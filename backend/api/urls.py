@@ -1,6 +1,8 @@
-from django.urls import path
-from .views import ping
+from rest_framework.routers import DefaultRouter
+from .views import TaskViewSet, BlockViewSet
 
-urlpatterns = [
-    path('ping/', ping, name='ping'),
-]
+router = DefaultRouter()
+router.register(r'tasks', TaskViewSet)
+router.register(r'blocks', BlockViewSet)
+
+urlpatterns = router.urls
