@@ -1,8 +1,8 @@
 from rest_framework.routers import DefaultRouter
-from .views import TaskViewSet, BlockViewSet
+from .views import BlockViewSet, ListViewSet
 
 router = DefaultRouter()
-router.register(r'tasks', TaskViewSet)
 router.register(r'blocks', BlockViewSet)
+router.register(r'lists', ListViewSet)
 
 urlpatterns = router.urls
