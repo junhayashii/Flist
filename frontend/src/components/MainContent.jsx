@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import BlockEditor from "./BlockEditor";
 import BlockDetails from "./BlockDetails";
+import TaskPage from "./TaskPage";
 
 const MainContent = ({ selectedListId, sidebarOpen, setSidebarOpen }) => {
   const [lists, setLists] = useState([]);
@@ -52,7 +53,9 @@ const MainContent = ({ selectedListId, sidebarOpen, setSidebarOpen }) => {
                 {selectedList.title}
               </h2>
             ) : (
-              <h2 className="text-xl font-semibold text-gray-400">リスト未選択</h2>
+              <h2 className="text-xl font-semibold text-gray-400">
+                リスト未選択
+              </h2>
             )}
           </div>
           <div className="text-sm text-gray-500">
@@ -62,7 +65,9 @@ const MainContent = ({ selectedListId, sidebarOpen, setSidebarOpen }) => {
 
         {/* ブロック編集エリア */}
         <div className="flex-1 overflow-y-auto">
-          {selectedListId ? (
+          {selectedListId === "tasks" ? (
+            <TaskPage />
+          ) : selectedListId ? (
             <div className="max-w-4xl mx-auto p-6">
               <BlockEditor
                 listId={selectedListId}
@@ -99,7 +104,8 @@ const MainContent = ({ selectedListId, sidebarOpen, setSidebarOpen }) => {
 
       {/* 🧩 タスク詳細パネル（右側） */}
       {selectedBlock &&
-        (selectedBlock.type === "task" || selectedBlock.type === "task-done") && (
+        (selectedBlock.type === "task" ||
+          selectedBlock.type === "task-done") && (
           <BlockDetails block={selectedBlock} />
         )}
     </div>

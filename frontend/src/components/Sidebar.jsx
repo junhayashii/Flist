@@ -94,19 +94,19 @@ const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
       <div className="p-6 border-b border-gray-200">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">📝 ノート</h1>
 
-        <div 
+        <div
           className={`mb-4 p-3 rounded-lg cursor-pointer transition-colors ${
-            selectedListId === 'tasks'
+            selectedListId === "tasks"
               ? "bg-blue-50 border-2 border-blue-200"
               : "hover:bg-gray-50 border-2 border-transparent"
           }`}
-          onClick={() => setSelectedListId('tasks')}
+          onClick={() => setSelectedListId("tasks")}
         >
-          <h3 className={`font-medium ${
-            selectedListId === 'tasks'
-              ? "text-blue-900"
-              : "text-gray-900"
-          }`}>
+          <h3
+            className={`font-medium ${
+              selectedListId === "tasks" ? "text-blue-900" : "text-gray-900"
+            }`}
+          >
             ✅ Tasks
           </h3>
         </div>

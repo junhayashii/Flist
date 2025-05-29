@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 
-export default function BlockEditor({ listId, parentBlockId, onSelectedBlock }) {
+export default function BlockEditor({
+  listId,
+  parentBlockId,
+  onSelectedBlock,
+}) {
   const [blocks, setBlocks] = useState([]);
   const [editingBlockId, setEditingBlockId] = useState(null);
   const [focusBlockId, setFocusBlockId] = useState(null);
@@ -10,24 +14,24 @@ export default function BlockEditor({ listId, parentBlockId, onSelectedBlock }) 
     const fetchBlocks = async () => {
       const res = await fetch("http://127.0.0.1:8000/api/blocks/");
       const data = await res.json();
-  
+
       console.log("受信ブロック一覧", data);
       console.log("listId", listId);
       console.log("parentBlockId", parentBlockId);
-  
+
       const filtered = data.filter((b) => {
         const isTopLevel = parentBlockId == null;
         const matchesList = String(b.list) === String(listId);
         const matchesParent = String(b.parent_block) === String(parentBlockId);
-      
+
         return isTopLevel
-          ? matchesList && (b.parent_block === null || b.parent_block === undefined)
+          ? matchesList &&
+              (b.parent_block === null || b.parent_block === undefined)
           : matchesParent;
       });
-      
-  
+
       console.log("表示対象ブロック", filtered);
-  
+
       if (filtered.length > 0) {
         setBlocks(filtered);
       } else {
@@ -43,16 +47,16 @@ export default function BlockEditor({ listId, parentBlockId, onSelectedBlock }) 
         ]);
       }
     };
-  
+
     fetchBlocks();
   }, [listId, parentBlockId]);
-  
 
   useEffect(() => {
     if (focusBlockId && blockRefs.current[focusBlockId]) {
       const el = blockRefs.current[focusBlockId];
       const block = blocks.find((b) => b.id === focusBlockId);
-      const isEditable = block?.type === "text" || editingBlockId === focusBlockId;
+      const isEditable =
+        block?.type === "text" || editingBlockId === focusBlockId;
 
       if (isEditable) {
         requestAnimationFrame(() => {
@@ -89,7 +93,7 @@ export default function BlockEditor({ listId, parentBlockId, onSelectedBlock }) 
     const payload = {
       ...block,
       list: parentBlockId ? null : listId,
-      parent_block: parentBlockId || null,  // ←ここを `parent_block` に修正
+      parent_block: parentBlockId || null, // ←ここを `parent_block` に修正
     };
 
     const res = await fetch("http://127.0.0.1:8000/api/blocks/", {
@@ -111,10 +115,10 @@ export default function BlockEditor({ listId, parentBlockId, onSelectedBlock }) 
   const updateBlock = async (block) => {
     const payload = {
       ...block,
-      list: listId, 
+      list: listId,
       parent: parentBlockId ?? null,
     };
-  
+
     const res = await fetch(`http://127.0.0.1:8000/api/blocks/${block.id}/`, {
       method: "PATCH",
       headers: {
@@ -122,13 +126,12 @@ export default function BlockEditor({ listId, parentBlockId, onSelectedBlock }) 
       },
       body: JSON.stringify(payload),
     });
-  
+
     if (!res.ok) {
       const error = await res.json();
       console.error("更新失敗", error);
     }
   };
-  
 
   const handleInput = async (e, id) => {
     const html = e.target.innerText;
@@ -154,7 +157,10 @@ export default function BlockEditor({ listId, parentBlockId, onSelectedBlock }) 
       type: getBlockType(html),
     };
 
-    if (typeof updatedBlock.id === "string" && updatedBlock.id.startsWith("tmp-")) {
+    if (
+      typeof updatedBlock.id === "string" &&
+      updatedBlock.id.startsWith("tmp-")
+    ) {
       const saved = await saveBlock(updatedBlock);
       setBlocks((prev) => prev.map((b) => (b.id === block.id ? saved : b)));
     } else {
@@ -168,9 +174,10 @@ export default function BlockEditor({ listId, parentBlockId, onSelectedBlock }) 
       const sorted = [...blocks].sort((a, b) => a.order - b.order);
       const currentOrder = sorted[index]?.order ?? 0;
       const nextOrder = sorted[index + 1]?.order;
-      const newOrder = nextOrder !== undefined
-        ? Math.floor((currentOrder + nextOrder) / 2)
-        : currentOrder + 1;
+      const newOrder =
+        nextOrder !== undefined
+          ? Math.floor((currentOrder + nextOrder) / 2)
+          : currentOrder + 1;
 
       const newBlock = {
         id: `tmp-${Date.now()}`,
@@ -198,13 +205,14 @@ export default function BlockEditor({ listId, parentBlockId, onSelectedBlock }) 
         const newBlocks = blocks.filter((b) => b.id !== deleteBlockId);
         setBlocks(newBlocks);
 
-        const isTemp = typeof deleteBlockId === "string" && deleteBlockId.startsWith("tmp-");
-  if (!isTemp) {
-    const blockId = Number(deleteBlockId); // ← ここ追加
-    await fetch(`http://127.0.0.1:8000/api/blocks/${blockId}/`, {
-      method: "DELETE",
-    });
-  }
+        const isTemp =
+          typeof deleteBlockId === "string" && deleteBlockId.startsWith("tmp-");
+        if (!isTemp) {
+          const blockId = Number(deleteBlockId); // ← ここ追加
+          await fetch(`http://127.0.0.1:8000/api/blocks/${blockId}/`, {
+            method: "DELETE",
+          });
+        }
 
         const prevBlock = blocks[index - 1];
         if (prevBlock) {
@@ -268,6 +276,12 @@ export default function BlockEditor({ listId, parentBlockId, onSelectedBlock }) 
                   <span className={isDone ? "line-through text-gray-500" : ""}>
                     {label}
                   </span>
+                  {block.due_date && (
+                    <div className="text-xs text-gray-500 ml-7">
+                      期日:{" "}
+                      {new Date(block.due_date).toLocaleDateString("ja-JP")}
+                    </div>
+                  )}
                 </div>
 
                 <button

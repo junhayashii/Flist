@@ -17,13 +17,28 @@ class BlockViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Block.objects.all()
-        list_id = self.request.query_params.get('list_id', None)
-        if list_id is not None:
+        params = self.request.query_params
+
+        block_type = params.get('type')
+        list_id = params.get('list_id')
+        parent_block = params.get('parent_block')
+
+        if block_type:
+            queryset = queryset.filter(type=block_type)
+
+        if parent_block is not None:
+            queryset = queryset.filter(parent_block=parent_block)
+        elif parent_block == '':
+            queryset = queryset.filter(parent_block__isnull=True)
+
+        if list_id == 'none':
+            queryset = queryset.filter(list__isnull=True)
+        elif list_id:
             try:
-                list_id = int(list_id)
-                queryset = queryset.filter(list_id=list_id)
+                queryset = queryset.filter(list_id=int(list_id))
             except (ValueError, TypeError):
                 pass
+
         return queryset.order_by('order')
 
     def perform_create(self, serializer):
@@ -31,4 +46,4 @@ class BlockViewSet(viewsets.ModelViewSet):
         if order is None:
             max_order = Block.objects.aggregate(models.Max('order'))['order__max'] or 0
             order = max_order + 1
-        serializer.save(order=order) 
+        serializer.save(order=order)
