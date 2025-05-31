@@ -1,83 +1,9 @@
-import { useEffect, useState } from "react";
+import useLists from "../hooks/useLists";
+import logo from "../assets/logo.png";
 
 const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
-  const [lists, setLists] = useState([]);
-  const [newListTitle, setNewListTitle] = useState("");
-
-  const fetchLists = async () => {
-    try {
-      const res = await fetch("http://127.0.0.1:8000/api/lists/");
-      const data = await res.json();
-      setLists(data);
-      if (data.length > 0 && !selectedListId) {
-        setSelectedListId(data[0].id);
-      }
-    } catch (error) {
-      console.error("リスト取得エラー:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchLists();
-  }, []);
-
-  const handleAddList = async () => {
-    if (!newListTitle.trim()) return;
-
-    try {
-      const listRes = await fetch("http://127.0.0.1:8000/api/lists/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ title: newListTitle }),
-      });
-
-      if (!listRes.ok) {
-        throw new Error("リスト作成エラー");
-      }
-
-      const newList = await listRes.json();
-
-      await fetch("http://127.0.0.1:8000/api/blocks/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          list: newList.id,
-          html: "",
-          type: "text",
-          order: 0,
-        }),
-      });
-
-      setNewListTitle("");
-      fetchLists();
-      setSelectedListId(newList.id);
-    } catch (error) {
-      console.error("リスト追加エラー:", error);
-    }
-  };
-
-  const handleDeleteList = async (id) => {
-    if (!confirm("このリストを削除しますか？")) return;
-
-    try {
-      const res = await fetch(`http://127.0.0.1:8000/api/lists/${id}/`, {
-        method: "DELETE",
-      });
-
-      if (res.ok) {
-        if (id === selectedListId) {
-          setSelectedListId(null);
-        }
-        fetchLists();
-      }
-    } catch (error) {
-      console.error("リスト削除エラー:", error);
-    }
-  };
+  const { lists, newListTitle, setNewListTitle, addList, deleteList } =
+    useLists(selectedListId, setSelectedListId);
 
   return (
     <div
@@ -86,9 +12,12 @@ const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
       } transition-all duration-300 bg-white/70 backdrop-blur-md border-r border-blue-200 flex flex-col overflow-hidden shadow-xl`}
     >
       <div className="p-6 border-b border-blue-100">
-        <h1 className="text-3xl font-extrabold text-blue-800 mb-6 tracking-tight">
-          📘 Flist
-        </h1>
+        <div className="flex items-center space-x-2 mb-6">
+          <img src={logo} alt="Flist Logo" className="w-8 h-8" />
+          <h1 className="text-2xl font-extrabold text-blue-800 tracking-tight">
+            Flist
+          </h1>
+        </div>
 
         <div
           className={`mb-6 p-3 rounded-xl cursor-pointer transition-colors ${
@@ -116,13 +45,13 @@ const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
-                handleAddList();
+                addList();
               }
             }}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white/80 focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none backdrop-blur-sm shadow-inner"
           />
           <button
-            onClick={handleAddList}
+            onClick={addList}
             className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow"
           >
             リストを追加
@@ -160,7 +89,7 @@ const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleDeleteList(list.id);
+                  deleteList(list.id);
                 }}
                 className="opacity-0 group-hover:opacity-100 p-1 text-red-400 hover:text-red-600 transition"
               >

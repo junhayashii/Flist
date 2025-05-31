@@ -2,22 +2,22 @@ import React, { useState, useEffect } from "react";
 import BlockEditor from "./BlockEditor";
 import BlockDetails from "./BlockDetails";
 import TaskPage from "./TaskPage";
+import { fetchLists } from "../api/lists"; // ← 追加
 
 const MainContent = ({ selectedListId, sidebarOpen, setSidebarOpen }) => {
   const [lists, setLists] = useState([]);
   const [selectedBlock, setSelectedBlock] = useState(null);
 
   useEffect(() => {
-    const fetchLists = async () => {
+    const loadLists = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/lists/");
-        const data = await res.json();
+        const data = await fetchLists();
         setLists(data);
       } catch (error) {
         console.error("リスト取得エラー:", error);
       }
     };
-    fetchLists();
+    loadLists();
   }, []);
 
   const selectedList = lists.find((list) => list.id === selectedListId);

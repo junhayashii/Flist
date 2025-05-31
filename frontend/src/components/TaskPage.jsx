@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import BlockDetails from "./BlockDetails";
+import { fetchTasks, createTask, updateTask } from "../api/blocks";
+import { fetchListMap } from "../api/lists";
 
 export default function TaskPage() {
   const [tasks, setTasks] = useState([]);
@@ -9,64 +11,30 @@ export default function TaskPage() {
   const taskRefs = useRef({});
 
   useEffect(() => {
-    const fetchData = async () => {
-      const [taskRes, listRes] = await Promise.all([
-        fetch("http://127.0.0.1:8000/api/blocks/"),
-        fetch("http://127.0.0.1:8000/api/lists/"),
+    const loadData = async () => {
+      const [taskData, listMap] = await Promise.all([
+        fetchTasks(),
+        fetchListMap(),
       ]);
-      const taskData = await taskRes.json();
-      const listData = await listRes.json();
-
-      const listMap = {};
-      listData.forEach((l) => {
-        listMap[l.id] = l.title;
-      });
+      setTasks(taskData);
       setLists(listMap);
-
-      const filtered = taskData.filter(
-        (block) => block.type === "task" || block.type === "task-done"
-      );
-      setTasks(filtered);
     };
 
-    fetchData();
+    loadData();
   }, []);
 
   const addTask = async () => {
     if (!newTaskText.trim()) return;
 
-    const payload = {
-      html: "- [ ] " + newTaskText,
-      type: "task",
-      order: Date.now(),
-      list: null,
-      parent_block: null,
-    };
-
-    const res = await fetch("http://127.0.0.1:8000/api/blocks/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    if (res.ok) {
-      const newBlock = await res.json();
-      setTasks((prev) => [...prev, newBlock]);
-      setNewTaskText("");
-    }
-  };
-
-  const updateTask = async (updated) => {
-    await fetch(`http://127.0.0.1:8000/api/blocks/${updated.id}/`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updated),
-    });
+    const newTask = await createTask(newTaskText);
+    setTasks((prev) => [...prev, newTask]);
+    setNewTaskText("");
   };
 
   const handleBlur = async (task) => {
     const el = taskRefs.current[task.id];
     if (!el) return;
+
     const html = el.innerText;
     const updated = {
       ...task,
@@ -95,7 +63,6 @@ export default function TaskPage() {
     };
 
     setTasks((prev) => prev.map((t) => (t.id === task.id ? updated : t)));
-
     await updateTask(updated);
   };
 

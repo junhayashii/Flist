@@ -1,48 +1,20 @@
 import { useState, useEffect, useRef } from "react";
+import useBlocks from "../hooks/useBlocks";
 
 export default function BlockEditor({
   listId,
   parentBlockId,
   onSelectedBlock,
 }) {
-  const [blocks, setBlocks] = useState([]);
+  const { blocks, setBlocks, loadBlocks, saveBlock, updateBlock, deleteBlock } =
+    useBlocks(listId, parentBlockId);
+
   const [editingBlockId, setEditingBlockId] = useState(null);
   const [focusBlockId, setFocusBlockId] = useState(null);
   const blockRefs = useRef({});
 
   useEffect(() => {
-    const fetchBlocks = async () => {
-      const res = await fetch("http://127.0.0.1:8000/api/blocks/");
-      const data = await res.json();
-
-      const filtered = data.filter((b) => {
-        const isTopLevel = parentBlockId == null;
-        const matchesList = String(b.list) === String(listId);
-        const matchesParent = String(b.parent_block) === String(parentBlockId);
-
-        return isTopLevel
-          ? matchesList &&
-              (b.parent_block === null || b.parent_block === undefined)
-          : matchesParent;
-      });
-
-      if (filtered.length > 0) {
-        setBlocks(filtered);
-      } else {
-        setBlocks([
-          {
-            id: `tmp-${Date.now()}`,
-            html: "",
-            type: "text",
-            order: 0,
-            list: listId,
-            parent: parentBlockId || null,
-          },
-        ]);
-      }
-    };
-
-    fetchBlocks();
+    loadBlocks();
   }, [listId, parentBlockId]);
 
   useEffect(() => {
@@ -81,43 +53,6 @@ export default function BlockEditor({
     if (text.startsWith("- [ ] ")) return "task";
     if (text.startsWith("- [x] ")) return "task-done";
     return "text";
-  };
-
-  const saveBlock = async (block) => {
-    const payload = {
-      ...block,
-      list: parentBlockId ? null : listId,
-      parent_block: parentBlockId || null,
-    };
-
-    const res = await fetch("http://127.0.0.1:8000/api/blocks/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error("保存に失敗しました");
-    return data;
-  };
-
-  const updateBlock = async (block) => {
-    const payload = {
-      ...block,
-      list: parentBlockId ? null : listId,
-      parent_block: parentBlockId || null,
-    };
-
-    const res = await fetch(`http://127.0.0.1:8000/api/blocks/${block.id}/`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    if (!res.ok) {
-      const error = await res.json();
-      console.error("更新失敗", error);
-    }
   };
 
   const handleInput = async (e, id) => {
@@ -190,9 +125,7 @@ export default function BlockEditor({
         setBlocks(newBlocks);
 
         if (!String(deleteBlockId).startsWith("tmp-")) {
-          await fetch(`http://127.0.0.1:8000/api/blocks/${deleteBlockId}/`, {
-            method: "DELETE",
-          });
+          await deleteBlock(deleteBlockId);
         }
 
         const prevBlock = blocks[index - 1];
