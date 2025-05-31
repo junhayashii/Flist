@@ -5,19 +5,18 @@ import TaskPage from "./TaskPage";
 
 const MainContent = ({ selectedListId, sidebarOpen, setSidebarOpen }) => {
   const [lists, setLists] = useState([]);
-  const [selectedBlock, setSelectedBlock] = useState(null); // ← タスク選択用
-
-  const fetchLists = async () => {
-    try {
-      const res = await fetch("http://127.0.0.1:8000/api/lists/");
-      const data = await res.json();
-      setLists(data);
-    } catch (error) {
-      console.error("リスト取得エラー:", error);
-    }
-  };
+  const [selectedBlock, setSelectedBlock] = useState(null);
 
   useEffect(() => {
+    const fetchLists = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/lists/");
+        const data = await res.json();
+        setLists(data);
+      } catch (error) {
+        console.error("リスト取得エラー:", error);
+      }
+    };
     fetchLists();
   }, []);
 
@@ -26,13 +25,13 @@ const MainContent = ({ selectedListId, sidebarOpen, setSidebarOpen }) => {
   return (
     <div className="flex-1 flex overflow-hidden">
       {/* メイン編集ペイン */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden bg-white/70 backdrop-blur-md">
         {/* ヘッダー */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <div className="bg-white/70 backdrop-blur-sm shadow-md border-b border-flist-blue px-6 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"
+              className="p-2 text-flist-dark hover:text-flist-blue rounded-lg hover:bg-blue-100 transition-colors"
             >
               <svg
                 className="w-6 h-6"
@@ -48,22 +47,20 @@ const MainContent = ({ selectedListId, sidebarOpen, setSidebarOpen }) => {
                 />
               </svg>
             </button>
-            {selectedList ? (
-              <h2 className="text-xl font-semibold text-gray-900">
-                {selectedList.title}
-              </h2>
-            ) : (
-              <h2 className="text-xl font-semibold text-gray-400">
-                リスト未選択
-              </h2>
-            )}
+            <h2
+              className={`text-xl font-semibold tracking-tight ${
+                selectedList ? "text-flist-dark" : "text-gray-400"
+              }`}
+            >
+              {selectedList ? selectedList.title : "リスト未選択"}
+            </h2>
           </div>
           <div className="text-sm text-gray-500">
             最終更新: {new Date().toLocaleString("ja-JP")}
           </div>
         </div>
 
-        {/* ブロック編集エリア */}
+        {/* ブロック or タスク一覧 */}
         <div className="flex-1 overflow-y-auto">
           {selectedListId === "tasks" ? (
             <TaskPage />
@@ -75,7 +72,7 @@ const MainContent = ({ selectedListId, sidebarOpen, setSidebarOpen }) => {
               />
             </div>
           ) : (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center h-full px-6">
               <div className="text-center text-gray-500">
                 <svg
                   className="mx-auto h-12 w-12 text-gray-400 mb-4"
@@ -102,7 +99,7 @@ const MainContent = ({ selectedListId, sidebarOpen, setSidebarOpen }) => {
         </div>
       </div>
 
-      {/* 🧩 タスク詳細パネル（右側） */}
+      {/* タスクの詳細パネル（右） */}
       {selectedBlock &&
         (selectedBlock.type === "task" ||
           selectedBlock.type === "task-done") && (

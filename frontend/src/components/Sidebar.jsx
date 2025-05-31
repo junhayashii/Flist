@@ -25,7 +25,6 @@ const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
     if (!newListTitle.trim()) return;
 
     try {
-      // First create the list
       const listRes = await fetch("http://127.0.0.1:8000/api/lists/", {
         method: "POST",
         headers: {
@@ -40,8 +39,7 @@ const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
 
       const newList = await listRes.json();
 
-      // Then create an initial block for the list
-      const blockRes = await fetch("http://127.0.0.1:8000/api/blocks/", {
+      await fetch("http://127.0.0.1:8000/api/blocks/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -54,13 +52,9 @@ const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
         }),
       });
 
-      if (!blockRes.ok) {
-        throw new Error("ブロック作成エラー");
-      }
-
       setNewListTitle("");
       fetchLists();
-      setSelectedListId(newList.id); // Select the newly created list
+      setSelectedListId(newList.id);
     } catch (error) {
       console.error("リスト追加エラー:", error);
     }
@@ -89,22 +83,24 @@ const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
     <div
       className={`${
         sidebarOpen ? "w-80" : "w-0"
-      } transition-all duration-300 bg-white border-r border-gray-200 flex flex-col overflow-hidden`}
+      } transition-all duration-300 bg-white/70 backdrop-blur-md border-r border-blue-200 flex flex-col overflow-hidden shadow-xl`}
     >
-      <div className="p-6 border-b border-gray-200">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">📝 ノート</h1>
+      <div className="p-6 border-b border-blue-100">
+        <h1 className="text-3xl font-extrabold text-blue-800 mb-6 tracking-tight">
+          📘 Flist
+        </h1>
 
         <div
-          className={`mb-4 p-3 rounded-lg cursor-pointer transition-colors ${
+          className={`mb-6 p-3 rounded-xl cursor-pointer transition-colors ${
             selectedListId === "tasks"
-              ? "bg-blue-50 border-2 border-blue-200"
-              : "hover:bg-gray-50 border-2 border-transparent"
+              ? "bg-blue-100 border-2 border-blue-300"
+              : "hover:bg-blue-50 border border-transparent"
           }`}
           onClick={() => setSelectedListId("tasks")}
         >
           <h3
-            className={`font-medium ${
-              selectedListId === "tasks" ? "text-blue-900" : "text-gray-900"
+            className={`font-semibold ${
+              selectedListId === "tasks" ? "text-blue-800" : "text-gray-800"
             }`}
           >
             ✅ Tasks
@@ -123,11 +119,11 @@ const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
                 handleAddList();
               }
             }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white/80 focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none backdrop-blur-sm shadow-inner"
           />
           <button
             onClick={handleAddList}
-            className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow"
           >
             リストを追加
           </button>
@@ -139,10 +135,10 @@ const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
           {lists.map((list) => (
             <div
               key={list.id}
-              className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
+              className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${
                 selectedListId === list.id
-                  ? "bg-blue-50 border-2 border-blue-200"
-                  : "hover:bg-gray-50 border-2 border-transparent"
+                  ? "bg-blue-100 border-2 border-blue-300"
+                  : "hover:bg-blue-50 border border-transparent"
               }`}
               onClick={() => setSelectedListId(list.id)}
             >
@@ -156,7 +152,7 @@ const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
                 >
                   {list.title}
                 </h3>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-xs text-gray-400 mt-1">
                   {list.created_at &&
                     new Date(list.created_at).toLocaleDateString("ja-JP")}
                 </p>
@@ -166,7 +162,7 @@ const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
                   e.stopPropagation();
                   handleDeleteList(list.id);
                 }}
-                className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:text-red-700 transition-all"
+                className="opacity-0 group-hover:opacity-100 p-1 text-red-400 hover:text-red-600 transition"
               >
                 🗑
               </button>

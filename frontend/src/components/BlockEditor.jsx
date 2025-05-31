@@ -15,10 +15,6 @@ export default function BlockEditor({
       const res = await fetch("http://127.0.0.1:8000/api/blocks/");
       const data = await res.json();
 
-      console.log("受信ブロック一覧", data);
-      console.log("listId", listId);
-      console.log("parentBlockId", parentBlockId);
-
       const filtered = data.filter((b) => {
         const isTopLevel = parentBlockId == null;
         const matchesList = String(b.list) === String(listId);
@@ -29,8 +25,6 @@ export default function BlockEditor({
               (b.parent_block === null || b.parent_block === undefined)
           : matchesParent;
       });
-
-      console.log("表示対象ブロック", filtered);
 
       if (filtered.length > 0) {
         setBlocks(filtered);
@@ -93,7 +87,7 @@ export default function BlockEditor({
     const payload = {
       ...block,
       list: parentBlockId ? null : listId,
-      parent_block: parentBlockId || null, // ←ここを `parent_block` に修正
+      parent_block: parentBlockId || null,
     };
 
     const res = await fetch("http://127.0.0.1:8000/api/blocks/", {
@@ -103,27 +97,20 @@ export default function BlockEditor({
     });
 
     const data = await res.json();
-
-    if (!res.ok) {
-      console.error("保存失敗", data);
-      throw new Error("保存に失敗しました");
-    }
-
+    if (!res.ok) throw new Error("保存に失敗しました");
     return data;
   };
 
   const updateBlock = async (block) => {
     const payload = {
       ...block,
-      list: listId,
-      parent: parentBlockId ?? null,
+      list: parentBlockId ? null : listId,
+      parent_block: parentBlockId || null,
     };
 
     const res = await fetch(`http://127.0.0.1:8000/api/blocks/${block.id}/`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
@@ -157,10 +144,7 @@ export default function BlockEditor({
       type: getBlockType(html),
     };
 
-    if (
-      typeof updatedBlock.id === "string" &&
-      updatedBlock.id.startsWith("tmp-")
-    ) {
+    if (String(updatedBlock.id).startsWith("tmp-")) {
       const saved = await saveBlock(updatedBlock);
       setBlocks((prev) => prev.map((b) => (b.id === block.id ? saved : b)));
     } else {
@@ -176,7 +160,7 @@ export default function BlockEditor({
       const nextOrder = sorted[index + 1]?.order;
       const newOrder =
         nextOrder !== undefined
-          ? Math.floor((currentOrder + nextOrder) / 2)
+          ? (currentOrder + nextOrder) / 2
           : currentOrder + 1;
 
       const newBlock = {
@@ -205,11 +189,8 @@ export default function BlockEditor({
         const newBlocks = blocks.filter((b) => b.id !== deleteBlockId);
         setBlocks(newBlocks);
 
-        const isTemp =
-          typeof deleteBlockId === "string" && deleteBlockId.startsWith("tmp-");
-        if (!isTemp) {
-          const blockId = Number(deleteBlockId); // ← ここ追加
-          await fetch(`http://127.0.0.1:8000/api/blocks/${blockId}/`, {
+        if (!String(deleteBlockId).startsWith("tmp-")) {
+          await fetch(`http://127.0.0.1:8000/api/blocks/${deleteBlockId}/`, {
             method: "DELETE",
           });
         }
@@ -241,13 +222,11 @@ export default function BlockEditor({
 
     setBlocks(updatedBlocks);
     const updatedBlock = updatedBlocks.find((b) => b.id === blockId);
-    if (updatedBlock) {
-      await updateBlock(updatedBlock);
-    }
+    if (updatedBlock) await updateBlock(updatedBlock);
   };
 
   return (
-    <div className="space-y-2 p-4 bg-gray-50 rounded shadow">
+    <div className="space-y-2 p-4 bg-white/70 backdrop-blur rounded-xl shadow-sm">
       {blocks
         .sort((a, b) => a.order - b.order)
         .map((block, index) => {
@@ -255,13 +234,11 @@ export default function BlockEditor({
           const isDone = block.type === "task-done";
           const label = block.html.replace(/^- \[[ x]\] /, "");
 
-          const isEditing = editingBlockId === block.id;
-
-          if (isTask && !isEditing) {
+          if (isTask && editingBlockId !== block.id) {
             return (
               <div
                 key={`view-${block.id}-${index}`}
-                className="flex items-center justify-between px-2 py-1 bg-white border rounded cursor-pointer"
+                className="flex items-center justify-between px-3 py-2 bg-white border rounded-lg hover:bg-blue-50 shadow-sm"
                 onClick={() => {
                   setEditingBlockId(block.id);
                   setFocusBlockId(block.id);
@@ -273,24 +250,25 @@ export default function BlockEditor({
                     checked={isDone}
                     onChange={() => handleToggleDone(block.id)}
                   />
-                  <span className={isDone ? "line-through text-gray-500" : ""}>
+                  <span
+                    className={
+                      isDone ? "line-through text-gray-400" : "text-gray-800"
+                    }
+                  >
                     {label}
                   </span>
                   {block.due_date && (
-                    <div className="text-xs text-gray-500 ml-7">
-                      期日:{" "}
-                      {new Date(block.due_date).toLocaleDateString("ja-JP")}
-                    </div>
+                    <span className="ml-4 text-xs text-blue-500">
+                      📅 {new Date(block.due_date).toLocaleDateString("ja-JP")}
+                    </span>
                   )}
                 </div>
-
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     onSelectedBlock?.(block);
                   }}
                   className="text-gray-400 hover:text-blue-500"
-                  title="詳細を表示"
                 >
                   ▶
                 </button>
@@ -304,7 +282,7 @@ export default function BlockEditor({
               id={`block-${block.id}`}
               contentEditable
               suppressContentEditableWarning
-              className="border px-2 py-1 rounded bg-white outline-none focus:ring-2 ring-blue-400"
+              className="border px-3 py-2 rounded-lg bg-white shadow-sm outline-none focus:ring-2 ring-blue-400"
               ref={(el) => {
                 if (el) {
                   blockRefs.current[block.id] = el;
