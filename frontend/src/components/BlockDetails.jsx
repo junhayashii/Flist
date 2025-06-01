@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import BlockEditor from "./BlockEditor";
 import { updateBlockDueDate } from "../api/blocks";
 
-export default function BlockDetails({ block }) {
+export default function BlockDetails({ block, onClose }) {
   const [localBlock, setLocalBlock] = useState(block);
 
   useEffect(() => {
@@ -22,9 +22,14 @@ export default function BlockDetails({ block }) {
   };
 
   return (
-    <div className="w-96 border-l border-gray-200 p-4 bg-white">
+    <div className="w-96 border-l border-gray-200 p-4 bg-white pt-16">
+      <button
+        onClick={onClose}
+        className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
+      >
+        ✕
+      </button>
       <h2 className="text-lg font-semibold mb-4">タスクの詳細</h2>
-
       <label className="block text-sm font-medium text-gray-700 mb-1">
         期日
       </label>

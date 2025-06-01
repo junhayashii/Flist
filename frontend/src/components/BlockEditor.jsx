@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import TaskBlock from "./TaskBlock";
 import useBlocks from "../hooks/useBlocks";
 
 export default function BlockEditor({
@@ -169,43 +170,16 @@ export default function BlockEditor({
 
           if (isTask && editingBlockId !== block.id) {
             return (
-              <div
+              <TaskBlock
                 key={`view-${block.id}-${index}`}
-                className="flex items-center justify-between px-3 py-2 bg-white border rounded-lg hover:bg-blue-50 shadow-sm"
+                block={block}
                 onClick={() => {
                   setEditingBlockId(block.id);
                   setFocusBlockId(block.id);
                 }}
-              >
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={isDone}
-                    onChange={() => handleToggleDone(block.id)}
-                  />
-                  <span
-                    className={
-                      isDone ? "line-through text-gray-400" : "text-gray-800"
-                    }
-                  >
-                    {label}
-                  </span>
-                  {block.due_date && (
-                    <span className="ml-4 text-xs text-blue-500">
-                      📅 {new Date(block.due_date).toLocaleDateString("ja-JP")}
-                    </span>
-                  )}
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelectedBlock?.(block);
-                  }}
-                  className="text-gray-400 hover:text-blue-500"
-                >
-                  ▶
-                </button>
-              </div>
+                onToggle={() => handleToggleDone(block.id)}
+                onOpenDetail={onSelectedBlock}
+              />
             );
           }
 
