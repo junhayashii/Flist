@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { CheckCircle, Circle, ChevronRight } from "lucide-react";
 
 export default function TaskBlock({
@@ -9,10 +10,34 @@ export default function TaskBlock({
   isEditable = false,
   onBlur,
   editableRef,
+  onEmptyTaskEnterOrBackspace,
+  onKeyDown,
 }) {
   const isDone = block.type === "task-done";
-  const label = block.html.replace(/^- \[[ x]\] /, "");
+  const label = block.html.replace(/^- \[[ x]\] ?/, "");
   const hasMeta = block.due_date || listName;
+
+  const localRef = useRef(null);
+
+  useEffect(() => {
+    if (isEditable && localRef.current) {
+      localRef.current.focus();
+      const sel = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(localRef.current);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  }, [isEditable]);
+
+  const handleKeyDown = (e) => {
+    const text = localRef.current?.innerText.trim();
+    if (!text && (e.key === "Enter" || e.key === "Backspace")) {
+      e.preventDefault();
+      onEmptyTaskEnterOrBackspace?.();
+    }
+  };
 
   return (
     <div
@@ -20,7 +45,6 @@ export default function TaskBlock({
       onClick={() => onClick?.(block)}
     >
       <div className="flex items-center space-x-3">
-        {/* ✅ 丸くて美しいチェックボックス（アイコン） */}
         <div
           onClick={(e) => {
             e.stopPropagation();
@@ -35,11 +59,13 @@ export default function TaskBlock({
           )}
         </div>
 
-        {/* ✅ 本文 + メタ情報 */}
         <div className="flex-1">
           {isEditable ? (
             <div
-              ref={editableRef}
+              ref={(el) => {
+                localRef.current = el;
+                if (el) editableRef?.(el);
+              }}
               contentEditable
               suppressContentEditableWarning
               className={`outline-none flex-1 ${
@@ -47,6 +73,7 @@ export default function TaskBlock({
               }`}
               onBlur={() => onBlur?.(block)}
               onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => onKeyDown?.(e)}
             >
               {label}
             </div>
@@ -72,7 +99,6 @@ export default function TaskBlock({
           )}
         </div>
 
-        {/* ✅ 詳細パネルボタン */}
         <button
           onClick={(e) => {
             e.stopPropagation();

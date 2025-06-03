@@ -50,7 +50,10 @@ export default function useBlocks(listId, parentBlockId) {
 
   const updateBlock = async (block) => {
     const payload = {
-      ...block,
+      id: block.id,
+      html: block.html,
+      type: block.type, // ✅ 必須
+      order: block.order,
       list: parentBlockId ? null : listId,
       parent_block: parentBlockId || null,
     };
