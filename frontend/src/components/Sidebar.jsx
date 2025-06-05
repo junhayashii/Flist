@@ -20,7 +20,7 @@ const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
         </div>
 
         <div
-          className={`mb-6 p-3 rounded-xl cursor-pointer transition-colors ${
+          className={`mb-1 p-3 rounded-xl cursor-pointer transition-colors ${
             selectedListId === "tasks"
               ? "bg-blue-100 border-2 border-blue-300"
               : "hover:bg-blue-50 border border-transparent"
@@ -33,6 +33,22 @@ const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
             }`}
           >
             ✅ Tasks
+          </h3>
+        </div>
+        <div
+          className={`mb-6 p-3 rounded-xl cursor-pointer transition-colors ${
+            selectedListId === "notes"
+              ? "bg-blue-100 border-2 border-blue-300"
+              : "hover:bg-blue-50 border border-transparent"
+          }`}
+          onClick={() => setSelectedListId("notes")}
+        >
+          <h3
+            className={`font-semibold ${
+              selectedListId === "notes" ? "text-blue-800" : "text-gray-800"
+            }`}
+          >
+            📘 Notes
           </h3>
         </div>
 

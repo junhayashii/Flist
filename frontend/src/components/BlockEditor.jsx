@@ -15,7 +15,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical } from "lucide-react";
+import { GripVertical, ChevronRight } from "lucide-react";
 
 function SortableItem({ block, index, renderBlock }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
@@ -149,6 +149,7 @@ export default function BlockEditor({
     if (trimmed.startsWith("- ")) return "bullet";
     if (trimmed.startsWith("> ")) return "quote";
     if (trimmed === "---") return "divider";
+    if (/^\[\[.+\]\]$/.test(trimmed)) return "note";
     return "text";
   };
 
@@ -539,6 +540,31 @@ export default function BlockEditor({
               className="my-4 border-t border-gray-300 cursor-pointer"
               onClick={() => handleBlockClick(block.id)}
             />
+          );
+        case "note":
+          return (
+            <div
+              tabIndex={-1}
+              ref={(el) => el && (blockRefs.current[block.id] = el)}
+              className="px-3 py-1 text-blue-700 font-medium cursor-pointer flex justify-between items-center hover:bg-blue-50 rounded"
+              onClick={() => {
+                handleBlockClick(block.id);
+                onSelectedBlock?.(block); // ← ノート詳細を開
+              }}
+            >
+              <span>
+                📘 {block.html.match(/\[\[(.+?)\]\]/)?.[1] || "ノート"}
+              </span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectedBlock?.(block); // ← ノート詳細を開く
+                }}
+                className="text-gray-400 hover:text-blue-500 p-1"
+              >
+                <ChevronRight size={10} strokeWidth={4} />
+              </button>
+            </div>
           );
       }
     }

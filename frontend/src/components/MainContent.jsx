@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import BlockEditor from "./BlockEditor";
 import BlockDetails from "./BlockDetails";
 import TaskListView from "./TaskListView";
+import NoteListView from "./NoteListView";
 import { fetchLists } from "../api/lists";
 
 export default function MainContent({
@@ -76,6 +77,8 @@ export default function MainContent({
         <div className="flex-1 overflow-y-auto">
           {selectedListId === "tasks" ? (
             <TaskListView onSelectTask={setSelectedBlock} />
+          ) : selectedListId === "notes" ? (
+            <NoteListView onSelectNote={setSelectedBlock} />
           ) : selectedListId ? (
             <div className="max-w-4xl mx-auto p-6">
               <BlockEditor
@@ -116,7 +119,8 @@ export default function MainContent({
       {/* タスクの詳細パネル（右） */}
       {selectedBlock &&
         (selectedBlock.type === "task" ||
-          selectedBlock.type === "task-done") && (
+          selectedBlock.type === "task-done" ||
+          selectedBlock.type == "note") && (
           <BlockDetails
             block={selectedBlock}
             onClose={() => setSelectedBlock(null)}
