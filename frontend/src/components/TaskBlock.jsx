@@ -13,9 +13,10 @@ export default function TaskBlock({
   onEmptyTaskEnterOrBackspace,
   onKeyDown,
   isSelected = false,
+  onDelete,
 }) {
   const isDone = block.type === "task-done";
-  const label = block.html.replace(/^- \[[ x]\] ?/, "");
+  const label = block.html.replace(/^(- \[[ xX]\]\s*)+/, "");
   const hasMeta = block.due_date || listName;
 
   const localRef = useRef(null);
@@ -66,21 +67,19 @@ export default function TaskBlock({
       onClick={() => onClick?.(block)}
     >
       <div className="flex items-center space-x-3">
-        {!isEditable && (
-          <div
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggle?.(block);
-            }}
-            className="w-6 h-6 cursor-pointer text-blue-600 hover:scale-105 transition-transform"
-          >
-            {isDone ? (
-              <CheckCircle className="w-6 h-6" strokeWidth={2} />
-            ) : (
-              <Circle className="w-6 h-6" strokeWidth={1.5} />
-            )}
-          </div>
-        )}
+        <div
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle?.(block);
+          }}
+          className="w-6 h-6 cursor-pointer text-blue-600 hover:scale-105 transition-transform"
+        >
+          {isDone ? (
+            <CheckCircle className="w-6 h-6" strokeWidth={2} />
+          ) : (
+            <Circle className="w-6 h-6" strokeWidth={1.5} />
+          )}
+        </div>
 
         <div className="flex-1">
           {isEditable ? (
@@ -98,7 +97,7 @@ export default function TaskBlock({
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => onKeyDown?.(e)}
             >
-              {block.html}
+              {label}
             </div>
           ) : (
             <div
@@ -125,10 +124,21 @@ export default function TaskBlock({
             e.stopPropagation();
             onOpenDetail?.(block);
           }}
-          className="text-gray-400 hover:text-blue-500 p-1 opacity-0 group-hover:opacity-100 transition"
+          className="text-gray-400 hover:text-blue-500 p-1"
         >
           <ChevronRight size={10} strokeWidth={4} />
         </button>
+        {onDelete && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation(); // ペインを開かないように
+              onDelete();
+            }}
+            className="ml-2 text-red-500 hover:text-red-700 text-sm"
+          >
+            削除
+          </button>
+        )}
       </div>
     </div>
   );

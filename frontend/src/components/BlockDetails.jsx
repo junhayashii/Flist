@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import BlockEditor from "./BlockEditor";
 import { updateBlockDueDate } from "../api/blocks";
 
-export default function BlockDetails({ block, onClose, onUpdateBlock }) {
+export default function BlockDetails({ block, onClose, onUpdate }) {
   const [localBlock, setLocalBlock] = useState(block);
 
   useEffect(() => {
@@ -16,7 +16,7 @@ export default function BlockDetails({ block, onClose, onUpdateBlock }) {
     try {
       await updateBlockDueDate(block.id, newDueDate);
       setLocalBlock(updatedBlock);
-      onUpdateBlock?.(updatedBlock);
+      onUpdate?.(updatedBlock); // ← TaskListView に変更を通知！
     } catch (err) {
       console.error("期日更新失敗:", err);
     }

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import BlockDetails from "./BlockDetails";
 import TaskBlock from "./TaskBlock";
-import { fetchTasks, createTask, updateTask } from "../api/blocks";
+import { fetchTasks, createTask, updateTask, deleteBlock } from "../api/blocks";
 import { fetchListMap } from "../api/lists";
 
 const TaskListView = () => {
@@ -26,9 +26,22 @@ const TaskListView = () => {
 
   const addTask = async () => {
     if (!newTaskText.trim()) return;
-    const newTask = await createTask(newTaskText);
+
+    const base = newTaskText.trim();
+    const html = /^- \[[ xX]\] /.test(base) ? base : `- [ ] ${base}`;
+    const newTask = await createTask(html);
     setTasks((prev) => [...prev, newTask]);
     setNewTaskText("");
+  };
+
+  const handleDelete = async (task) => {
+    console.log("削除対象タスク:", task);
+    try {
+      await deleteBlock(task.id);
+      setTasks((prev) => prev.filter((t) => t.id !== task.id));
+    } catch (err) {
+      console.error("タスク削除失敗:", err);
+    }
   };
 
   const handleToggle = async (task) => {
@@ -96,11 +109,19 @@ const TaskListView = () => {
               block={task}
               isEditable={true}
               editableRef={(el) => (taskRefs.current[task.id] = el)}
-              onClick={() => setSelectedTask(task)}
+              onClick={() => {
+                // クリックで切り替えロジックを実行
+                setSelectedTask((prev) => (prev?.id === task.id ? null : task));
+              }}
               onToggle={handleToggle}
-              onOpenDetail={() => setSelectedTask(task)}
+              onOpenDetail={() => {
+                // 詳細アイコンから開いた場合のみ明示的に開く
+                setSelectedTask(task);
+              }}
               onBlur={handleBlur}
               listName={task.list ? lists[task.list] : "Inbox"}
+              onDelete={() => handleDelete(task)}
+              isSelected={selectedTask?.id === task.id}
             />
           ))}
         </div>
@@ -111,6 +132,12 @@ const TaskListView = () => {
           <BlockDetails
             block={selectedTask}
             onClose={() => setSelectedTask(null)}
+            onUpdate={(updatedBlock) => {
+              setTasks((prev) =>
+                prev.map((t) => (t.id === updatedBlock.id ? updatedBlock : t))
+              );
+              setSelectedTask(updatedBlock);
+            }}
           />
         )}
     </div>
