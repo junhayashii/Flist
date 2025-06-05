@@ -38,15 +38,16 @@ export const deleteBlock = async (id) => {
   if (!res.ok) throw new Error("ブロック削除失敗");
 };
 
-export const updateBlockDueDate = async (id, due_date) => {
-  const res = await fetch(`http://127.0.0.1:8000/api/blocks/${id}/`, {
+export async function updateBlockDueDate(id, due_date) {
+  const res = await fetch(`http://localhost:8000/api/blocks/${id}/`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({ due_date }),
   });
-  if (!res.ok) throw new Error("期日更新に失敗しました");
-  return await res.json();
-};
+  if (!res.ok) throw new Error("Failed to update due date");
+}
 
 export const fetchTasks = async () => {
   const res = await fetch("http://127.0.0.1:8000/api/blocks/");

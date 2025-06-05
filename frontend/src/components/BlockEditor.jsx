@@ -48,6 +48,8 @@ export default function BlockEditor({
   listId,
   parentBlockId,
   onSelectedBlock,
+  selectedBlockId,
+  selectedBlock,
 }) {
   const { blocks, setBlocks, loadBlocks, saveBlock, updateBlock, deleteBlock } =
     useBlocks(listId, parentBlockId);
@@ -55,6 +57,8 @@ export default function BlockEditor({
   const [editingBlockId, setEditingBlockId] = useState(null);
   const [focusBlockId, setFocusBlockId] = useState(null);
   const blockRefs = useRef({});
+  const caretX = useRef(null);
+  const caretToStart = useRef(false);
 
   useEffect(() => {
     loadBlocks();
@@ -64,28 +68,66 @@ export default function BlockEditor({
     if (focusBlockId && blockRefs.current[focusBlockId]) {
       const el = blockRefs.current[focusBlockId];
       const block = blocks.find((b) => b.id === focusBlockId);
-      const isEditable =
-        block?.type === "text" ||
-        block?.type === "task" ||
-        block?.type === "task-done" ||
-        editingBlockId === focusBlockId;
+      if (!block) return;
 
-      if (isEditable) {
-        requestAnimationFrame(() => {
-          setEditingBlockId(focusBlockId);
-          el.focus();
-          const selection = window.getSelection();
+      requestAnimationFrame(() => {
+        setEditingBlockId(focusBlockId);
+        el.focus();
+
+        const selection = window.getSelection();
+
+        if (caretX.current !== null) {
+          moveCaretToClosestXAndLine(
+            el,
+            caretX.current,
+            el.getBoundingClientRect().top,
+            "down"
+          );
+        } else {
           const range = document.createRange();
           range.selectNodeContents(el);
-          range.collapse(false);
+          range.collapse(caretToStart.current);
           selection.removeAllRanges();
           selection.addRange(range);
-        });
-      }
+        }
+
+        caretToStart.current = false;
+        caretX.current = null;
+      });
 
       setFocusBlockId(null);
     }
   }, [blocks, focusBlockId, editingBlockId]);
+
+  useEffect(() => {
+    if (selectedBlock?.id) {
+      setBlocks((prev) =>
+        prev.map((b) =>
+          b.id === selectedBlock.id ? { ...b, ...selectedBlock } : b
+        )
+      );
+    }
+  }, [selectedBlock]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!editingBlockId) return;
+      const el = blockRefs.current[editingBlockId];
+      if (!el) return;
+
+      // クリックした場所が現在のブロック内でなければ handleBlur を呼ぶ
+      if (!el.contains(e.target)) {
+        const block = blocks.find((b) => b.id === editingBlockId);
+        if (block) {
+          handleBlur(block);
+          setEditingBlockId(null); // 編集モード解除
+        }
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [editingBlockId, blocks]);
 
   const isEmptyBlock = (el) => el?.textContent.trim() === "";
 
@@ -114,15 +156,14 @@ export default function BlockEditor({
     const html = e.target.innerText;
     const block = blocks.find((b) => b.id === id);
     if (!block) return;
-    const newType = getBlockType(html);
-    const shouldUpdateType =
-      block.type === "text" && (newType === "task" || newType === "task-done");
+
     const updatedBlock = {
       ...block,
       html,
-      type: shouldUpdateType ? newType : block.type,
     };
+
     setBlocks((prev) => prev.map((b) => (b.id === id ? updatedBlock : b)));
+
     if (!id.toString().startsWith("tmp-")) {
       await updateBlock(updatedBlock);
     }
@@ -138,10 +179,23 @@ export default function BlockEditor({
       newType === "text"
         ? block.type
         : newType;
-    if (html === block.html && correctedType === block.type) return;
+
+    // バレットリストの場合は、マークダウン記法を保持
+    let finalHtml = html;
+    if (block.type === "bullet" && !html.startsWith("- ")) {
+      finalHtml = `- ${html}`;
+    } else if (block.type === "heading1" && !html.startsWith("# ")) {
+      finalHtml = `# ${html}`;
+    } else if (block.type === "heading2" && !html.startsWith("## ")) {
+      finalHtml = `## ${html}`;
+    } else if (block.type === "heading3" && !html.startsWith("### ")) {
+      finalHtml = `### ${html}`;
+    }
+
+    if (finalHtml === block.html && correctedType === block.type) return;
     const updatedBlock = {
       ...block,
-      html,
+      html: finalHtml,
       type: correctedType,
     };
     if (String(block.id).startsWith("tmp-")) {
@@ -155,24 +209,169 @@ export default function BlockEditor({
     }
   };
 
+  function moveCaretToClosestXAndLine(targetEl, caretX, currentTop, direction) {
+    const walker = document.createTreeWalker(targetEl, NodeFilter.SHOW_TEXT);
+    let bestNode = null;
+    let bestOffset = 0;
+    let minDiff = Infinity;
+
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      for (let i = 0; i <= node.length; i++) {
+        const range = document.createRange();
+        range.setStart(node, i);
+        range.setEnd(node, i);
+        const rects = range.getClientRects();
+        if (rects.length === 0) continue;
+        const rect = rects[0];
+
+        const isCorrectLine =
+          (direction === "down" && rect.top > currentTop + 2) ||
+          (direction === "up" && rect.bottom < currentTop - 2);
+        if (!isCorrectLine) continue;
+
+        const diff = Math.abs(rect.left - caretX);
+        if (diff < minDiff) {
+          minDiff = diff;
+          bestNode = node;
+          bestOffset = i;
+        }
+      }
+    }
+
+    const sel = window.getSelection();
+    const range = document.createRange();
+    if (bestNode != null) {
+      range.setStart(bestNode, bestOffset);
+    } else {
+      range.selectNodeContents(targetEl);
+      range.collapse(false); // ← fallback: 末尾
+    }
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
   const handleKeyDown = async (e, block, index) => {
     const el = blockRefs.current[block.id];
     const html = el?.innerText || "";
+    const sel = window.getSelection();
+    const range = sel?.rangeCount ? sel.getRangeAt(0) : null;
+
+    const prevBlock = blocks[index - 1];
+    const nextBlock = blocks[index + 1];
+
+    if (["ArrowUp", "ArrowDown"].includes(e.key) && range) {
+      const rect = range.getBoundingClientRect();
+      caretX.current = rect.left;
+      const currentTop = rect.top;
+
+      const targetIndex = e.key === "ArrowUp" ? index - 1 : index + 1;
+      const targetBlock = blocks[targetIndex];
+      const targetEl = targetBlock && blockRefs.current[targetBlock.id];
+
+      if (targetBlock) {
+        e.preventDefault();
+
+        // ✅ 即編集モードに
+        if (targetBlock.id === selectedBlockId) {
+          onSelectedBlock?.(targetBlock); // すでに選択されていたら開いていてOK
+        }
+        setEditingBlockId(targetBlock.id);
+        setFocusBlockId(targetBlock.id);
+
+        requestAnimationFrame(() => {
+          const el = blockRefs.current[targetBlock.id];
+          if (!el) return;
+
+          el.focus();
+
+          const isEditable =
+            targetBlock.type === "text" ||
+            targetBlock.type === "task" ||
+            targetBlock.type === "task-done";
+
+          if (isEditable) {
+            moveCaretToClosestXAndLine(
+              el,
+              caretX.current,
+              currentTop,
+              e.key === "ArrowUp" ? "up" : "down"
+            );
+          }
+        });
+      }
+    }
+
+    if (e.key === "ArrowLeft" && range?.startOffset === 0 && prevBlock) {
+      e.preventDefault();
+      setEditingBlockId(prevBlock.id);
+      setFocusBlockId(prevBlock.id);
+      caretToStart.current = false;
+
+      const moveCaret = () => {
+        const prevEl = blockRefs.current[prevBlock.id];
+        if (document.contains(prevEl)) {
+          prevEl.focus();
+          const range = document.createRange();
+          range.selectNodeContents(prevEl);
+          range.collapse(false);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+        } else {
+          requestAnimationFrame(moveCaret);
+        }
+      };
+      requestAnimationFrame(moveCaret);
+    }
+
+    if (
+      e.key === "ArrowRight" &&
+      range?.endOffset === html.length &&
+      nextBlock
+    ) {
+      e.preventDefault();
+      setEditingBlockId(nextBlock.id);
+      setFocusBlockId(nextBlock.id);
+      caretToStart.current = true;
+
+      const moveCaret = () => {
+        const nextEl = blockRefs.current[nextBlock.id];
+        if (document.contains(nextEl)) {
+          nextEl.focus();
+          const range = document.createRange();
+          range.selectNodeContents(nextEl);
+          range.collapse(true);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+        } else {
+          requestAnimationFrame(moveCaret);
+        }
+      };
+      requestAnimationFrame(moveCaret);
+    }
+
+    // タスクが空状態でEnter or Backspace
+    const isEmptyTask =
+      (block.type === "task" || block.type === "task-done") &&
+      /^-\s\[[ x]?\]\s*$/.test(html.trim());
+
+    if (isEmptyTask && (e.key === "Enter" || e.key === "Backspace")) {
+      e.preventDefault();
+      const updatedBlock = { ...block, type: "text", html: "" };
+      setBlocks((prev) =>
+        prev.map((b) => (b.id === block.id ? updatedBlock : b))
+      );
+      setEditingBlockId(block.id);
+      setFocusBlockId(block.id);
+      await updateBlock(updatedBlock);
+      return;
+    }
+
+    // 既存のEnter処理（ブロック追加）
     if (e.key === "Enter") {
       e.preventDefault();
-      const isEmptyTask =
-        (block.type === "task" || block.type === "task-done") &&
-        /^-\s\[\s?\]\s*$/.test(html.trim());
-      if (isEmptyTask) {
-        const updatedBlock = { ...block, type: "text", html: "" };
-        setBlocks((prev) =>
-          prev.map((b) => (b.id === block.id ? updatedBlock : b))
-        );
-        setEditingBlockId(block.id);
-        setFocusBlockId(block.id);
-        await updateBlock(updatedBlock);
-        return;
-      }
       const sorted = [...blocks].sort((a, b) => a.order - b.order);
       const currentOrder = sorted[index]?.order ?? 0;
       const nextOrder = sorted[index + 1]?.order;
@@ -196,6 +395,7 @@ export default function BlockEditor({
       return;
     }
 
+    // 既存のBackspace処理（削除）
     if (e.key === "Backspace") {
       if (isEmptyBlock(el) && isCursorAtStart()) {
         e.preventDefault();
@@ -257,15 +457,19 @@ export default function BlockEditor({
             if (el) blockRefs.current[block.id] = el;
           }}
           onKeyDown={(e) => handleKeyDown(e, block, index)}
+          isSelected={block.id === selectedBlockId}
         />
       );
     }
+
     if (editingBlockId !== block.id) {
       const text = block.html;
       switch (block.type) {
         case "heading1":
           return (
             <h1
+              tabIndex={-1}
+              ref={(el) => el && (blockRefs.current[block.id] = el)}
               className="text-2xl font-bold px-3 py-1 cursor-pointer"
               onClick={() => handleBlockClick(block.id)}
             >
@@ -275,7 +479,9 @@ export default function BlockEditor({
         case "heading2":
           return (
             <h2
-              className="text-xl font-semibold px-3 py-1"
+              tabIndex={-1}
+              ref={(el) => el && (blockRefs.current[block.id] = el)}
+              className="text-xl font-semibold px-3 py-1 cursor-pointer"
               onClick={() => handleBlockClick(block.id)}
             >
               {text.replace(/^## /, "")}
@@ -284,7 +490,9 @@ export default function BlockEditor({
         case "heading3":
           return (
             <h3
-              className="text-lg font-medium px-3 py-1"
+              tabIndex={-1}
+              ref={(el) => el && (blockRefs.current[block.id] = el)}
+              className="text-lg font-medium px-3 py-1 cursor-pointer"
               onClick={() => handleBlockClick(block.id)}
             >
               {text.replace(/^### /, "")}
@@ -293,7 +501,9 @@ export default function BlockEditor({
         case "bullet":
           return (
             <li
-              className="list-disc ml-6 px-3 py-1"
+              tabIndex={-1}
+              ref={(el) => el && (blockRefs.current[block.id] = el)}
+              className="list-disc ml-6 px-3 py-1 cursor-pointer"
               onClick={() => handleBlockClick(block.id)}
             >
               {text.replace(/^- /, "")}
@@ -302,7 +512,9 @@ export default function BlockEditor({
         case "numbered":
           return (
             <li
-              className="list-decimal ml-6 px-3 py-1"
+              tabIndex={-1}
+              ref={(el) => el && (blockRefs.current[block.id] = el)}
+              className="list-decimal ml-6 px-3 py-1 cursor-pointer"
               onClick={() => handleBlockClick(block.id)}
             >
               {text.replace(/^\d+\. /, "")}
@@ -311,7 +523,9 @@ export default function BlockEditor({
         case "quote":
           return (
             <blockquote
-              className="border-l-4 pl-4 text-gray-600 italic px-3 py-1"
+              tabIndex={-1}
+              ref={(el) => el && (blockRefs.current[block.id] = el)}
+              className="border-l-4 pl-4 text-gray-600 italic px-3 py-1 cursor-pointer"
               onClick={() => handleBlockClick(block.id)}
             >
               {text.replace(/^> /, "")}
@@ -320,7 +534,9 @@ export default function BlockEditor({
         case "divider":
           return (
             <hr
-              className="my-4 border-t border-gray-300"
+              tabIndex={-1}
+              ref={(el) => el && (blockRefs.current[block.id] = el)}
+              className="my-4 border-t border-gray-300 cursor-pointer"
               onClick={() => handleBlockClick(block.id)}
             />
           );
@@ -332,11 +548,26 @@ export default function BlockEditor({
         id={`block-${block.id}`}
         contentEditable
         suppressContentEditableWarning
-        className="border px-3 py-2 rounded-lg bg-white shadow-sm outline-none focus:ring-2 ring-blue-400"
+        className={`px-3 py-2 rounded-lg bg-white outline-none whitespace-pre focus:bg-blue-50 ${
+          block.type === "heading1"
+            ? "text-2xl font-bold"
+            : block.type === "heading2"
+            ? "text-xl font-semibold"
+            : block.type === "heading3"
+            ? "text-lg font-medium"
+            : block.type === "bullet"
+            ? "list-disc ml-6"
+            : block.type === "numbered"
+            ? "list-decimal ml-6"
+            : block.type === "quote"
+            ? "border-l-4 pl-4 text-gray-600 italic"
+            : ""
+        }`}
         ref={(el) => {
           if (el) {
             blockRefs.current[block.id] = el;
             if (!el.dataset.initialized) {
+              // 編集モードに入る際に、マークダウン記法を保持したまま表示
               el.innerText = block.html;
               el.dataset.initialized = "true";
             }
@@ -344,7 +575,11 @@ export default function BlockEditor({
         }}
         onFocus={() => setEditingBlockId(block.id)}
         onInput={(e) => handleInput(e, block.id)}
-        onBlur={() => handleBlur(block)}
+        onBlur={(e) => {
+          if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) {
+            handleBlur(block);
+          }
+        }}
         onKeyDown={(e) => handleKeyDown(e, block, index)}
       />
     );
@@ -373,7 +608,7 @@ export default function BlockEditor({
         items={blocks.map((b) => b.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="space-y-2 p-4 bg-white/70 backdrop-blur rounded-xl shadow-sm">
+        <div className="space-y-1 p-4 bg-white/70 backdrop-blur rounded-xl shadow-sm">
           {blocks
             .sort((a, b) => a.order - b.order)
             .map((block, index) => (

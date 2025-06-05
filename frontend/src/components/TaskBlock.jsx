@@ -12,6 +12,7 @@ export default function TaskBlock({
   editableRef,
   onEmptyTaskEnterOrBackspace,
   onKeyDown,
+  isSelected = false,
 }) {
   const isDone = block.type === "task-done";
   const label = block.html.replace(/^- \[[ x]\] ?/, "");
@@ -31,6 +32,24 @@ export default function TaskBlock({
     }
   }, [isEditable]);
 
+  function formatDateLocal(dateStr) {
+    try {
+      // "2025-06-23" のような文字列が来ると仮定
+      const parts = dateStr.split("-");
+      const year = parseInt(parts[0]);
+      const month = parseInt(parts[1]) - 1; // JSの月は0始まり
+      const day = parseInt(parts[2]);
+
+      // タイムゾーンに依存しない日付オブジェクトを作成
+      const localDate = new Date(year, month, day);
+
+      return localDate.toLocaleDateString("pt-BR");
+    } catch (e) {
+      console.error("日付表示エラー:", e);
+      return "";
+    }
+  }
+
   const handleKeyDown = (e) => {
     const text = localRef.current?.innerText.trim();
     if (!text && (e.key === "Enter" || e.key === "Backspace")) {
@@ -41,23 +60,27 @@ export default function TaskBlock({
 
   return (
     <div
-      className="p-3 border rounded bg-white hover:bg-blue-50 shadow-sm cursor-pointer"
+      className={`p-3 cursor-pointer ${
+        isSelected ? "bg-blue-100 border border-blue-300" : "bg-white"
+      }`}
       onClick={() => onClick?.(block)}
     >
       <div className="flex items-center space-x-3">
-        <div
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggle?.(block);
-          }}
-          className="w-6 h-6 cursor-pointer text-blue-600 hover:scale-105 transition-transform"
-        >
-          {isDone ? (
-            <CheckCircle className="w-6 h-6" strokeWidth={2} />
-          ) : (
-            <Circle className="w-6 h-6" strokeWidth={1.5} />
-          )}
-        </div>
+        {!isEditable && (
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle?.(block);
+            }}
+            className="w-6 h-6 cursor-pointer text-blue-600 hover:scale-105 transition-transform"
+          >
+            {isDone ? (
+              <CheckCircle className="w-6 h-6" strokeWidth={2} />
+            ) : (
+              <Circle className="w-6 h-6" strokeWidth={1.5} />
+            )}
+          </div>
+        )}
 
         <div className="flex-1">
           {isEditable ? (
@@ -75,7 +98,7 @@ export default function TaskBlock({
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => onKeyDown?.(e)}
             >
-              {label}
+              {block.html}
             </div>
           ) : (
             <div
@@ -90,9 +113,7 @@ export default function TaskBlock({
           {hasMeta && (
             <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
               {block.due_date && (
-                <span>
-                  📅 {new Date(block.due_date).toLocaleDateString("ja-JP")}
-                </span>
+                <span>📅 {formatDateLocal(block.due_date)}</span>
               )}
               {listName && <span>{listName}</span>}
             </div>
@@ -104,9 +125,9 @@ export default function TaskBlock({
             e.stopPropagation();
             onOpenDetail?.(block);
           }}
-          className="text-gray-400 hover:text-blue-500 p-1"
+          className="text-gray-400 hover:text-blue-500 p-1 opacity-0 group-hover:opacity-100 transition"
         >
-          <ChevronRight size={16} strokeWidth={2} />
+          <ChevronRight size={10} strokeWidth={4} />
         </button>
       </div>
     </div>

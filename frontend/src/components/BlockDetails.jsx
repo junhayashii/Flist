@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import BlockEditor from "./BlockEditor";
 import { updateBlockDueDate } from "../api/blocks";
 
-export default function BlockDetails({ block, onClose }) {
+export default function BlockDetails({ block, onClose, onUpdateBlock }) {
   const [localBlock, setLocalBlock] = useState(block);
 
   useEffect(() => {
@@ -16,6 +16,7 @@ export default function BlockDetails({ block, onClose }) {
     try {
       await updateBlockDueDate(block.id, newDueDate);
       setLocalBlock(updatedBlock);
+      onUpdateBlock?.(updatedBlock);
     } catch (err) {
       console.error("期日更新失敗:", err);
     }
@@ -29,7 +30,9 @@ export default function BlockDetails({ block, onClose }) {
       >
         ✕
       </button>
-      <h2 className="text-lg font-semibold mb-4">タスクの詳細</h2>
+      <h2 className="text-lg font-semibold mb-4">
+        {localBlock.html?.replace(/^- \[[ xX]?\] /, "") || "(無題)"}
+      </h2>
       <label className="block text-sm font-medium text-gray-700 mb-1">
         期日
       </label>

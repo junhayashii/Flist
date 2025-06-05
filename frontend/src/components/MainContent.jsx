@@ -81,6 +81,8 @@ export default function MainContent({
               <BlockEditor
                 listId={selectedListId}
                 onSelectedBlock={(block) => setSelectedBlock(block)}
+                selectedBlockId={selectedBlock?.id}
+                selectedBlock={selectedBlock}
               />
             </div>
           ) : (
@@ -118,6 +120,9 @@ export default function MainContent({
           <BlockDetails
             block={selectedBlock}
             onClose={() => setSelectedBlock(null)}
+            onUpdateBlock={(updated) => {
+              setSelectedBlock(updated);
+            }}
           />
         )}
     </div>
