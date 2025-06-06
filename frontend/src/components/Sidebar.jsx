@@ -8,22 +8,22 @@ const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
   return (
     <div
       className={`${
-        sidebarOpen ? "w-80" : "w-0"
-      } transition-all duration-300 bg-white/70 backdrop-blur-md border-r border-blue-200 flex flex-col overflow-hidden shadow-xl`}
+        sidebarOpen ? "w-72" : "w-0"
+      } transition-all duration-300 bg-white border-r border-gray-200 flex flex-col overflow-hidden shadow-sm`}
     >
       <div className="p-6 border-b border-blue-100">
         <div className="flex items-center space-x-2 mb-6">
           <img src={logo} alt="Flist Logo" className="w-8 h-8" />
-          <h1 className="text-2xl font-extrabold text-blue-800 tracking-tight">
+          <h1 className="text-xl font-bold text-blue-800 tracking-tight">
             Flist
           </h1>
         </div>
 
         <div
-          className={`mb-1 p-3 rounded-xl cursor-pointer transition-colors ${
+          className={`mb-1 px-3 py-2 rounded-lg cursor-pointer transition ${
             selectedListId === "tasks"
-              ? "bg-blue-100 border-2 border-blue-300"
-              : "hover:bg-blue-50 border border-transparent"
+              ? "bg-blue-100 text-blue-800 font-semibold"
+              : "hover:bg-gray-100 text-gray-800"
           }`}
           onClick={() => setSelectedListId("tasks")}
         >

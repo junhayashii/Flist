@@ -1,7 +1,7 @@
 // src/components/TaskListView.jsx
 import React, { useState, useEffect, useRef } from "react";
-import BlockDetails from "./BlockDetails";
-import TaskBlock from "./TaskBlock";
+import BlockDetails from "../components/BlockDetails";
+import TaskBlock from "../components/blocks/TaskBlock";
 import { fetchTasks, createTask, updateTask, deleteBlock } from "../api/blocks";
 import { fetchListMap } from "../api/lists";
 

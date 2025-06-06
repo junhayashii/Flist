@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
-import BlockEditor from "./BlockEditor";
+import { useState, useEffect } from "react";
+import BlockEditor from "./editor/BlockEditor";
 import BlockDetails from "./BlockDetails";
-import TaskListView from "./TaskListView";
-import NoteListView from "./NoteListView";
+import TaskListView from "../pages/TaskListView";
+import NoteListView from "../pages/NoteListView";
 import { fetchLists } from "../api/lists";
 
 export default function MainContent({

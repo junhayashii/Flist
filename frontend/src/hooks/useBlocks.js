@@ -1,4 +1,3 @@
-// hooks/useBlocks.js
 import { useState } from "react";
 import {
   fetchAllBlocks,
@@ -52,7 +51,7 @@ export default function useBlocks(listId, parentBlockId) {
     const payload = {
       id: block.id,
       html: block.html,
-      type: block.type, // ✅ 必須
+      type: block.type,
       order: block.order,
       list: parentBlockId ? null : listId,
       parent_block: parentBlockId || null,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import BlockEditor from "./BlockEditor";
+import BlockEditor from "./editor/BlockEditor";
 import { updateBlockDueDate } from "../api/blocks";
 
 export default function BlockDetails({ block, onClose, onUpdate }) {
