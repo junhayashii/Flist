@@ -84,3 +84,22 @@ export const updateTask = async (task) => {
   if (!res.ok) throw new Error("タスク更新失敗");
   return await res.json();
 };
+
+export const createNote = async (title = "New Note") => {
+  const payload = {
+    html: `[[${title}]]`,
+    type: "note",
+    order: Date.now(),
+    list: null,
+    parent_block: null,
+  };
+
+  const res = await fetch(BASE_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("ノート作成失敗");
+  return await res.json();
+};

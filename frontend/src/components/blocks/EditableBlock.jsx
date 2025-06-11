@@ -13,7 +13,7 @@ export default function EditableBlock({
 
   useEffect(() => {
     if (ref.current && !ref.current.dataset.initialized) {
-      ref.current.innerText = block.html;
+      ref.current.innerHTML = block.html || "";
       ref.current.dataset.initialized = "true";
     }
   }, [block]);
@@ -24,7 +24,7 @@ export default function EditableBlock({
       id={`block-${block.id}`}
       contentEditable
       suppressContentEditableWarning
-      className={`px-3 py-2 rounded-lg bg-white outline-none whitespace-pre focus:bg-blue-50 ${
+      className={`px-3 py-2 rounded-lg bg-white outline-none whitespace-pre-wrap break-words focus:bg-blue-50 ${
         block.type === "heading1"
           ? "text-2xl font-bold"
           : block.type === "heading2"

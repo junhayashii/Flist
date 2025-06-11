@@ -1,83 +1,20 @@
 @import "tailwindcss";
 
-@theme {
-  --color-flist-bg: #f9fafb;
-  --color-flist-blue-dark: #1e40af;
-  --color-flist-blue: #3b82f6;
-  --color-flist-border: #e5e7eb;
-  --color-flist-hover: #f3f4f6;
-}
-
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  color-scheme: light dark;
-  color: #ffffff;
-  background-color: #1a365d;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --color-flist-bg: #f9fafb;
+  --color-flist-border: #e5e7eb;
+  --color-flist-blue: #3b82f6;
+  --color-flist-blue-light: #eff6ff;
+  --color-flist-blue-dark: #1e40af;
+  --color-flist-dark: #1f2937;
+  --color-flist-muted: #6b7280;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
-}
-
-a {
-  font-weight: 500;
-  color: #63b3ed;
-  text-decoration: inherit;
-  transition: color 0.3s ease;
-}
-a:hover {
-  color: #90cdf4;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #2b6cb0;
-  color: white;
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
-button:hover {
-  background-color: #3182ce;
-  border-color: #63b3ed;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-button:focus,
-button:focus-visible {
-  outline: 2px solid #63b3ed;
-  outline-offset: 2px;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #2d3748;
-    background-color: #ebf8ff;
-  }
-  body {
-    background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
-  }
-  a:hover {
-    color: #2b6cb0;
-  }
-  button {
-    background-color: #3182ce;
-    color: white;
-  }
-  button:hover {
-    background-color: #2b6cb0;
-  }
+  font-family: "Inter", sans-serif;
+  background-color: var(--color-flist-bg);
+  color: var(--color-flist-dark);
 }

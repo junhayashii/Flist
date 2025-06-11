@@ -1,26 +1,65 @@
-import React from "react";
-import { ChevronRight } from "lucide-react";
+import React, { useEffect, useRef } from "react";
+import { ChevronRight, StickyNote } from "lucide-react";
 
 export default function NoteBlock({
   block,
   onClick,
   onOpenDetail,
   isSelected,
+  isEditable = false,
+  editableRef,
+  onBlur,
+  onKeyDown,
 }) {
-  const noteTitle = block.html.match(/\[\[(.+?)\]\]/)?.[1] || "ノート";
+  const noteTitle = block.html.match(/\[\[(.+?)\]\]/)?.[1] || "Note";
+
+  const localRef = useRef(null);
+
+  useEffect(() => {
+    if (isEditable && localRef.current) {
+      localRef.current.focus();
+      const sel = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(localRef.current);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  }, [isEditable]);
 
   return (
     <div
       tabIndex={-1}
-      className={`px-3 py-1 font-medium cursor-pointer flex justify-between items-center hover:bg-blue-50 rounded ${
-        isSelected ? "bg-blue-100" : ""
+      className={`flex items-center justify-between gap-2 px-3 py-2 cursor-pointer transition-colors ${
+        isSelected ? "bg-blue-100/50 rounded-xl" : "hover:bg-white"
       }`}
       onClick={() => {
         onClick?.(block.id);
         onOpenDetail?.(block);
       }}
     >
-      <span className="text-blue-700">📘 {noteTitle}</span>
+      <div className="flex items-center gap-2 pt-1 pb-1 font-medium">
+        <StickyNote size={20} strokeWidth={2} className="text-blue-500" />
+        {isEditable ? (
+          <div
+            ref={(el) => {
+              localRef.current = el;
+              if (el) editableRef?.(el);
+            }}
+            contentEditable
+            suppressContentEditableWarning
+            className="outline-none"
+            onBlur={() => onBlur?.(block)}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => onKeyDown?.(e)}
+          >
+            {noteTitle}
+          </div>
+        ) : (
+          <div>{noteTitle}</div>
+        )}
+      </div>
+
       <button
         onClick={(e) => {
           e.stopPropagation();
@@ -28,7 +67,7 @@ export default function NoteBlock({
         }}
         className="text-gray-400 hover:text-blue-500 p-1"
       >
-        <ChevronRight size={10} strokeWidth={4} />
+        <ChevronRight size={14} strokeWidth={3} />
       </button>
     </div>
   );

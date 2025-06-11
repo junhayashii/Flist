@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { CheckCircle, Circle, ChevronRight } from "lucide-react";
+import { CheckCircle, Circle, ChevronRight, CalendarDays } from "lucide-react";
 
 export default function TaskBlock({
   block,
@@ -62,7 +62,7 @@ export default function TaskBlock({
   return (
     <div
       className={`p-3 cursor-pointer ${
-        isSelected ? "bg-blue-100 border border-blue-300" : "bg-white"
+        isSelected ? "bg-blue-100/50 rounded-xl" : "bg-white"
       }`}
       onClick={() => onClick?.(block)}
     >
@@ -112,7 +112,10 @@ export default function TaskBlock({
           {hasMeta && (
             <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
               {block.due_date && (
-                <span>📅 {formatDateLocal(block.due_date)}</span>
+                <div className="flex items-center text-sm text-gray-500 gap-1">
+                  <CalendarDays className="w-4 h-4 text-gray-400" />
+                  {formatDateLocal(block.due_date)}
+                </div>
               )}
               {listName && <span>{listName}</span>}
             </div>
@@ -126,12 +129,12 @@ export default function TaskBlock({
           }}
           className="text-gray-400 hover:text-blue-500 p-1"
         >
-          <ChevronRight size={10} strokeWidth={4} />
+          <ChevronRight size={14} strokeWidth={3} />
         </button>
         {onDelete && (
           <button
             onClick={(e) => {
-              e.stopPropagation(); // ペインを開かないように
+              e.stopPropagation();
               onDelete();
             }}
             className="ml-2 text-red-500 hover:text-red-700 text-sm"

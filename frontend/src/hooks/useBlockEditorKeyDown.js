@@ -1,4 +1,3 @@
-// hooks/useBlockEditorKeyDown.js
 export function useBlockEditorKeyDown({
   blocks,
   setBlocks,
@@ -14,7 +13,10 @@ export function useBlockEditorKeyDown({
   caretX,
   caretToStart,
 }) {
-  const isEmptyBlock = (el) => el?.textContent.trim() === "";
+  const isEmptyBlock = (el) => {
+    const text = el?.innerText.replace(/\u200B/g, "").trim();
+    return text === "" || el.innerHTML === "<br>";
+  };
 
   const isCursorAtStart = () => {
     const sel = window.getSelection();
@@ -32,107 +34,27 @@ export function useBlockEditorKeyDown({
     const prevBlock = blocks[index - 1];
     const nextBlock = blocks[index + 1];
 
-    // Arrow Up/Down
-    if (["ArrowUp", "ArrowDown"].includes(e.key) && range) {
-      const rect = range.getBoundingClientRect();
-      caretX.current = rect.left;
-      const currentTop = rect.top;
-
-      const targetIndex = e.key === "ArrowUp" ? index - 1 : index + 1;
-      const targetBlock = blocks[targetIndex];
-
-      if (targetBlock) {
-        e.preventDefault();
-        if (targetBlock.id === selectedBlockId) {
-          onSelectedBlock?.(targetBlock);
-        }
-        setEditingBlockId(targetBlock.id);
-        setFocusBlockId(targetBlock.id);
-
-        requestAnimationFrame(() => {
-          const el = blockRefs.current[targetBlock.id];
-          if (!el) return;
-
-          el.focus();
-          const isEditable =
-            targetBlock.type === "text" ||
-            targetBlock.type === "task" ||
-            targetBlock.type === "task-done";
-
-          if (isEditable) {
-            moveCaretToClosestXAndLine(
-              el,
-              caretX.current,
-              currentTop,
-              e.key === "ArrowUp" ? "up" : "down"
-            );
-          }
-        });
-      }
-    }
-
-    // Arrow Left
-    if (e.key === "ArrowLeft" && range?.startOffset === 0 && prevBlock) {
+    // --- Shift+Enter = <br> 改行挿入
+    if (e.key === "Enter" && e.shiftKey) {
       e.preventDefault();
-      setEditingBlockId(prevBlock.id);
-      setFocusBlockId(prevBlock.id);
-      caretToStart.current = false;
-      requestAnimationFrame(() => {
-        const prevEl = blockRefs.current[prevBlock.id];
-        if (document.contains(prevEl)) {
-          prevEl.focus();
-          const r = document.createRange();
-          r.selectNodeContents(prevEl);
-          r.collapse(false);
-          const sel = window.getSelection();
-          sel.removeAllRanges();
-          sel.addRange(r);
-        }
-      });
-    }
+      if (!range) return;
 
-    // Arrow Right
-    if (
-      e.key === "ArrowRight" &&
-      range?.endOffset === html.length &&
-      nextBlock
-    ) {
-      e.preventDefault();
-      setEditingBlockId(nextBlock.id);
-      setFocusBlockId(nextBlock.id);
-      caretToStart.current = true;
-      requestAnimationFrame(() => {
-        const nextEl = blockRefs.current[nextBlock.id];
-        if (document.contains(nextEl)) {
-          nextEl.focus();
-          const r = document.createRange();
-          r.selectNodeContents(nextEl);
-          r.collapse(true);
-          const sel = window.getSelection();
-          sel.removeAllRanges();
-          sel.addRange(r);
-        }
-      });
-    }
+      const spacer = document.createTextNode("\u200B");
+      const br = document.createElement("br");
 
-    // 空のタスクでEnter/Backspaceならtext化
-    const isEmptyTask =
-      (block.type === "task" || block.type === "task-done") &&
-      /^-\s\[[ x]?\]\s*$/.test(html.trim());
+      range.deleteContents();
+      range.insertNode(spacer);
+      range.insertNode(br);
 
-    if (isEmptyTask && (e.key === "Enter" || e.key === "Backspace")) {
-      e.preventDefault();
-      const updatedBlock = { ...block, type: "text", html: "" };
-      setBlocks((prev) =>
-        prev.map((b) => (b.id === block.id ? updatedBlock : b))
-      );
-      setEditingBlockId(block.id);
-      setFocusBlockId(block.id);
-      await updateBlock(updatedBlock);
+      const newRange = document.createRange();
+      newRange.setStartAfter(spacer);
+      newRange.setEndAfter(spacer);
+      sel.removeAllRanges();
+      sel.addRange(newRange);
       return;
     }
 
-    // Enter = 新規ブロック
+    // --- 通常のEnter = 新規ブロック挿入
     if (e.key === "Enter") {
       e.preventDefault();
       const sorted = [...blocks].sort((a, b) => a.order - b.order);
@@ -159,17 +81,125 @@ export function useBlockEditorKeyDown({
       return;
     }
 
-    // Backspace = 削除
+    // --- Arrow Up/Down 移動
+    if (["ArrowUp", "ArrowDown"].includes(e.key) && range) {
+      const rect = range.getBoundingClientRect();
+      caretX.current = rect.left;
+      const currentTop = rect.top;
+      const targetIndex = e.key === "ArrowUp" ? index - 1 : index + 1;
+      const targetBlock = blocks[targetIndex];
+
+      if (targetBlock) {
+        e.preventDefault();
+        onSelectedBlock?.(targetBlock);
+        setEditingBlockId(targetBlock.id);
+        setFocusBlockId(targetBlock.id);
+
+        requestAnimationFrame(() => {
+          const el = blockRefs.current[targetBlock.id];
+          if (!el) return;
+          el.focus();
+
+          const isEditable = ["text", "task", "task-done"].includes(
+            targetBlock.type
+          );
+
+          if (isEditable) {
+            moveCaretToClosestXAndLine(
+              el,
+              caretX.current,
+              currentTop,
+              e.key === "ArrowUp" ? "up" : "down"
+            );
+          }
+        });
+      }
+    }
+
+    // --- Arrow Left
+    if (e.key === "ArrowLeft" && range?.startOffset === 0 && prevBlock) {
+      e.preventDefault();
+      setEditingBlockId(prevBlock.id);
+      setFocusBlockId(prevBlock.id);
+      caretToStart.current = false;
+      requestAnimationFrame(() => {
+        const prevEl = blockRefs.current[prevBlock.id];
+        if (document.contains(prevEl)) {
+          prevEl.focus();
+          const r = document.createRange();
+          r.selectNodeContents(prevEl);
+          r.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(r);
+        }
+      });
+    }
+
+    // --- Arrow Right
+    if (
+      e.key === "ArrowRight" &&
+      range?.endOffset === html.length &&
+      nextBlock
+    ) {
+      e.preventDefault();
+      setEditingBlockId(nextBlock.id);
+      setFocusBlockId(nextBlock.id);
+      caretToStart.current = true;
+      requestAnimationFrame(() => {
+        const nextEl = blockRefs.current[nextBlock.id];
+        if (document.contains(nextEl)) {
+          nextEl.focus();
+          const r = document.createRange();
+          r.selectNodeContents(nextEl);
+          r.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(r);
+        }
+      });
+    }
+
+    // --- 空のタスクをテキストに戻す
+    const isEmptyTask =
+      (block.type === "task" || block.type === "task-done") &&
+      /^-\s\[[ x]?\]\s*$/.test(html.trim());
+
+    if (isEmptyTask && (e.key === "Enter" || e.key === "Backspace")) {
+      e.preventDefault();
+      const updatedBlock = { ...block, type: "text", html: "" };
+      setBlocks((prev) =>
+        prev.map((b) => (b.id === block.id ? updatedBlock : b))
+      );
+      setEditingBlockId(block.id);
+      setFocusBlockId(block.id);
+      await updateBlock(updatedBlock);
+      return;
+    }
+
+    // --- Backspace 処理
     if (e.key === "Backspace") {
-      if (isEmptyBlock(el) && isCursorAtStart()) {
+      if (!range || !el) return;
+
+      const isAtStart =
+        range.startOffset === 0 &&
+        range.endOffset === 0 &&
+        (range.startContainer === el || range.startContainer === el.firstChild);
+
+      const htmlContent = el.innerHTML.replace(/\u200B/g, "").trim();
+      const isTrulyEmpty = htmlContent === "" || htmlContent === "<br>";
+
+      // ブロック削除
+      if (isAtStart && isTrulyEmpty) {
         e.preventDefault();
         if (blocks.length === 1) return;
+
         const deleteBlockId = block.id;
         const newBlocks = blocks.filter((b) => b.id !== deleteBlockId);
         setBlocks(newBlocks);
+
         if (!String(deleteBlockId).startsWith("tmp-")) {
           await deleteBlock(deleteBlockId);
         }
+
         const prevBlock = blocks[index - 1];
         if (prevBlock) {
           setEditingBlockId(prevBlock.id);
@@ -178,6 +208,30 @@ export function useBlockEditorKeyDown({
           setEditingBlockId(newBlocks[0].id);
           setFocusBlockId(newBlocks[0].id);
         }
+        return;
+      }
+
+      // <br> の削除
+      const container = range.startContainer;
+      const offset = range.startOffset;
+
+      if (
+        container.nodeType === Node.ELEMENT_NODE &&
+        container.childNodes[offset - 1]?.nodeName === "BR"
+      ) {
+        e.preventDefault();
+        container.childNodes[offset - 1].remove();
+        return;
+      }
+
+      if (
+        container.nodeType === Node.TEXT_NODE &&
+        container.previousSibling?.nodeName === "BR" &&
+        offset === 0
+      ) {
+        e.preventDefault();
+        container.previousSibling.remove();
+        return;
       }
     }
   };

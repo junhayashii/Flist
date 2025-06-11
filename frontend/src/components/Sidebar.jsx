@@ -1,116 +1,133 @@
 import useLists from "../hooks/useLists";
 import logo from "../assets/logo.png";
+import { CheckSquare, FileText, Plus, List } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 
 const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
-  const { lists, newListTitle, setNewListTitle, addList, deleteList } =
-    useLists(selectedListId, setSelectedListId);
+  const { lists, addList, updateListTitle } = useLists(
+    selectedListId,
+    setSelectedListId
+  );
+
+  const [editingId, setEditingId] = useState(null);
+  const [draftTitle, setDraftTitle] = useState("");
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (editingId && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [editingId]);
+
+  const handleAddList = async () => {
+    const newId = await addList("");
+    setEditingId(newId);
+    setDraftTitle("");
+  };
+
+  const handleSaveTitle = (id) => {
+    const trimmed = draftTitle.trim();
+    if (!trimmed) return;
+    updateListTitle(id, trimmed);
+    setEditingId(null);
+  };
+
+  const baseButton =
+    "w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-sm font-medium transition";
+  const selected = "bg-blue-50 text-blue-600 font-semibold";
+  const unselected = "text-gray-600 hover:bg-gray-100";
 
   return (
     <div
       className={`${
         sidebarOpen ? "w-72" : "w-0"
-      } transition-all duration-300 bg-white border-r border-gray-200 flex flex-col overflow-hidden shadow-sm`}
+      } transition-all duration-300 bg-[var(--color-flist-bg)] border-r border-[var(--color-flist-border)] flex flex-col overflow-hidden shadow-sm`}
     >
-      <div className="p-6 border-b border-blue-100">
+      <div className="p-6 border-b border-[var(--color-flist-border)]">
+        {/* Logo */}
         <div className="flex items-center space-x-2 mb-6">
           <img src={logo} alt="Flist Logo" className="w-8 h-8" />
-          <h1 className="text-xl font-bold text-blue-800 tracking-tight">
+          <h1 className="text-xl font-bold text-[var(--color-flist-blue-dark)] tracking-tight">
             Flist
           </h1>
         </div>
 
-        <div
-          className={`mb-1 px-3 py-2 rounded-lg cursor-pointer transition ${
-            selectedListId === "tasks"
-              ? "bg-blue-100 text-blue-800 font-semibold"
-              : "hover:bg-gray-100 text-gray-800"
+        {/* Tasks */}
+        <button
+          className={`${baseButton} ${
+            selectedListId === "tasks" ? selected : unselected
           }`}
           onClick={() => setSelectedListId("tasks")}
         >
-          <h3
-            className={`font-semibold ${
-              selectedListId === "tasks" ? "text-blue-800" : "text-gray-800"
+          <CheckSquare
+            className={`w-4 h-4 ${
+              selectedListId === "tasks" ? "text-blue-600" : "text-gray-400"
             }`}
-          >
-            ✅ Tasks
-          </h3>
-        </div>
-        <div
-          className={`mb-6 p-3 rounded-xl cursor-pointer transition-colors ${
-            selectedListId === "notes"
-              ? "bg-blue-100 border-2 border-blue-300"
-              : "hover:bg-blue-50 border border-transparent"
+          />
+          <span>Tasks</span>
+        </button>
+
+        {/* Notes */}
+        <button
+          className={`${baseButton} ${
+            selectedListId === "notes" ? selected : unselected
           }`}
           onClick={() => setSelectedListId("notes")}
         >
-          <h3
-            className={`font-semibold ${
-              selectedListId === "notes" ? "text-blue-800" : "text-gray-800"
+          <FileText
+            className={`w-4 h-4 ${
+              selectedListId === "notes" ? "text-blue-600" : "text-gray-400"
             }`}
-          >
-            📘 Notes
-          </h3>
-        </div>
-
-        <div className="space-y-3">
-          <input
-            type="text"
-            placeholder="新しいリスト名"
-            value={newListTitle}
-            onChange={(e) => setNewListTitle(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addList();
-              }
-            }}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white/80 focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none backdrop-blur-sm shadow-inner"
           />
-          <button
-            onClick={addList}
-            className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow"
-          >
-            リストを追加
-          </button>
-        </div>
+          <span>Notes</span>
+        </button>
       </div>
 
+      {/* My Lists */}
       <div className="flex-1 overflow-y-auto p-4">
-        <div className="space-y-2">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm font-semibold text-gray-500">My Lists</h2>
+          <button
+            onClick={handleAddList}
+            className="p-1 rounded-md hover:bg-gray-100 text-gray-500"
+          >
+            <Plus size={18} />
+          </button>
+        </div>
+
+        <div className="space-y-1">
           {lists.map((list) => (
             <div
               key={list.id}
-              className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${
+              className={`w-full flex items-center px-4 py-2 rounded-lg cursor-pointer text-sm transition font-medium ${
                 selectedListId === list.id
-                  ? "bg-blue-100 border-2 border-blue-300"
-                  : "hover:bg-blue-50 border border-transparent"
+                  ? "bg-blue-50 text-blue-600"
+                  : "text-gray-700 hover:bg-gray-100"
               }`}
               onClick={() => setSelectedListId(list.id)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                console.log(`右クリック: ${list.id}`);
+              }}
             >
-              <div className="flex-1 min-w-0">
-                <h3
-                  className={`font-medium truncate ${
-                    selectedListId === list.id
-                      ? "text-blue-900"
-                      : "text-gray-900"
-                  }`}
-                >
-                  {list.title}
-                </h3>
-                <p className="text-xs text-gray-400 mt-1">
-                  {list.created_at &&
-                    new Date(list.created_at).toLocaleDateString("ja-JP")}
-                </p>
-              </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  deleteList(list.id);
-                }}
-                className="opacity-0 group-hover:opacity-100 p-1 text-red-400 hover:text-red-600 transition"
-              >
-                🗑
-              </button>
+              {editingId === list.id ? (
+                <input
+                  ref={inputRef}
+                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none"
+                  value={draftTitle}
+                  onChange={(e) => setDraftTitle(e.target.value)}
+                  onBlur={() => handleSaveTitle(list.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSaveTitle(list.id);
+                    if (e.key === "Escape") setEditingId(null);
+                  }}
+                />
+              ) : (
+                <div className="flex items-center space-x-3">
+                  <List className="w-4 h-4 text-gray-400" />
+                  <span className="truncate">{list.title || "Untitled"}</span>
+                </div>
+              )}
             </div>
           ))}
         </div>

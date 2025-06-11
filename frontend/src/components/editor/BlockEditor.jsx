@@ -119,6 +119,15 @@ export default function BlockEditor({
   const handleBlockClick = (blockId) => {
     setEditingBlockId(blockId);
     setFocusBlockId(blockId);
+
+    const clicked = blocks.find((b) => b.id === blockId);
+    if (
+      clicked?.type === "task" ||
+      clicked?.type === "task-done" ||
+      clicked?.type === "note"
+    ) {
+      onSelectedBlock?.(clicked);
+    }
   };
 
   const sensors = useSensors(useSensor(PointerSensor));

@@ -3,11 +3,11 @@ import {
   fetchLists,
   createList,
   deleteList as apiDeleteList,
+  updateListTitle as apiUpdateListTitle,
 } from "../api/lists";
 
 export default function useLists(selectedListId, setSelectedListId) {
   const [lists, setLists] = useState([]);
-  const [newListTitle, setNewListTitle] = useState("");
 
   const loadLists = async () => {
     try {
@@ -25,11 +25,10 @@ export default function useLists(selectedListId, setSelectedListId) {
     loadLists();
   }, []);
 
-  const addList = async () => {
-    if (!newListTitle.trim()) return;
-
+  const addList = async (title) => {
+    const safeTitle = (title || "").trim() || "新しいリスト";
     try {
-      const newList = await createList(newListTitle);
+      const newList = await createList(safeTitle);
 
       await fetch("http://127.0.0.1:8000/api/blocks/", {
         method: "POST",
@@ -42,11 +41,12 @@ export default function useLists(selectedListId, setSelectedListId) {
         }),
       });
 
-      setNewListTitle("");
       await loadLists();
       setSelectedListId(newList.id);
+      return newList.id;
     } catch (error) {
       console.error("リスト追加エラー:", error);
+      throw error;
     }
   };
 
@@ -64,11 +64,23 @@ export default function useLists(selectedListId, setSelectedListId) {
     }
   };
 
+  const updateListTitle = async (id, title) => {
+    try {
+      const updated = await apiUpdateListTitle(id, title);
+      setLists((prev) =>
+        prev.map((l) =>
+          l.id === updated.id ? { ...l, title: updated.title } : l
+        )
+      );
+    } catch (error) {
+      console.error("リストタイトル更新エラー:", error);
+    }
+  };
+
   return {
     lists,
-    newListTitle,
-    setNewListTitle,
     addList,
     deleteList,
+    updateListTitle,
   };
 }

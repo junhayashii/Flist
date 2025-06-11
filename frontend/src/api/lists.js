@@ -36,3 +36,13 @@ export const fetchListMap = async () => {
 
   return listMap;
 };
+
+export const updateListTitle = async (id, title) => {
+  const res = await fetch(`${BASE_URL}${id}/`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title }),
+  });
+  if (!res.ok) throw new Error("リストタイトル更新失敗");
+  return await res.json();
+};

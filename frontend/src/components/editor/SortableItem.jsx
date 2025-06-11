@@ -17,15 +17,17 @@ export default function SortableItem({ block, index, renderBlock }) {
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className="flex gap-2 group"
+      className="relative group"
     >
       <div
         {...listeners}
-        className="cursor-grab text-gray-400 opacity-0 group-hover:opacity-100 p-1"
+        className="absolute -left-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 cursor-grab"
       >
-        <GripVertical size={16} />
+        <GripVertical size={14} />
       </div>
-      <div className="flex-1">{renderBlock(block, index)}</div>
+      <div className="flex-1">
+        <div className="min-w-0">{renderBlock(block, index)}</div>
+      </div>
     </div>
   );
 }

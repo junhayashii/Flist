@@ -90,8 +90,14 @@ export default function renderBlock({
         return (
           <NoteBlock
             block={block}
-            onClick={handleBlockClick}
+            onClick={() => handleBlockClick(block.id)}
             onOpenDetail={handleBlockClick}
+            isEditable={isEditing}
+            onBlur={() => handleBlur(block)}
+            editableRef={(el) => {
+              if (el) blockRefs.current[block.id] = el;
+            }}
+            onKeyDown={(e) => handleKeyDown(e, block, index)}
             isSelected={block.id === selectedBlockId}
           />
         );

@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import BlockEditor from "./editor/BlockEditor";
-import { updateBlockDueDate } from "../api/blocks";
+import { updateBlockDueDate, updateBlock } from "../api/blocks";
 
 export default function BlockDetails({ block, onClose, onUpdate }) {
   const [localBlock, setLocalBlock] = useState(block);
+  const titleRef = useRef(null);
 
   useEffect(() => {
     setLocalBlock(block);
@@ -16,13 +17,39 @@ export default function BlockDetails({ block, onClose, onUpdate }) {
     try {
       await updateBlockDueDate(block.id, newDueDate);
       setLocalBlock(updatedBlock);
-      onUpdate?.(updatedBlock); // ← 通知
+      onUpdate?.(updatedBlock);
     } catch (err) {
       console.error("期日更新失敗:", err);
     }
   };
 
-  const getTitle = () => {
+  const handleTitleBlur = async () => {
+    if (!titleRef.current) return;
+
+    const newTitle = titleRef.current.innerText.trim();
+    if (!newTitle) return;
+
+    let newHtml;
+    if (localBlock.type === "note") {
+      newHtml = `[[${newTitle}]]`;
+    } else {
+      // task, task-done
+      const prefix = localBlock.type === "task-done" ? "- [x] " : "- [ ] ";
+      newHtml = prefix + newTitle;
+    }
+
+    const updatedBlock = { ...localBlock, html: newHtml };
+
+    try {
+      await updateBlock(updatedBlock);
+      setLocalBlock(updatedBlock);
+      onUpdate?.(updatedBlock); // 即時反映
+    } catch (err) {
+      console.error("タイトル更新失敗:", err);
+    }
+  };
+
+  const getTitleText = () => {
     if (localBlock.type === "note") {
       return localBlock.html?.match(/\[\[(.+?)\]\]/)?.[1] || "(無題ノート)";
     }
@@ -30,31 +57,56 @@ export default function BlockDetails({ block, onClose, onUpdate }) {
   };
 
   return (
-    <div className="w-96 border-l border-gray-200 p-4 bg-white pt-16">
+    <div className="w-[32rem] border-l border-[var(--color-flist-border)] bg-[var(--color-flist-bg)] p-8 pt-10 relative text-[var(--color-flist-dark)]">
       <button
         onClick={onClose}
-        className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
+        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
       >
         ✕
       </button>
 
-      <h2 className="text-lg font-semibold mb-4">{getTitle()}</h2>
+      {/* タイトル */}
+      <h2
+        ref={titleRef}
+        contentEditable
+        suppressContentEditableWarning
+        onBlur={handleTitleBlur}
+        className="text-lg font-semibold mb-6 outline-none border-b border-transparent focus:border-blue-400"
+      >
+        {getTitleText()}
+      </h2>
 
+      {/* タスク用の期日入力 */}
       {localBlock.type !== "note" && (
-        <>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-500 mb-2">
             期日
           </label>
-          <input
-            type="date"
-            className="border px-2 py-1 rounded w-full mb-4"
-            value={localBlock.due_date?.slice(0, 10) || ""}
-            onChange={handleDueDateChange}
-          />
-        </>
+          <div className="flex items-center gap-2 bg-white rounded border border-gray-300 px-3 py-2 shadow-sm">
+            <svg
+              className="w-5 h-5 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+            <input
+              type="date"
+              className="flex-1 text-sm bg-transparent focus:outline-none"
+              value={localBlock.due_date?.slice(0, 10) || ""}
+              onChange={handleDueDateChange}
+            />
+          </div>
+        </div>
       )}
 
-      <h3 className="text-sm text-gray-600 mb-1">メモ</h3>
+      <h3 className="text-sm font-medium mb-2">メモ</h3>
       <BlockEditor parentBlockId={block.id} listId={block.list} />
     </div>
   );
