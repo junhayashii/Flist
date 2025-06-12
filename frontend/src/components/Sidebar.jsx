@@ -1,6 +1,12 @@
 import useLists from "../hooks/useLists";
 import logo from "../assets/logo.png";
-import { CheckSquare, FileText, Plus, List } from "lucide-react";
+import {
+  CheckSquare,
+  FileText,
+  Plus,
+  List,
+  LayoutDashboard,
+} from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
@@ -51,6 +57,21 @@ const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
             Flist
           </h1>
         </div>
+
+        {/* Dashboard */}
+        <button
+          className={`${baseButton} ${
+            selectedListId === "dashboard" ? selected : unselected
+          }`}
+          onClick={() => setSelectedListId("dashboard")}
+        >
+          <LayoutDashboard
+            className={`w-4 h-4 ${
+              selectedListId === "dashboard" ? "text-blue-600" : "text-gray-400"
+            }`}
+          />
+          <span>Dashboard</span>
+        </button>
 
         {/* Tasks */}
         <button

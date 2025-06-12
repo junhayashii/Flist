@@ -3,6 +3,7 @@ import BlockEditor from "./editor/BlockEditor";
 import BlockDetails from "./BlockDetails";
 import TaskListView from "../pages/TaskListView";
 import NoteListView from "../pages/NoteListView";
+import Dashboard from "../pages/Dashboard";
 import { fetchLists, updateListTitle } from "../api/lists";
 import { createTask, createNote } from "../api/blocks";
 import { Plus } from "lucide-react";
@@ -61,33 +62,35 @@ export default function MainContent({
         <div className="flex-1 overflow-y-auto">
           <div className="flex justify-between items-center w-full max-w-8xl px-8 pt-8">
             {selectedListId &&
-              (selectedListId !== "tasks" && selectedListId !== "notes" ? (
-                editing ? (
-                  <input
-                    className="text-xl font-semibold tracking-tight border-b border-gray-300 focus:outline-none focus:border-blue-400 bg-transparent"
-                    value={draftTitle}
-                    onChange={(e) => setDraftTitle(e.target.value)}
-                    onBlur={handleSaveTitle}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleSaveTitle();
-                      if (e.key === "Escape") setEditing(false);
-                    }}
-                    autoFocus
-                  />
-                ) : (
-                  <h2
-                    className="text-xl font-semibold tracking-tight text-[var(--color-flist-dark)] cursor-text"
-                    onClick={() => {
-                      setDraftTitle(selectedList?.title || "");
-                      setEditing(true);
-                    }}
-                  >
-                    {selectedList?.title || "Untitled"}
-                  </h2>
-                )
-              ) : (
+              (["tasks", "notes", "dashboard"].includes(selectedListId) ? (
                 <h2 className="text-xl font-semibold tracking-tight text-[var(--color-flist-dark)]">
-                  {selectedListId === "tasks" ? "Tasks" : "Notes"}
+                  {selectedListId === "tasks"
+                    ? "Tasks"
+                    : selectedListId === "notes"
+                    ? "Notes"
+                    : "Dashboard"}
+                </h2>
+              ) : editing ? (
+                <input
+                  className="text-xl font-semibold tracking-tight border-b border-gray-300 focus:outline-none focus:border-blue-400 bg-transparent"
+                  value={draftTitle}
+                  onChange={(e) => setDraftTitle(e.target.value)}
+                  onBlur={handleSaveTitle}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSaveTitle();
+                    if (e.key === "Escape") setEditing(false);
+                  }}
+                  autoFocus
+                />
+              ) : (
+                <h2
+                  className="text-xl font-semibold tracking-tight text-[var(--color-flist-dark)] cursor-text"
+                  onClick={() => {
+                    setDraftTitle(selectedList?.title || "");
+                    setEditing(true);
+                  }}
+                >
+                  {selectedList?.title || "Untitled"}
                 </h2>
               ))}
 
@@ -120,7 +123,9 @@ export default function MainContent({
 
           {/* メイン表示（ブロック or タスク） */}
           <div className="mt-4">
-            {selectedListId === "tasks" ? (
+            {selectedListId === "dashboard" ? (
+              <Dashboard />
+            ) : selectedListId === "tasks" ? (
               <TaskListView
                 onSelectTask={setSelectedBlock}
                 selectedBlockId={selectedBlock?.id}
@@ -170,6 +175,7 @@ export default function MainContent({
 
       {/* タスクの詳細パネル（右） */}
       {selectedBlock &&
+        selectedListId !== "dashboard" &&
         (selectedBlock.type === "task" ||
           selectedBlock.type === "task-done" ||
           selectedBlock.type === "note") && (
