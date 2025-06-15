@@ -14,6 +14,7 @@ export default function TaskBlock({
   onKeyDown,
   isSelected = false,
   onDelete,
+  editingBlockId,
 }) {
   const isDone = block.type === "task-done";
   const label = block.html.replace(/^(- \[[ xX]\]\s*)+/, "");
@@ -22,7 +23,7 @@ export default function TaskBlock({
   const localRef = useRef(null);
 
   useEffect(() => {
-    if (isEditable && localRef.current) {
+    if (isEditable && localRef.current && editingBlockId === block.id) {
       localRef.current.focus();
       const sel = window.getSelection();
       const range = document.createRange();
@@ -31,7 +32,7 @@ export default function TaskBlock({
       sel.removeAllRanges();
       sel.addRange(range);
     }
-  }, [isEditable]);
+  }, [isEditable, editingBlockId, block.id]);
 
   function formatDateLocal(dateStr) {
     try {
