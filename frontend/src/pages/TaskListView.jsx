@@ -38,6 +38,19 @@ const TaskListView = ({ onSelectTask, selectedBlockId }) => {
       setLists(listMap);
     };
     loadData();
+
+    // Add event listener for task updates
+    const handleTaskUpdate = (event) => {
+      const updatedTask = event.detail;
+      setTasks(prev => prev.map(task => 
+        task.id === updatedTask.id ? updatedTask : task
+      ));
+    };
+
+    window.addEventListener('taskUpdated', handleTaskUpdate);
+    return () => {
+      window.removeEventListener('taskUpdated', handleTaskUpdate);
+    };
   }, []);
 
   const addTask = async () => {

@@ -1,5 +1,10 @@
 from rest_framework import serializers
-from .models import Block, List, Folder
+from .models import Block, List, Folder, Tag
+
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = '__all__'
 
 class FolderSerializer(serializers.ModelSerializer):
     class Meta:
@@ -17,6 +22,14 @@ class ListSerializer(serializers.ModelSerializer):
 
 class BlockSerializer(serializers.ModelSerializer):
     child_blocks = serializers.SerializerMethodField()
+    tags = TagSerializer(many=True, read_only=True)
+    tag_ids = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(),
+        source='tags',
+        many=True,
+        write_only=True,
+        required=False
+    )
 
     class Meta:
         model = Block

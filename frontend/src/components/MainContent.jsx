@@ -183,8 +183,18 @@ export default function MainContent({
             <BlockDetails
               block={selectedBlock}
               onClose={() => setSelectedBlock(null)}
-              onUpdateBlock={(updated) => {
+              onUpdate={(updated) => {
                 setSelectedBlock(updated);
+                // Update the block in the main content
+                if (selectedListId === "tasks") {
+                  // For TaskListView, we need to trigger a refresh
+                  const event = new CustomEvent('taskUpdated', { detail: updated });
+                  window.dispatchEvent(event);
+                } else if (selectedListId === "notes") {
+                  // For NoteListView, we need to trigger a refresh
+                  const event = new CustomEvent('noteUpdated', { detail: updated });
+                  window.dispatchEvent(event);
+                }
               }}
             />
           </div>

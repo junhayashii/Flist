@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { ChevronRight, StickyNote } from "lucide-react";
+import { ChevronRight, StickyNote, Tag } from "lucide-react";
 
 export default function NoteBlock({
   block,
@@ -12,6 +12,7 @@ export default function NoteBlock({
   onKeyDown,
 }) {
   const noteTitle = block.html.match(/\[\[(.+?)\]\]/)?.[1] || "Note";
+  const hasTags = block.tags && block.tags.length > 0;
 
   const localRef = useRef(null);
 
@@ -38,25 +39,33 @@ export default function NoteBlock({
         onOpenDetail?.(block);
       }}
     >
-      <div className="flex items-center gap-2 pt-1 pb-1 font-medium">
-        <StickyNote size={20} strokeWidth={2} className="text-blue-500" />
-        {isEditable ? (
-          <div
-            ref={(el) => {
-              localRef.current = el;
-              if (el) editableRef?.(el);
-            }}
-            contentEditable
-            suppressContentEditableWarning
-            className="outline-none"
-            onBlur={() => onBlur?.(block)}
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => onKeyDown?.(e)}
-          >
-            {noteTitle}
+      <div className="flex-1">
+        <div className="flex items-center gap-2 pt-1 pb-1 font-medium">
+          <StickyNote size={20} strokeWidth={2} className="text-blue-500" />
+          {isEditable ? (
+            <div
+              ref={(el) => {
+                localRef.current = el;
+                if (el) editableRef?.(el);
+              }}
+              contentEditable
+              suppressContentEditableWarning
+              className="outline-none"
+              onBlur={() => onBlur?.(block)}
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => onKeyDown?.(e)}
+            >
+              {noteTitle}
+            </div>
+          ) : (
+            <div>{noteTitle}</div>
+          )}
+        </div>
+        {hasTags && (
+          <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+            <Tag className="w-3 h-3 text-gray-400" />
+            <span>{block.tags.map(tag => tag.name).join(", ")}</span>
           </div>
-        ) : (
-          <div>{noteTitle}</div>
         )}
       </div>
 

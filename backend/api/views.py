@@ -1,8 +1,14 @@
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db import models
-from .models import Block, List, Folder
-from .serializers import BlockSerializer, ListSerializer, FolderSerializer
+from .models import Block, List, Folder, Tag
+from .serializers import BlockSerializer, ListSerializer, FolderSerializer, TagSerializer
+
+class TagViewSet(viewsets.ModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name']
 
 class FolderViewSet(viewsets.ModelViewSet):
     queryset = Folder.objects.all()

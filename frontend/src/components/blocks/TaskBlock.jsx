@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { CheckCircle, Circle, ChevronRight, CalendarDays } from "lucide-react";
+import { CheckCircle, Circle, ChevronRight, CalendarDays, Tag } from "lucide-react";
 
 export default function TaskBlock({
   block,
@@ -18,7 +18,7 @@ export default function TaskBlock({
 }) {
   const isDone = block.type === "task-done";
   const label = block.html.replace(/^(- \[[ xX]\]\s*)+/, "");
-  const hasMeta = block.due_date || listName;
+  const hasMeta = block.due_date || listName || (block.tags && block.tags.length > 0);
 
   const localRef = useRef(null);
 
@@ -119,6 +119,12 @@ export default function TaskBlock({
                 </div>
               )}
               {listName && <span>{listName}</span>}
+              {block.tags && block.tags.length > 0 && (
+                <div className="flex items-center gap-1">
+                  <Tag className="w-4 h-4 text-gray-400" />
+                  <span>{block.tags.map(tag => tag.name).join(", ")}</span>
+                </div>
+              )}
             </div>
           )}
         </div>

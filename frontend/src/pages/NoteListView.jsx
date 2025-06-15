@@ -36,6 +36,19 @@ export default function NoteListView({ onSelectNote, selectedNote }) {
       }
     };
     loadData();
+
+    // Add event listener for note updates
+    const handleNoteUpdate = (event) => {
+      const updatedNote = event.detail;
+      setNotes(prev => prev.map(note => 
+        note.id === updatedNote.id ? updatedNote : note
+      ));
+    };
+
+    window.addEventListener('noteUpdated', handleNoteUpdate);
+    return () => {
+      window.removeEventListener('noteUpdated', handleNoteUpdate);
+    };
   }, [selectedNote]);
 
   return (

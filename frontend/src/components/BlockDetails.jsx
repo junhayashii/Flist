@@ -1,14 +1,23 @@
 import React, { useState, useEffect, useRef } from "react";
 import BlockEditor from "./editor/BlockEditor";
-import { updateBlockDueDate, updateBlock } from "../api/blocks";
+import { updateBlockDueDate, updateBlock, fetchBlock } from "../api/blocks";
+import TagSelector from "./TagSelector";
 
 export default function BlockDetails({ block, onClose, onUpdate }) {
   const [localBlock, setLocalBlock] = useState(block);
   const titleRef = useRef(null);
 
   useEffect(() => {
-    setLocalBlock(block);
-  }, [block]);
+    const loadBlock = async () => {
+      try {
+        const data = await fetchBlock(block.id);
+        setLocalBlock(data);
+      } catch (err) {
+        console.error("ブロック取得失敗:", err);
+      }
+    };
+    loadBlock();
+  }, [block.id]);
 
   const handleDueDateChange = async (e) => {
     const newDueDate = e.target.value;
@@ -43,9 +52,20 @@ export default function BlockDetails({ block, onClose, onUpdate }) {
     try {
       await updateBlock(updatedBlock);
       setLocalBlock(updatedBlock);
-      onUpdate?.(updatedBlock); // 即時反映
+      onUpdate?.(updatedBlock);
     } catch (err) {
       console.error("タイトル更新失敗:", err);
+    }
+  };
+
+  const handleTagsChange = async (tagIds) => {
+    const updatedBlock = { ...localBlock, tag_ids: tagIds };
+    try {
+      const data = await updateBlock(updatedBlock);
+      setLocalBlock(data);
+      onUpdate?.(data);
+    } catch (err) {
+      console.error("タグ更新失敗:", err);
     }
   };
 
@@ -75,6 +95,17 @@ export default function BlockDetails({ block, onClose, onUpdate }) {
       >
         {getTitleText()}
       </h2>
+
+      {/* タグ選択 */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-500 mb-2">
+          タグ
+        </label>
+        <TagSelector
+          selectedTags={localBlock.tags?.map(tag => tag.id) || []}
+          onChange={handleTagsChange}
+        />
+      </div>
 
       {/* タスク用の期日入力 */}
       {localBlock.type !== "note" && (
