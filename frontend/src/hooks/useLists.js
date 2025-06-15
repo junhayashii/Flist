@@ -8,51 +8,42 @@ import {
 
 export default function useLists(selectedListId, setSelectedListId) {
   const [lists, setLists] = useState([]);
-
-  const loadLists = async () => {
-    try {
-      const data = await fetchLists();
-      setLists(data);
-      if (data.length > 0 && !selectedListId) {
-        setSelectedListId(data[0].id);
-      }
-    } catch (error) {
-      console.error("リスト取得エラー:", error);
-    }
-  };
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     loadLists();
   }, []);
 
-  const addList = async (title) => {
-    const safeTitle = (title || "").trim() || "新しいリスト";
+  const loadLists = async () => {
     try {
-      const newList = await createList(safeTitle);
+      setLoading(true);
+      const data = await fetchLists();
+      setLists(data);
+      if (data.length > 0 && !selectedListId) {
+        setSelectedListId(data[0].id);
+      }
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      await fetch("http://127.0.0.1:8000/api/blocks/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          list: newList.id,
-          html: "",
-          type: "text",
-          order: 0,
-        }),
-      });
-
-      await loadLists();
+  const addList = async (title, folderId = null) => {
+    try {
+      const newList = await createList(title, folderId);
+      setLists(prev => [...prev, newList]);
       setSelectedListId(newList.id);
       return newList.id;
-    } catch (error) {
-      console.error("リスト追加エラー:", error);
-      throw error;
+    } catch (err) {
+      setError(err.message);
+      throw err;
     }
   };
 
   const deleteList = async (id) => {
-    if (!confirm("このリストを削除しますか？")) return;
-
     try {
       await apiDeleteList(id);
       if (id === selectedListId) {
@@ -61,26 +52,30 @@ export default function useLists(selectedListId, setSelectedListId) {
       await loadLists();
     } catch (error) {
       console.error("リスト削除エラー:", error);
+      throw error;
     }
   };
 
-  const updateListTitle = async (id, title) => {
+  const updateList = async (id, data) => {
     try {
-      const updated = await apiUpdateListTitle(id, title);
-      setLists((prev) =>
-        prev.map((l) =>
-          l.id === updated.id ? { ...l, title: updated.title } : l
-        )
+      const updated = await apiUpdateListTitle(id, data);
+      setLists(prev =>
+        prev.map(list => (list.id === id ? { ...list, ...updated } : list))
       );
-    } catch (error) {
-      console.error("リストタイトル更新エラー:", error);
+      return updated;
+    } catch (err) {
+      setError(err.message);
+      throw err;
     }
   };
 
   return {
     lists,
+    loading,
+    error,
     addList,
     deleteList,
-    updateListTitle,
+    updateList,
+    refreshLists: loadLists,
   };
 }

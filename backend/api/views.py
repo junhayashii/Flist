@@ -1,9 +1,13 @@
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db import models
-from .models import Block, List
-from .serializers import BlockSerializer, ListSerializer
+from .models import Block, List, Folder
+from .serializers import BlockSerializer, ListSerializer, FolderSerializer
 
+class FolderViewSet(viewsets.ModelViewSet):
+    queryset = Folder.objects.all()
+    serializer_class = FolderSerializer
+    
 class ListViewSet(viewsets.ModelViewSet):
     queryset = List.objects.all()
     serializer_class = ListSerializer
