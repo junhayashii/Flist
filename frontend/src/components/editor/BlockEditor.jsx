@@ -153,7 +153,7 @@ export default function BlockEditor({
         items={blocks.map((b) => b.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="space-y-1 p-4 bg-white/70 backdrop-blur rounded-xl shadow-sm">
+        <div className={`space-y-1 p-4 bg-white/70 backdrop-blur rounded-xl ${blocks.length > 0 ? 'shadow-sm' : ''}`}>
           {blocks
             .sort((a, b) => a.order - b.order)
             .map((block, index) => (

@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, forwardRef } from "react";
 import { CheckCircle, Circle, ChevronRight, CalendarDays, Tag } from "lucide-react";
 
-export default function TaskBlock({
+const TaskBlock = forwardRef(({
   block,
   onClick,
   onToggle,
@@ -11,11 +11,10 @@ export default function TaskBlock({
   onBlur,
   editableRef,
   onEmptyTaskEnterOrBackspace,
-  onKeyDown,
   isSelected = false,
   onDelete,
   editingBlockId,
-}) {
+}, ref) => {
   const isDone = block.type === "task-done";
   const label = block.html.replace(/^(- \[[ xX]\]\s*)+/, "");
   const hasMeta = block.due_date || listName || (block.tags && block.tags.length > 0);
@@ -62,27 +61,30 @@ export default function TaskBlock({
 
   return (
     <div
-      className={`p-3 cursor-pointer ${
-        isSelected ? "bg-blue-100/50 rounded-xl" : "bg-white"
+      ref={ref}
+      className={`p-4 cursor-pointer rounded-xl transition-all duration-200 ${
+        isSelected 
+          ? "bg-[var(--color-flist-blue-light)] border border-[var(--color-flist-accent)]" 
+          : "bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] hover:border-[var(--color-flist-accent)] hover:bg-[var(--color-flist-surface-hover)]"
       }`}
       onClick={() => onClick?.(block)}
     >
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center space-x-4">
         <div
           onClick={(e) => {
             e.stopPropagation();
             onToggle?.(block);
           }}
-          className="w-6 h-6 cursor-pointer text-blue-600 hover:scale-105 transition-transform"
+          className="w-6 h-6 cursor-pointer text-[var(--color-flist-accent)] hover:scale-105 transition-transform"
         >
           {isDone ? (
-            <CheckCircle className="w-6 h-6" strokeWidth={2} />
+            <CheckCircle className="w-6 h-6" strokeWidth={1.5} />
           ) : (
             <Circle className="w-6 h-6" strokeWidth={1.5} />
           )}
         </div>
 
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           {isEditable ? (
             <div
               ref={(el) => {
@@ -92,18 +94,18 @@ export default function TaskBlock({
               contentEditable
               suppressContentEditableWarning
               className={`outline-none flex-1 ${
-                isDone ? "line-through text-gray-400" : ""
+                isDone ? "line-through text-[var(--color-flist-muted)]" : "text-[var(--color-flist-dark)]"
               }`}
               onBlur={() => onBlur?.(block)}
               onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => onKeyDown?.(e)}
+              onKeyDown={handleKeyDown}
             >
               {label}
             </div>
           ) : (
             <div
               className={
-                isDone ? "line-through text-gray-400" : "text-gray-800"
+                isDone ? "line-through text-[var(--color-flist-muted)]" : "text-[var(--color-flist-dark)]"
               }
             >
               {label}
@@ -111,45 +113,55 @@ export default function TaskBlock({
           )}
 
           {hasMeta && (
-            <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
+            <div className="flex items-center gap-4 text-xs mt-2">
               {block.due_date && (
-                <div className="flex items-center text-sm text-gray-500 gap-1">
-                  <CalendarDays className="w-4 h-4 text-gray-400" />
+                <div className="flex items-center text-sm text-[var(--color-flist-muted)] gap-1">
+                  <CalendarDays className="w-4 h-4" />
                   {formatDateLocal(block.due_date)}
                 </div>
               )}
-              {listName && <span>{listName}</span>}
+              {listName && (
+                <span className="text-[var(--color-flist-muted)]">{listName}</span>
+              )}
               {block.tags && block.tags.length > 0 && (
                 <div className="flex items-center gap-1">
-                  <Tag className="w-4 h-4 text-gray-400" />
-                  <span>{block.tags.map(tag => tag.name).join(", ")}</span>
+                  <Tag className="w-4 h-4 text-[var(--color-flist-muted)]" />
+                  <span className="text-[var(--color-flist-muted)]">
+                    {block.tags.map(tag => tag.name).join(", ")}
+                  </span>
                 </div>
               )}
             </div>
           )}
         </div>
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpenDetail?.(block);
-          }}
-          className="text-gray-400 hover:text-blue-500 p-1"
-        >
-          <ChevronRight size={14} strokeWidth={3} />
-        </button>
-        {onDelete && (
+        <div className="flex items-center gap-2">
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onDelete();
+              onOpenDetail?.(block);
             }}
-            className="ml-2 text-red-500 hover:text-red-700 text-sm"
+            className="text-[var(--color-flist-muted)] hover:text-[var(--color-flist-accent)] p-1 transition-colors"
           >
-            削除
+            <ChevronRight size={14} strokeWidth={2} />
           </button>
-        )}
+          {onDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="text-[var(--color-flist-muted)] hover:text-red-500 text-sm transition-colors"
+            >
+              削除
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
-}
+});
+
+TaskBlock.displayName = 'TaskBlock';
+
+export default TaskBlock;

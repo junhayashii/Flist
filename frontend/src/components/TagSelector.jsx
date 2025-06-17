@@ -83,7 +83,7 @@ const TagSelector = ({ selectedTags = [], onChange }) => {
   return (
     <div className="relative">
       <div
-        className="flex flex-wrap items-center gap-2 p-2 border rounded cursor-pointer min-h-[2.5rem]"
+        className="flex flex-wrap items-center gap-2 p-2 border border-[var(--color-flist-border)] rounded-lg cursor-pointer min-h-[2.5rem] bg-[var(--color-flist-surface)] hover:border-[var(--color-flist-accent)] transition-colors"
         onClick={() => setShowDropdown(!showDropdown)}
       >
         {localSelectedTags.length > 0 ? (
@@ -93,14 +93,14 @@ const TagSelector = ({ selectedTags = [], onChange }) => {
             return (
               <div
                 key={tagId}
-                className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
+                className="flex items-center gap-1 px-2 py-1 bg-[var(--color-flist-blue-light)] text-[var(--color-flist-accent)] rounded-full text-sm transition-colors"
                 onClick={(e) => e.stopPropagation()}
               >
                 <Tag className="w-3 h-3" />
                 <span>{tag.name}</span>
                 <button
                   onClick={(e) => handleRemoveTag(tagId, e)}
-                  className="hover:text-blue-900"
+                  className="hover:text-[var(--color-flist-accent-hover)] transition-colors"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -108,49 +108,51 @@ const TagSelector = ({ selectedTags = [], onChange }) => {
             );
           })
         ) : (
-          <span className="text-sm text-gray-500">Add tags...</span>
+          <span className="text-sm text-[var(--color-flist-muted)]">Add tags...</span>
         )}
       </div>
 
       {showDropdown && (
-        <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg">
-          <div className="p-2 border-b">
+        <div className="absolute z-10 w-full mt-1 bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] rounded-lg shadow-lg backdrop-blur-md">
+          <div className="p-2 border-b border-[var(--color-flist-border)]">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               placeholder="Search or create tag..."
-              className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-2 border border-[var(--color-flist-border)] rounded-md focus:outline-none focus:border-[var(--color-flist-accent)] bg-[var(--color-flist-surface)] transition-colors"
               onClick={(e) => e.stopPropagation()}
             />
           </div>
 
           <div className="max-h-48 overflow-y-auto">
             {isLoading ? (
-              <div className="p-2 text-center text-gray-500">Loading...</div>
+              <div className="p-2 text-center text-[var(--color-flist-muted)]">Loading...</div>
             ) : (
               <>
                 {tags.map(tag => (
                   <div
                     key={tag.id}
-                    className="flex items-center gap-2 p-2 hover:bg-gray-100 cursor-pointer"
+                    className="flex items-center gap-2 p-2 hover:bg-[var(--color-flist-surface-hover)] cursor-pointer transition-colors"
                     onClick={() => handleTagSelect(tag.id)}
                   >
-                    <div className={`w-4 h-4 border rounded flex items-center justify-center ${
-                      localSelectedTags.includes(tag.id) ? 'bg-blue-500 border-blue-500' : 'border-gray-300'
+                    <div className={`w-4 h-4 border rounded-md flex items-center justify-center transition-colors ${
+                      localSelectedTags.includes(tag.id) 
+                        ? 'bg-[var(--color-flist-accent)] border-[var(--color-flist-accent)]' 
+                        : 'border-[var(--color-flist-border)]'
                     }`}>
                       {localSelectedTags.includes(tag.id) && (
                         <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
                         </svg>
                       )}
                     </div>
-                    <span className="flex-1">{tag.name}</span>
+                    <span className="flex-1 text-[var(--color-flist-dark)]">{tag.name}</span>
                   </div>
                 ))}
                 {searchQuery && !tags.some(tag => tag.name === searchQuery) && (
                   <div
-                    className="flex items-center gap-2 p-2 text-blue-600 hover:bg-gray-100 cursor-pointer"
+                    className="flex items-center gap-2 p-2 text-[var(--color-flist-accent)] hover:bg-[var(--color-flist-surface-hover)] cursor-pointer transition-colors"
                     onClick={() => handleCreateTag(searchQuery)}
                   >
                     <Plus className="w-4 h-4" />

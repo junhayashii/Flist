@@ -179,94 +179,99 @@ const TaskListView = ({ onSelectTask, selectedBlockId }) => {
 
   return (
     <div className="flex-1 flex overflow-hidden">
-      <div className="flex-1 overflow-y-auto px-10 py-8 backdrop-blur-md">
-        {/* Filter/Sort + Add */}
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm px-4 py-3 mb-6 max-w-8xl mx-auto">
+      <div className="flex-1 overflow-y-auto px-8 py-6 backdrop-blur-md">
+        {/* Filter/Sort */}
+        <div className="bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] rounded-xl shadow-sm px-6 py-4 mb-6 max-w-8xl mx-auto">
           <div className="flex flex-wrap items-center gap-4">
             {/* Filter Button */}
             <div className="relative">
               <button
                 onClick={() => setFilterOpen(!filterOpen)}
-                className="flex items-center gap-2 text-sm border rounded px-3 py-1 bg-white hover:bg-gray-100"
+                className="flex items-center gap-2 text-sm border border-[var(--color-flist-border)] rounded-lg px-3 py-1.5 bg-[var(--color-flist-surface)] hover:bg-[var(--color-flist-surface-hover)] hover:border-[var(--color-flist-accent)] transition-all duration-200"
               >
-                <Filter size={16} />
-                Filter
+                <Filter size={16} className="text-[var(--color-flist-muted)]" />
+                <span className="text-[var(--color-flist-dark)]">Filter</span>
                 {(selectedLists.length > 0 || statusFilter !== "all" || dateFilter !== "all") && (
-                  <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full text-xs">
+                  <span className="bg-[var(--color-flist-blue-light)] text-[var(--color-flist-accent)] px-2 py-0.5 rounded-full text-xs font-medium">
                     Active
                   </span>
                 )}
               </button>
               {filterOpen && (
-                <div className="absolute z-10 bg-white border rounded-lg shadow-lg mt-2 p-4 space-y-4 min-w-[240px]">
-                  <div className="space-y-2">
-                    <h3 className="font-medium text-sm text-gray-700">Status</h3>
-                    <div className="space-y-1">
+                <div className="absolute z-10 mt-2 w-64 bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] rounded-lg shadow-lg backdrop-blur-md">
+                  <div className="p-3 border-b border-[var(--color-flist-border)]">
+                    <h3 className="text-sm font-medium text-[var(--color-flist-dark)] mb-2">Status</h3>
+                    <div className="space-y-2">
                       {["all", "pending", "completed"].map((status) => (
-                        <label key={status} className="flex items-center gap-2 text-sm">
+                        <label
+                          key={status}
+                          className="flex items-center gap-2 text-sm text-[var(--color-flist-dark)] cursor-pointer hover:text-[var(--color-flist-accent)] transition-colors"
+                        >
                           <input
                             type="radio"
                             checked={statusFilter === status}
                             onChange={() => setStatusFilter(status)}
-                            className="text-blue-600"
+                            className="w-4 h-4 text-[var(--color-flist-accent)] border-[var(--color-flist-border)] focus:ring-[var(--color-flist-accent)]"
                           />
                           {status.charAt(0).toUpperCase() + status.slice(1)}
                         </label>
                       ))}
                     </div>
                   </div>
-
-                  <div className="space-y-2">
-                    <h3 className="font-medium text-sm text-gray-700">Due Date</h3>
-                    <div className="space-y-1">
+                  <div className="p-3 border-b border-[var(--color-flist-border)]">
+                    <h3 className="text-sm font-medium text-[var(--color-flist-dark)] mb-2">Due Date</h3>
+                    <div className="space-y-2">
                       {[
-                        { value: "all", label: "All Dates" },
+                        { value: "all", label: "All" },
                         { value: "today", label: "Today" },
                         { value: "tomorrow", label: "Tomorrow" },
                         { value: "this-week", label: "This Week" },
                       ].map(({ value, label }) => (
-                        <label key={value} className="flex items-center gap-2 text-sm">
+                        <label
+                          key={value}
+                          className="flex items-center gap-2 text-sm text-[var(--color-flist-dark)] cursor-pointer hover:text-[var(--color-flist-accent)] transition-colors"
+                        >
                           <input
                             type="radio"
                             checked={dateFilter === value}
                             onChange={() => setDateFilter(value)}
-                            className="text-blue-600"
+                            className="w-4 h-4 text-[var(--color-flist-accent)] border-[var(--color-flist-border)] focus:ring-[var(--color-flist-accent)]"
                           />
                           {label}
                         </label>
                       ))}
                     </div>
                   </div>
-
-                  <div className="space-y-2">
-                    <h3 className="font-medium text-sm text-gray-700">Lists</h3>
-                    <div className="space-y-1 max-h-40 overflow-y-auto">
-                      {Object.entries(lists).map(([id, name]) => (
-                        <label key={id} className="flex items-center gap-2 text-sm">
+                  <div className="p-3">
+                    <h3 className="text-sm font-medium text-[var(--color-flist-dark)] mb-2">Lists</h3>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {Object.entries(lists).map(([id, list]) => (
+                        <label
+                          key={id}
+                          className="flex items-center gap-2 text-sm text-[var(--color-flist-dark)] cursor-pointer hover:text-[var(--color-flist-accent)] transition-colors"
+                        >
                           <input
                             type="checkbox"
                             checked={selectedLists.includes(id)}
-                            onChange={() =>
-                              setSelectedLists((prev) =>
-                                prev.includes(id)
-                                  ? prev.filter((x) => x !== id)
-                                  : [...prev, id]
-                              )
-                            }
-                            className="text-blue-600"
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedLists([...selectedLists, id]);
+                              } else {
+                                setSelectedLists(selectedLists.filter((l) => l !== id));
+                              }
+                            }}
+                            className="w-4 h-4 text-[var(--color-flist-accent)] border-[var(--color-flist-border)] rounded focus:ring-[var(--color-flist-accent)]"
                           />
-                          {name}
+                          {list.title}
                         </label>
                       ))}
                     </div>
                   </div>
-
-                  <div className="pt-2 border-t">
+                  <div className="p-3 border-t border-[var(--color-flist-border)]">
                     <button
                       onClick={clearFilters}
-                      className="w-full text-sm text-gray-600 hover:text-gray-900 flex items-center justify-center gap-2"
+                      className="w-full text-sm text-[var(--color-flist-accent)] hover:text-[var(--color-flist-accent-hover)] transition-colors"
                     >
-                      <X size={14} />
                       Clear Filters
                     </button>
                   </div>
@@ -278,104 +283,65 @@ const TaskListView = ({ onSelectTask, selectedBlockId }) => {
             <div className="relative">
               <button
                 onClick={() => setSortOpen(!sortOpen)}
-                className="flex items-center gap-2 text-sm border rounded px-3 py-1 bg-white hover:bg-gray-100"
+                className="flex items-center gap-2 text-sm border border-[var(--color-flist-border)] rounded-lg px-3 py-1.5 bg-[var(--color-flist-surface)] hover:bg-[var(--color-flist-surface-hover)] hover:border-[var(--color-flist-accent)] transition-all duration-200"
               >
-                {sortOrder === "asc" ? <SortAsc size={16} /> : <SortDesc size={16} />}
-                Sort
+                {sortOrder === "asc" ? (
+                  <SortAsc size={16} className="text-[var(--color-flist-muted)]" />
+                ) : (
+                  <SortDesc size={16} className="text-[var(--color-flist-muted)]" />
+                )}
+                <span className="text-[var(--color-flist-dark)]">Sort</span>
               </button>
               {sortOpen && (
-                <div className="absolute z-10 bg-white border rounded-lg shadow-lg mt-2 p-4 space-y-2 min-w-[200px]">
-                  <h3 className="font-medium text-sm text-gray-700 mb-2">Sort by</h3>
-                  {[
-                    { value: "due-date", label: "Due Date", icon: Calendar },
-                    { value: "created", label: "Created Date", icon: Clock },
-                    { value: "updated", label: "Updated Date", icon: Clock },
-                    { value: "title", label: "Title", icon: List },
-                  ].map(({ value, label, icon: Icon }) => (
-                    <button
-                      key={value}
-                      onClick={() => {
-                        setSortBy(value);
-                        setSortOpen(false);
-                      }}
-                      className={`w-full flex items-center gap-2 text-sm px-2 py-1 rounded hover:bg-gray-100 ${
-                        sortBy === value ? "text-blue-600 bg-blue-50" : "text-gray-700"
-                      }`}
-                    >
-                      <Icon size={14} />
-                      {label}
-                    </button>
-                  ))}
-                  <div className="pt-2 border-t mt-2">
-                    <button
-                      onClick={() => {
-                        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-                        setSortOpen(false);
-                      }}
-                      className="w-full flex items-center justify-center gap-2 text-sm text-gray-600 hover:text-gray-900"
-                    >
-                      {sortOrder === "asc" ? <SortAsc size={14} /> : <SortDesc size={14} />}
-                      {sortOrder === "asc" ? "Ascending" : "Descending"}
-                    </button>
+                <div className="absolute z-10 mt-2 w-48 bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] rounded-lg shadow-lg backdrop-blur-md">
+                  <div className="p-2">
+                    {[
+                      { value: "due-date", label: "Due Date" },
+                      { value: "created", label: "Created" },
+                      { value: "updated", label: "Updated" },
+                      { value: "title", label: "Title" },
+                    ].map(({ value, label }) => (
+                      <button
+                        key={value}
+                        onClick={() => {
+                          setSortBy(value);
+                          setSortOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
+                          sortBy === value
+                            ? "text-[var(--color-flist-accent)] bg-[var(--color-flist-blue-light)]"
+                            : "text-[var(--color-flist-dark)] hover:bg-[var(--color-flist-surface-hover)]"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
             </div>
-
-            {/* Active Filters Display */}
-            {(selectedLists.length > 0 || statusFilter !== "all" || dateFilter !== "all") && (
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <span>Active filters:</span>
-                {statusFilter !== "all" && (
-                  <span className="bg-gray-100 px-2 py-0.5 rounded-full text-xs">
-                    {statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}
-                  </span>
-                )}
-                {dateFilter !== "all" && (
-                  <span className="bg-gray-100 px-2 py-0.5 rounded-full text-xs">
-                    {dateFilter === "today"
-                      ? "Today"
-                      : dateFilter === "tomorrow"
-                      ? "Tomorrow"
-                      : "This Week"}
-                  </span>
-                )}
-                {selectedLists.length > 0 && (
-                  <span className="bg-gray-100 px-2 py-0.5 rounded-full text-xs">
-                    {selectedLists.length} List{selectedLists.length > 1 ? "s" : ""}
-                  </span>
-                )}
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Task Cards */}
-        <div className="space-y-2 max-w-8xl mx-auto">
+        {/* Task List */}
+        <div className="max-w-8xl mx-auto space-y-1">
           {filteredTasks.map((task) => (
-            <div
+            <TaskBlock
               key={task.id}
-              className="rounded-lg border border-gray-200 bg-white hover:bg-blue-50 cursor-pointer shadow-sm"
-            >
-              <TaskBlock
-                block={task}
-                isEditable={true}
-                editableRef={(el) => (taskRefs.current[task.id] = el)}
-                onClick={() => onSelectTask?.(task)}
-                onToggle={handleToggle}
-                onOpenDetail={() => onSelectTask?.(task)}
-                onBlur={handleBlur}
-                listName={task.list ? lists[task.list] : "Inbox"}
-                isSelected={selectedBlockId === task.id}
-                editingBlockId={editingBlockId}
-              />
-            </div>
+              block={task}
+              onClick={() => onSelectTask(task)}
+              onToggle={handleToggle}
+              onOpenDetail={() => onSelectTask(task)}
+              listName={lists[task.list]?.title}
+              isEditable={editingBlockId === task.id}
+              onBlur={handleBlur}
+              editableRef={(el) => (taskRefs.current[task.id] = el)}
+              onEmptyTaskEnterOrBackspace={() => handleDelete(task)}
+              isSelected={selectedBlockId === task.id}
+              onDelete={() => handleDelete(task)}
+              editingBlockId={editingBlockId}
+            />
           ))}
-          {filteredTasks.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              No tasks match the current filters
-            </div>
-          )}
         </div>
       </div>
     </div>

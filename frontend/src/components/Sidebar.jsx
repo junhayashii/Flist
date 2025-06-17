@@ -59,8 +59,10 @@ const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitl
       ref={setNodeRef}
       {...attributes}
       {...listeners}
-      className={`w-full flex items-center px-4 py-2 rounded-lg cursor-pointer text-sm transition font-medium ${
-        isSelected ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100"
+      className={`w-full flex items-center px-4 py-2 rounded-lg cursor-pointer text-sm transition-all duration-200 ${
+        isSelected 
+          ? "bg-[var(--color-flist-blue-light)] text-[var(--color-flist-accent)]" 
+          : "text-[var(--color-flist-dark)] hover:bg-[var(--color-flist-surface-hover)]"
       } ${isDragging ? "opacity-50" : ""}`}
       onClick={onClick}
       onContextMenu={handleContextMenu}
@@ -68,7 +70,7 @@ const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitl
       {editingId === list.id ? (
         <input
           ref={inputRef}
-          className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none"
+          className="w-full px-2 py-1 text-sm border border-[var(--color-flist-border)] rounded-md focus:outline-none focus:border-[var(--color-flist-accent)] bg-[var(--color-flist-surface)]"
           value={draftTitle}
           onChange={(e) => setDraftTitle(e.target.value)}
           onBlur={() => onEdit(list.id)}
@@ -79,7 +81,7 @@ const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitl
         />
       ) : (
         <div className="flex items-center space-x-3">
-          <List className="w-4 h-4 text-gray-400" />
+          <List className="w-4 h-4 text-[var(--color-flist-muted)]" />
           <span className="truncate">{list.title || "Untitled"}</span>
         </div>
       )}
@@ -87,14 +89,14 @@ const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitl
       {showContextMenu && (
         <div
           ref={contextMenuRef}
-          className="fixed bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 min-w-[160px]"
+          className="fixed bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] rounded-lg shadow-lg py-1 z-50 min-w-[160px] backdrop-blur-md"
           style={{
             top: contextMenuPosition.y,
             left: contextMenuPosition.x,
           }}
         >
           <button
-            className="w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+            className="w-full px-4 py-2 text-sm text-left text-[var(--color-flist-dark)] hover:bg-[var(--color-flist-surface-hover)] flex items-center space-x-2 transition-colors"
             onClick={() => {
               onRename(list.id);
               setShowContextMenu(false);
@@ -104,7 +106,7 @@ const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitl
             <span>Rename List</span>
           </button>
           <button
-            className="w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-red-50 flex items-center space-x-2"
+            className="w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-red-50 flex items-center space-x-2 transition-colors"
             onClick={() => {
               onDelete(list.id);
               setShowContextMenu(false);
@@ -151,8 +153,8 @@ const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, chi
     <div className="space-y-1">
       <div
         ref={setNodeRef}
-        className={`flex items-center justify-between px-2 py-1 rounded-lg hover:bg-gray-100 cursor-pointer transition-all duration-200 ${
-          isOver ? "bg-blue-100 border-2 border-blue-400 shadow-md" : ""
+        className={`flex items-center justify-between px-2 py-1 rounded-lg hover:bg-[var(--color-flist-surface-hover)] cursor-pointer transition-all duration-200 ${
+          isOver ? "bg-[var(--color-flist-blue-light)] border-2 border-[var(--color-flist-accent)] shadow-sm" : ""
         }`}
         onClick={onToggle}
         onContextMenu={handleContextMenu}
@@ -161,12 +163,12 @@ const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, chi
       >
         <div className="flex items-center space-x-2">
           {isExpanded ? (
-            <ChevronDown size={16} className={`${isOver ? "text-blue-500" : "text-gray-400"}`} />
+            <ChevronDown size={16} className={`${isOver ? "text-[var(--color-flist-accent)]" : "text-[var(--color-flist-muted)]"}`} />
           ) : (
-            <ChevronRight size={16} className={`${isOver ? "text-blue-500" : "text-gray-400"}`} />
+            <ChevronRight size={16} className={`${isOver ? "text-[var(--color-flist-accent)]" : "text-[var(--color-flist-muted)]"}`} />
           )}
-          <Folder size={16} className={`${isOver ? "text-blue-500" : "text-gray-400"}`} />
-          <span className={`text-sm font-medium ${isOver ? "text-blue-600" : "text-gray-700"}`}>
+          <Folder size={16} className={`${isOver ? "text-[var(--color-flist-accent)]" : "text-[var(--color-flist-muted)]"}`} />
+          <span className={`text-sm font-medium ${isOver ? "text-[var(--color-flist-accent)]" : "text-[var(--color-flist-dark)]"}`}>
             {folder.title}
           </span>
         </div>
@@ -176,7 +178,7 @@ const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, chi
               e.stopPropagation();
               onAddList(folder.id);
             }}
-            className="p-1 rounded-md hover:bg-gray-200 text-gray-500"
+            className="p-1 rounded-md hover:bg-[var(--color-flist-surface-hover)] text-[var(--color-flist-muted)] transition-colors"
             title="Add List"
           >
             <Plus size={14} />
@@ -184,7 +186,7 @@ const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, chi
         )}
       </div>
       {isExpanded && (
-        <div className={`ml-6 space-y-1 transition-all duration-200 ${isOver ? "bg-blue-50 rounded-lg p-1" : ""}`}>
+        <div className={`ml-6 space-y-1 transition-all duration-200 ${isOver ? "bg-[var(--color-flist-blue-light)] rounded-lg p-1" : ""}`}>
           {children}
         </div>
       )}
@@ -192,14 +194,14 @@ const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, chi
       {showContextMenu && (
         <div
           ref={contextMenuRef}
-          className="fixed bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 min-w-[160px]"
+          className="fixed bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] rounded-lg shadow-lg py-1 z-50 min-w-[160px] backdrop-blur-md"
           style={{
             top: contextMenuPosition.y,
             left: contextMenuPosition.x,
           }}
         >
           <button
-            className="w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+            className="w-full px-4 py-2 text-sm text-left text-[var(--color-flist-dark)] hover:bg-[var(--color-flist-surface-hover)] flex items-center space-x-2 transition-colors"
             onClick={() => {
               onRename(folder.id);
               setShowContextMenu(false);
@@ -209,7 +211,7 @@ const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, chi
             <span>Rename Folder</span>
           </button>
           <button
-            className="w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-red-50 flex items-center space-x-2"
+            className="w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-red-50 flex items-center space-x-2 transition-colors"
             onClick={() => {
               onDelete(folder.id);
               setShowContextMenu(false);
@@ -346,7 +348,7 @@ const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
   const activeList = activeId ? lists.find(list => list.id === activeId) : null;
 
   return (
-    <div className={`${sidebarOpen ? "w-72" : "w-0"} transition-all duration-300 bg-[var(--color-flist-bg)] border-r border-[var(--color-flist-border)] flex flex-col overflow-hidden shadow-sm`}>
+    <div className={`${sidebarOpen ? "w-72" : "w-0"} transition-all duration-300 bg-[var(--color-flist-surface)] border-r border-[var(--color-flist-border)] flex flex-col overflow-hidden shadow-sm`}>
       <div className="p-6 border-b border-[var(--color-flist-border)]">
         {/* Logo */}
         <div className="flex items-center space-x-2 mb-6">

@@ -63,7 +63,7 @@ export default function MainContent({
           <div className="flex justify-between items-center w-full max-w-8xl px-8 pt-8">
             {selectedListId &&
               (["tasks", "notes", "dashboard"].includes(selectedListId) ? (
-                <h2 className="text-xl font-semibold tracking-tight text-[var(--color-flist-dark)]">
+                <h2 className="text-xl font-medium tracking-tight text-[var(--color-flist-dark)]">
                   {selectedListId === "tasks"
                     ? "Tasks"
                     : selectedListId === "notes"
@@ -72,7 +72,7 @@ export default function MainContent({
                 </h2>
               ) : editing ? (
                 <input
-                  className="text-xl font-semibold tracking-tight border-b border-gray-300 focus:outline-none focus:border-blue-400 bg-transparent"
+                  className="text-xl font-medium tracking-tight border-b border-[var(--color-flist-border)] focus:outline-none focus:border-[var(--color-flist-accent)] bg-transparent px-1 py-0.5 transition-colors"
                   value={draftTitle}
                   onChange={(e) => setDraftTitle(e.target.value)}
                   onBlur={handleSaveTitle}
@@ -84,7 +84,7 @@ export default function MainContent({
                 />
               ) : (
                 <h2
-                  className="text-xl font-semibold tracking-tight text-[var(--color-flist-dark)] cursor-text"
+                  className="text-xl font-medium tracking-tight text-[var(--color-flist-dark)] cursor-text hover:text-[var(--color-flist-accent)] transition-colors"
                   onClick={() => {
                     setDraftTitle(selectedList?.title || "");
                     setEditing(true);
@@ -101,7 +101,7 @@ export default function MainContent({
                   const newTask = await createTask("New Task");
                   setSelectedBlock(newTask);
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition"
+                className="flex items-center gap-2 px-4 py-2 bg-[var(--color-flist-accent)] text-white text-sm rounded-lg hover:bg-[var(--color-flist-accent-hover)] transition-all duration-200 shadow-sm hover:shadow-md"
               >
                 <Plus size={16} />
                 New Task
@@ -113,7 +113,7 @@ export default function MainContent({
                   const newNote = await createNote("New Note");
                   setSelectedBlock(newNote);
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition"
+                className="flex items-center gap-2 px-4 py-2 bg-[var(--color-flist-accent)] text-white text-sm rounded-lg hover:bg-[var(--color-flist-accent-hover)] transition-all duration-200 shadow-sm hover:shadow-md"
               >
                 <Plus size={16} />
                 New Note
@@ -122,7 +122,7 @@ export default function MainContent({
           </div>
 
           {/* メイン表示（ブロック or タスク） */}
-          <div className="mt-4">
+          <div className="mt-2">
             {selectedListId === "dashboard" ? (
               <Dashboard />
             ) : selectedListId === "tasks" ? (
@@ -146,9 +146,9 @@ export default function MainContent({
               </div>
             ) : (
               <div className="flex items-center justify-center h-full px-6">
-                <div className="text-center text-gray-500">
+                <div className="text-center text-[var(--color-flist-muted)]">
                   <svg
-                    className="mx-auto h-12 w-12 text-gray-400 mb-4"
+                    className="mx-auto h-12 w-12 text-[var(--color-flist-muted)] mb-4 opacity-50"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -156,14 +156,14 @@ export default function MainContent({
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth={2}
+                      strokeWidth={1.5}
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                     />
                   </svg>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  <h3 className="text-lg font-medium text-[var(--color-flist-dark)] mb-2">
                     リストを選択してください
                   </h3>
-                  <p className="text-gray-500">
+                  <p className="text-[var(--color-flist-muted)]">
                     左のサイドバーからリストを選択するか、新しいリストを作成してください。
                   </p>
                 </div>
@@ -179,7 +179,7 @@ export default function MainContent({
         (selectedBlock.type === "task" ||
           selectedBlock.type === "task-done" ||
           selectedBlock.type === "note") && (
-          <div className="w-[32rem] shrink-0 overflow-y-auto border-l border-[var(--color-flist-border)] bg-[var(--color-flist-bg)]">
+          <div className="w-[32rem] shrink-0 overflow-y-auto border-l border-[var(--color-flist-border)] bg-[var(--color-flist-surface)] backdrop-blur-md">
             <BlockDetails
               block={selectedBlock}
               onClose={() => setSelectedBlock(null)}

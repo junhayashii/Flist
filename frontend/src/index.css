@@ -1,20 +1,136 @@
 @import "tailwindcss";
 
 :root {
-  --color-flist-bg: #f9fafb;
-  --color-flist-border: #e5e7eb;
-  --color-flist-blue: #3b82f6;
-  --color-flist-blue-light: #eff6ff;
-  --color-flist-blue-dark: #1e40af;
-  --color-flist-dark: #1f2937;
-  --color-flist-muted: #6b7280;
+  /* Base colors */
+  --color-flist-bg: #f8fafc;
+  --color-flist-border: rgba(226, 232, 240, 0.6);
+  --color-flist-dark: #0f172a;
+  --color-flist-muted: #64748b;
+  
+  /* Surface colors */
+  --color-flist-surface: #ffffff;
+  --color-flist-surface-hover: #f8fafc;
+  --color-flist-surface-active: #f1f5f9;
+  
+  /* Accent colors */
+  --color-flist-accent: #6366f1;
+  --color-flist-accent-hover: #4f46e5;
+  --color-flist-accent-light: rgba(99, 102, 241, 0.1);
+  --color-flist-accent-dark: #4338ca;
+  
+  /* Text colors */
+  --color-flist-text: #0f172a;
+  --color-flist-text-secondary: #334155;
+  --color-flist-text-muted: #64748b;
+  
+  /* Status colors */
+  --color-flist-success: #10b981;
+  --color-flist-warning: #f59e0b;
+  --color-flist-error: #ef4444;
+  
+  /* Shadow */
+  --color-flist-shadow: rgba(0, 0, 0, 0.04);
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  font-family: "Inter", sans-serif;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
   background-color: var(--color-flist-bg);
-  color: var(--color-flist-dark);
+  color: var(--color-flist-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Modern scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.3);
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  box-shadow: 0 1px 3px var(--color-flist-shadow);
+}
+
+/* Subtle hover effect */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--color-flist-shadow);
+}
+
+/* Focus styles */
+.focus-ring {
+  outline: none;
+  transition: box-shadow 0.2s ease;
+}
+
+.focus-ring:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-flist-accent-light), 0 0 0 4px var(--color-flist-accent);
+}
+
+/* Block styles */
+.block {
+  background: var(--color-flist-surface);
+  border: 1px solid var(--color-flist-border);
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.block:hover {
+  border-color: var(--color-flist-accent);
+  box-shadow: 0 4px 12px var(--color-flist-shadow);
+}
+
+.block-selected {
+  border-color: var(--color-flist-accent);
+  box-shadow: 0 0 0 1px var(--color-flist-accent);
+}
+
+/* Button styles */
+.btn {
+  background: var(--color-flist-surface);
+  border: 1px solid var(--color-flist-border);
+  color: var(--color-flist-text);
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  background: var(--color-flist-surface-hover);
+  border-color: var(--color-flist-accent);
+  color: var(--color-flist-accent);
+}
+
+.btn-primary {
+  background: var(--color-flist-accent);
+  border-color: var(--color-flist-accent);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--color-flist-accent-hover);
+  border-color: var(--color-flist-accent-hover);
+  color: white;
 }
