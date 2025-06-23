@@ -1,6 +1,6 @@
 import useLists from "../hooks/useLists";
 import useFolders from "../hooks/useFolders";
-import logo from "../assets/logo.png";
+import logo from "../assets/flist-icon.png";
 import {
   CheckSquare,
   FileText,
@@ -13,6 +13,8 @@ import {
   MoreVertical,
   Trash2,
   Edit2,
+  Calendar,
+  ChevronLeft,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import {
@@ -226,7 +228,7 @@ const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, chi
   );
 };
 
-const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
+const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListId }) => {
   const { lists, addList, updateList, refreshLists, deleteList } = useLists(selectedListId, setSelectedListId);
   const { folders, addFolder, editFolder, removeFolder } = useFolders();
 
@@ -349,7 +351,17 @@ const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
 
   return (
     <div className={`${sidebarOpen ? "w-72" : "w-0"} transition-all duration-300 bg-[var(--color-flist-surface)] border-r border-[var(--color-flist-border)] flex flex-col overflow-hidden shadow-sm`}>
-      <div className="p-6 border-b border-[var(--color-flist-border)]">
+      <div className="p-6 border-b border-[var(--color-flist-border)] relative">
+        {/* Close button */}
+        {sidebarOpen && setSidebarOpen && (
+          <button
+            className="absolute top-4 right-4 p-1 rounded-full hover:bg-[var(--color-flist-blue-light)]/40 text-[var(--color-flist-accent)] transition-colors z-10"
+            onClick={() => setSidebarOpen(false)}
+            title="サイドバーを閉じる"
+          >
+            <ChevronLeft size={22} />
+          </button>
+        )}
         {/* Logo */}
         <div className="flex items-center space-x-2 mb-6">
           <img src={logo} alt="Flist Logo" className="w-8 h-8" />
@@ -383,6 +395,15 @@ const Sidebar = ({ sidebarOpen, selectedListId, setSelectedListId }) => {
         >
           <FileText className={`w-4 h-4 ${selectedListId === "notes" ? "text-blue-600" : "text-gray-400"}`} />
           <span>Notes</span>
+        </button>
+
+        {/* Calendar */}
+        <button
+          className={`${baseButton} ${selectedListId === "calendar" ? selected : unselected}`}
+          onClick={() => setSelectedListId("calendar")}
+        >
+          <Calendar className={`w-4 h-4 ${selectedListId === "calendar" ? "text-blue-600" : "text-gray-400"}`} />
+          <span>Calendar</span>
         </button>
       </div>
 

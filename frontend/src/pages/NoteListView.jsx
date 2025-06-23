@@ -258,10 +258,12 @@ export default function NoteListView({ onSelectNote, selectedNote }) {
               key={note.id}
               onClick={() => onSelectNote(note)}
               className={`
-                p-4 rounded-lg border border-[var(--color-flist-border)]
-                bg-[var(--color-flist-surface)] hover:bg-[var(--color-flist-surface-hover)]
+                p-4 rounded-lg border 
+                ${selectedNote?.id === note.id 
+                  ? 'border-[var(--color-flist-accent)] bg-[var(--color-flist-blue-light)]' 
+                  : 'border-[var(--color-flist-border)] bg-[var(--color-flist-surface)]'}
+                hover:bg-[var(--color-flist-surface-hover)]
                 cursor-pointer transition-all duration-200 ease-in-out
-                ${selectedNote?.id === note.id ? 'ring-2 ring-[var(--color-flist-primary)]' : ''}
               `}
             >
               <h3 className="font-medium text-[var(--color-flist-text)] mb-2">

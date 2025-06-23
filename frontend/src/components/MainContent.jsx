@@ -4,9 +4,10 @@ import BlockDetails from "./BlockDetails";
 import TaskListView from "../pages/TaskListView";
 import NoteListView from "../pages/NoteListView";
 import Dashboard from "../pages/Dashboard";
+import CalendarPage from "../pages/CalendarPage";
 import { fetchLists, updateListTitle } from "../api/lists";
 import { createTask, createNote } from "../api/blocks";
-import { Plus } from "lucide-react";
+import { Plus, Menu, ChevronRight } from "lucide-react";
 
 export default function MainContent({
   selectedListId,
@@ -57,18 +58,30 @@ export default function MainContent({
 
   return (
     <div className="flex-1 flex overflow-hidden">
+      {/* サイドバーが閉じているときだけ表示する開くボタン */}
+      {!sidebarOpen && setSidebarOpen && (
+        <button
+          className="fixed top-4 left-2 z-50 p-2 rounded-full bg-white/80 shadow-md hover:bg-[var(--color-flist-blue-light)]/40 text-[var(--color-flist-accent)] transition-colors border border-[var(--color-flist-border)]"
+          onClick={() => setSidebarOpen(true)}
+          title="サイドバーを開く"
+        >
+          <ChevronRight size={22} />
+        </button>
+      )}
       {/* メイン編集ペイン */}
       <div className="flex-1 flex flex-col bg-[var(--color-flist-bg)] backdrop-blur-md overflow-hidden">
         <div className="flex-1 overflow-y-auto">
           <div className="flex justify-between items-center w-full max-w-8xl px-8 pt-8">
             {selectedListId &&
-              (["tasks", "notes", "dashboard"].includes(selectedListId) ? (
+              (["tasks", "notes", "dashboard", "calendar"].includes(selectedListId) ? (
                 <h2 className="text-xl font-medium tracking-tight text-[var(--color-flist-dark)]">
                   {selectedListId === "tasks"
                     ? "Tasks"
                     : selectedListId === "notes"
                     ? "Notes"
-                    : "Dashboard"}
+                    : selectedListId === "dashboard"
+                    ? "Dashboard"
+                    : "Calendar"}
                 </h2>
               ) : editing ? (
                 <input
@@ -135,6 +148,8 @@ export default function MainContent({
                 onSelectNote={setSelectedBlock}
                 selectedNote={selectedBlock}
               />
+            ) : selectedListId === "calendar" ? (
+              <CalendarPage onSelectTask={setSelectedBlock} selectedBlockId={selectedBlock?.id} />
             ) : selectedListId ? (
               <div className="max-w-8xl mx-auto p-8">
                 <BlockEditor
