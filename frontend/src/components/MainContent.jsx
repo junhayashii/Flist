@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import BlockEditor from "./editor/BlockEditor";
 import BlockDetails from "./BlockDetails";
+import TableOfContents from "./TableOfContents";
 import TaskListView from "../pages/TaskListView";
 import NoteListView from "../pages/NoteListView";
 import Dashboard from "../pages/Dashboard";
@@ -17,6 +18,7 @@ export default function MainContent({
 }) {
   const [lists, setLists] = useState([]);
   const [selectedBlock, setSelectedBlock] = useState(null);
+  const [listBlocks, setListBlocks] = useState([]);
 
   const [editing, setEditing] = useState(false);
   const [draftTitle, setDraftTitle] = useState("");
@@ -54,6 +56,23 @@ export default function MainContent({
       }
     }
     setEditing(false);
+  };
+
+  // リストのブロックを更新するためのコールバック
+  const handleListBlocksUpdate = (blocks) => {
+    setListBlocks(blocks);
+  };
+
+  // 見出しクリック時のハンドラー
+  const handleHeadingClick = (headingBlock) => {
+    // 該当の見出しブロックを選択状態にする
+    setSelectedBlock(headingBlock);
+    
+    // メインコンテンツエリアで該当ブロックにスクロール
+    const event = new CustomEvent('scrollToBlock', { 
+      detail: { blockId: headingBlock.id } 
+    });
+    window.dispatchEvent(event);
   };
 
   return (
@@ -157,6 +176,7 @@ export default function MainContent({
                   onSelectedBlock={(block) => setSelectedBlock(block)}
                   selectedBlockId={selectedBlock?.id}
                   selectedBlock={selectedBlock}
+                  onBlocksUpdate={handleListBlocksUpdate}
                 />
               </div>
             ) : (
@@ -188,32 +208,67 @@ export default function MainContent({
         </div>
       </div>
 
-      {/* タスクの詳細パネル（右） */}
-      {selectedBlock &&
-        selectedListId !== "dashboard" &&
-        (selectedBlock.type === "task" ||
-          selectedBlock.type === "task-done" ||
-          selectedBlock.type === "note") && (
-          <div className="w-[32rem] shrink-0 overflow-y-auto border-l border-[var(--color-flist-border)] bg-[var(--color-flist-surface)] backdrop-blur-md">
-            <BlockDetails
-              block={selectedBlock}
-              onClose={() => setSelectedBlock(null)}
-              onUpdate={(updated) => {
-                setSelectedBlock(updated);
-                // Update the block in the main content
-                if (selectedListId === "tasks") {
-                  // For TaskListView, we need to trigger a refresh
-                  const event = new CustomEvent('taskUpdated', { detail: updated });
-                  window.dispatchEvent(event);
-                } else if (selectedListId === "notes") {
-                  // For NoteListView, we need to trigger a refresh
-                  const event = new CustomEvent('noteUpdated', { detail: updated });
-                  window.dispatchEvent(event);
-                }
-              }}
-            />
-          </div>
-        )}
+      {/* 詳細パネル（右）- リストページでは常に表示、その他は従来通り */}
+      {selectedListId && selectedListId !== "dashboard" && (
+        <>
+          {/* リストページ（BlockEditor使用）では常に表示 */}
+          {!["tasks", "notes", "calendar"].includes(selectedListId) && (
+            <div className="w-[32rem] shrink-0 overflow-y-auto border-l border-[var(--color-flist-border)] bg-[var(--color-flist-surface)] backdrop-blur-md">
+              {selectedBlock && 
+               (selectedBlock.type === "task" ||
+                selectedBlock.type === "task-done" ||
+                selectedBlock.type === "note") ? (
+                <BlockDetails
+                  block={selectedBlock}
+                  onClose={() => setSelectedBlock(null)}
+                  onUpdate={(updated) => {
+                    setSelectedBlock(updated);
+                    // Update the block in the main content
+                    if (selectedListId === "tasks") {
+                      // For TaskListView, we need to trigger a refresh
+                      const event = new CustomEvent('taskUpdated', { detail: updated });
+                      window.dispatchEvent(event);
+                    } else if (selectedListId === "notes") {
+                      // For NoteListView, we need to trigger a refresh
+                      const event = new CustomEvent('noteUpdated', { detail: updated });
+                      window.dispatchEvent(event);
+                    }
+                  }}
+                />
+              ) : (
+                // タスクが選択されていない時は目次を表示
+                <TableOfContents 
+                  blocks={listBlocks} 
+                  onHeadingClick={handleHeadingClick}
+                />
+              )}
+            </div>
+          )}
+          
+          {/* タスク、ノート、カレンダーページでは従来通り */}
+          {["tasks", "notes", "calendar"].includes(selectedListId) && selectedBlock && (
+            <div className="w-[32rem] shrink-0 overflow-y-auto border-l border-[var(--color-flist-border)] bg-[var(--color-flist-surface)] backdrop-blur-md">
+              <BlockDetails
+                block={selectedBlock}
+                onClose={() => setSelectedBlock(null)}
+                onUpdate={(updated) => {
+                  setSelectedBlock(updated);
+                  // Update the block in the main content
+                  if (selectedListId === "tasks") {
+                    // For TaskListView, we need to trigger a refresh
+                    const event = new CustomEvent('taskUpdated', { detail: updated });
+                    window.dispatchEvent(event);
+                  } else if (selectedListId === "notes") {
+                    // For NoteListView, we need to trigger a refresh
+                    const event = new CustomEvent('noteUpdated', { detail: updated });
+                    window.dispatchEvent(event);
+                  }
+                }}
+              />
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

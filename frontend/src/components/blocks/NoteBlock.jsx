@@ -30,6 +30,7 @@ export default function NoteBlock({
 
   return (
     <div
+      id={`block-${block.id}`}
       tabIndex={-1}
       className={`flex items-center justify-between gap-2 px-3 py-2 cursor-pointer transition-colors ${
         isSelected

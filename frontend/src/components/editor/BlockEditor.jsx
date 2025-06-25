@@ -30,6 +30,7 @@ export default function BlockEditor({
   onSelectedBlock,
   selectedBlockId,
   selectedBlock,
+  onBlocksUpdate,
 }) {
   const { blocks, setBlocks, loadBlocks, saveBlock, updateBlock, deleteBlock } =
     useBlocks(listId, parentBlockId);
@@ -43,6 +44,34 @@ export default function BlockEditor({
   useEffect(() => {
     loadBlocks();
   }, [listId, parentBlockId]);
+
+  useEffect(() => {
+    if (onBlocksUpdate) {
+      onBlocksUpdate(blocks);
+    }
+  }, [blocks, onBlocksUpdate]);
+
+  useEffect(() => {
+    const handleScrollToBlock = (event) => {
+      const { blockId } = event.detail;
+      const blockElement = document.getElementById(`block-${blockId}`);
+      if (blockElement) {
+        blockElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+        blockElement.classList.add('ring-2', 'ring-[var(--color-flist-accent)]', 'ring-opacity-50');
+        setTimeout(() => {
+          blockElement.classList.remove('ring-2', 'ring-[var(--color-flist-accent)]', 'ring-opacity-50');
+        }, 2000);
+      }
+    };
+
+    window.addEventListener('scrollToBlock', handleScrollToBlock);
+    return () => {
+      window.removeEventListener('scrollToBlock', handleScrollToBlock);
+    };
+  }, []);
 
   useEffect(() => {
     if (focusBlockId && blockRefs.current[focusBlockId]) {

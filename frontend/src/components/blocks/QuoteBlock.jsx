@@ -5,6 +5,7 @@ export default function QuoteBlock({ block, onClick }) {
 
   return (
     <blockquote
+      id={`block-${block.id}`}
       tabIndex={-1}
       className="border-l-4 pl-4 text-gray-600 italic px-3 py-1 cursor-pointer"
       onClick={() => onClick?.(block.id)}

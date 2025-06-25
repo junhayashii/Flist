@@ -14,6 +14,7 @@ export default function ListItemBlock({ block, type = "bullet", onClick }) {
 
   return (
     <li
+      id={`block-${block.id}`}
       tabIndex={-1}
       className={`${baseClass} ${classes[type]}`}
       onClick={() => onClick?.(block.id)}

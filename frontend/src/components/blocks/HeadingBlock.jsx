@@ -13,6 +13,7 @@ export default function HeadingBlock({ block, level = 1, onClick }) {
 
   return (
     <Tag
+      id={`block-${block.id}`}
       tabIndex={-1}
       className={`${baseClass} ${levels[level]}`}
       onClick={() => onClick?.(block.id)}

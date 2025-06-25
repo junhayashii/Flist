@@ -61,6 +61,7 @@ const TaskBlock = forwardRef(({
 
   return (
     <div
+      id={`block-${block.id}`}
       ref={ref}
       className={`p-4 cursor-pointer rounded-xl transition-all duration-200 ${
         isSelected 
