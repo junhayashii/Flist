@@ -1,5 +1,6 @@
 import useLists from "../hooks/useLists";
 import useFolders from "../hooks/useFolders";
+import { useAuth } from "../hooks/useAuth";
 import logo from "../assets/flist-icon.png";
 import {
   CheckSquare,
@@ -15,6 +16,9 @@ import {
   Edit2,
   Calendar,
   ChevronLeft,
+  User,
+  LogOut,
+  Settings,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import {
@@ -231,11 +235,11 @@ const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, chi
 const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListId }) => {
   const { lists, addList, updateList, refreshLists, deleteList } = useLists(selectedListId, setSelectedListId);
   const { folders, addFolder, editFolder, removeFolder } = useFolders();
+  const { user, logout } = useAuth();
 
   const [editingId, setEditingId] = useState(null);
   const [draftTitle, setDraftTitle] = useState("");
   const [expandedFolders, setExpandedFolders] = useState({});
-  const [showFolderMenu, setShowFolderMenu] = useState(null);
   const [activeId, setActiveId] = useState(null);
   const inputRef = useRef(null);
 
@@ -247,57 +251,57 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
     })
   );
 
-  useEffect(() => {
-    if (editingId && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [editingId]);
-
   const handleAddList = async (folderId = null) => {
-    const newId = await addList("", folderId);
-    setEditingId(newId);
-    setDraftTitle("");
+    try {
+      await addList("New List", folderId);
+    } catch (error) {
+      console.error("Failed to add list:", error);
+      alert("Failed to add list. Please try again.");
+    }
   };
 
   const handleAddFolder = async () => {
-    const newFolder = await addFolder("New Folder");
-    setExpandedFolders(prev => ({ ...prev, [newFolder.id]: true }));
-    setEditingId(`folder-${newFolder.id}`);
-    setDraftTitle("New Folder");
+    try {
+      await addFolder("New Folder");
+    } catch (error) {
+      console.error("Failed to add folder:", error);
+      alert("Failed to add folder. Please try again.");
+    }
   };
 
   const handleSaveTitle = async (id, isFolder = false) => {
-    const trimmed = draftTitle.trim();
-    if (!trimmed) return;
-
-    if (isFolder) {
-      const folderId = id.replace('folder-', '');
-      await editFolder(folderId, { title: trimmed });
-    } else {
-      await updateList(id, { title: trimmed });
+    if (draftTitle.trim() === "") return;
+    
+    try {
+      if (isFolder) {
+        await editFolder(id, draftTitle);
+      } else {
+        await updateList(id, draftTitle);
+      }
+      setEditingId(null);
+      setDraftTitle("");
+    } catch (error) {
+      console.error("Failed to save title:", error);
+      alert("Failed to save title. Please try again.");
     }
-    setEditingId(null);
   };
 
   const handleDragStart = (event) => {
-    const { active } = event;
-    setActiveId(active.id);
+    setActiveId(event.active.id);
   };
 
   const handleDragEnd = async (event) => {
     const { active, over } = event;
-    if (!over) return;
+    setActiveId(null);
 
-    const listId = active.id;
-    const folderId = over.id.startsWith('folder-') ? over.id.replace('folder-', '') : null;
-
-    try {
-      await moveListToFolder(listId, folderId);
-      await refreshLists();
-    } catch (error) {
-      console.error('Failed to move list:', error);
-    } finally {
-      setActiveId(null);
+    if (active && over && active.id !== over.id) {
+      try {
+        await moveListToFolder(active.id, over.id.replace('folder-', ''));
+        await refreshLists();
+      } catch (error) {
+        console.error("Failed to move list:", error);
+        alert("Failed to move list. Please try again.");
+      }
     }
   };
 
@@ -331,6 +335,16 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
   const handleRenameFolder = (folderId) => {
     setEditingId(`folder-${folderId}`);
     setDraftTitle(folders.find(f => f.id === folderId)?.title || "");
+  };
+
+  const handleLogout = async () => {
+    if (confirm("ログアウトしますか？")) {
+      try {
+        await logout();
+      } catch (error) {
+        console.error("ログアウトエラー:", error);
+      }
+    }
   };
 
   const baseButton = "w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-sm font-medium transition";
@@ -505,6 +519,41 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
               ) : null}
             </DragOverlay>
           </DndContext>
+        </div>
+      </div>
+
+      {/* Account Section */}
+      <div className="p-4 border-t border-[var(--color-flist-border)] bg-[var(--color-flist-surface)]">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-[var(--color-flist-accent)] rounded-full flex items-center justify-center">
+              <User size={16} className="text-white" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-[var(--color-flist-dark)] truncate max-w-[160px]">
+                {user?.email || "User"}
+              </span>
+              <span className="text-xs text-[var(--color-flist-muted)]">
+                {user?.is_staff ? "Admin" : "User"}
+              </span>
+            </div>
+          </div>
+          <div className="flex space-x-1">
+            <button
+              onClick={() => {/* TODO: Settings */}}
+              className="p-1 rounded-md hover:bg-[var(--color-flist-surface-hover)] text-[var(--color-flist-muted)] transition-colors"
+              title="Settings"
+            >
+              <Settings size={16} />
+            </button>
+            <button
+              onClick={handleLogout}
+              className="p-1 rounded-md hover:bg-red-50 text-[var(--color-flist-muted)] hover:text-red-600 transition-colors"
+              title="Log Out"
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
         </div>
       </div>
     </div>

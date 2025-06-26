@@ -5,28 +5,42 @@ from .models import Block, List, Folder, Tag
 from .serializers import BlockSerializer, ListSerializer, FolderSerializer, TagSerializer
 
 class TagViewSet(viewsets.ModelViewSet):
-    queryset = Tag.objects.all()
     serializer_class = TagSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
 
+    def get_queryset(self):
+        return Tag.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
 class FolderViewSet(viewsets.ModelViewSet):
-    queryset = Folder.objects.all()
     serializer_class = FolderSerializer
     
+    def get_queryset(self):
+        return Folder.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+    
 class ListViewSet(viewsets.ModelViewSet):
-    queryset = List.objects.all()
     serializer_class = ListSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['title']
 
+    def get_queryset(self):
+        return List.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
 class BlockViewSet(viewsets.ModelViewSet):
-    queryset = Block.objects.all()
     serializer_class = BlockSerializer
     filter_backends = [DjangoFilterBackend]
 
     def get_queryset(self):
-        queryset = Block.objects.all()
+        queryset = Block.objects.filter(user=self.request.user)
         params = self.request.query_params
 
         block_type = params.get('type')
@@ -54,6 +68,6 @@ class BlockViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         order = serializer.validated_data.get("order")
         if order is None:
-            max_order = Block.objects.aggregate(models.Max('order'))['order__max'] or 0
+            max_order = Block.objects.filter(user=self.request.user).aggregate(models.Max('order'))['order__max'] or 0
             order = max_order + 1
-        serializer.save(order=order)
+        serializer.save(user=self.request.user, order=order)

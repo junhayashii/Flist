@@ -1,14 +1,12 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:8000/api';
+import apiClient from './axios';
 
 export const fetchLists = async () => {
-  const response = await axios.get(`${API_URL}/lists/`);
+  const response = await apiClient.get('/lists/');
   return response.data;
 };
 
 export const createList = async (title, folderId = null) => {
-  const response = await axios.post(`${API_URL}/lists/`, {
+  const response = await apiClient.post('/lists/', {
     title: title || "New List",
     folder_id: folderId
   });
@@ -16,18 +14,17 @@ export const createList = async (title, folderId = null) => {
 };
 
 export const updateListTitle = async (id, data) => {
-  const response = await axios.patch(`${API_URL}/lists/${id}/`, data);
+  const response = await apiClient.patch(`/lists/${id}/`, data);
   return response.data;
 };
 
 export const deleteList = async (id) => {
-  await axios.delete(`${API_URL}/lists/${id}/`);
+  await apiClient.delete(`/lists/${id}/`);
 };
 
 export const fetchListMap = async () => {
-  const res = await fetch("http://127.0.0.1:8000/api/lists/");
-  if (!res.ok) throw new Error("リスト取得失敗");
-  const data = await res.json();
+  const response = await apiClient.get('/lists/');
+  const data = response.data;
 
   const listMap = {};
   data.forEach((l) => {

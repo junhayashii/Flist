@@ -38,10 +38,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
     'django_filters',
     'corsheaders',
     'api',
+    'accounts',
 ]
+
+AUTH_USER_MODEL = 'accounts.CustomUser'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -58,13 +62,14 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = 'config.urls'
 
-# REST_FRAMEWORK = {
-#     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
-#     'DEFAULT_RENDERER_CLASSES': (
-#         'rest_framework.renderers.JSONRenderer',
-#         'rest_framework.renderers.BrowsableAPIRenderer',  
-#     ),
-# }
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
 
 TEMPLATES = [
     {
