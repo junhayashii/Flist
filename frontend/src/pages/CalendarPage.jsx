@@ -105,9 +105,16 @@ export default function CalendarPage({ onSelectTask, selectedBlockId }) {
         {...listeners}
         style={{ cursor: "grab" }}
         onClick={handleClick}
-        className={`transition-all duration-200 select-none ${isDragging ? "opacity-80 scale-105 shadow-2xl z-50" : ""}`}
+        className={`transition-all duration-200 select-none group ${isDragging ? "opacity-80 scale-105 shadow-2xl z-50" : ""}`}
       >
-        {children}
+        {/* ドラッグ中のオーバーレイ */}
+        {isDragging && (
+          <div className="absolute inset-0 bg-[var(--color-flist-accent)]/10 border-2 border-dashed border-[var(--color-flist-accent)] rounded-xl animate-pulse" />
+        )}
+        
+        <div className={`relative ${isDragging ? "transform rotate-1" : ""}`}>
+          {children}
+        </div>
       </div>
     );
   }
@@ -121,7 +128,7 @@ export default function CalendarPage({ onSelectTask, selectedBlockId }) {
     return (
       <div
         ref={setNodeRef}
-        className={`rounded-xl p-2 min-h-[80px] border text-left flex flex-col gap-1 transition-all duration-200 bg-white
+        className={`rounded-xl p-2 min-h-[80px] border text-left flex flex-col gap-1 transition-all duration-200 bg-white relative
           ${isToday ? "border-2 border-[var(--color-flist-accent)] bg-[var(--color-flist-blue-light)]/10" : "border border-[var(--color-flist-border)]"}
           ${isSelected ? "ring-2 ring-[var(--color-flist-accent)]" : ""}
           ${(isOver || isDropping) ? "ring-2 ring-[var(--color-flist-accent)] bg-[var(--color-flist-accent)]/10" : ""}
@@ -129,7 +136,21 @@ export default function CalendarPage({ onSelectTask, selectedBlockId }) {
         style={{ position: "relative" }}
         onClick={onClick}
       >
-        {children}
+        {(isOver || isDropping) && (
+          <div className="absolute inset-0 bg-[var(--color-flist-accent)]/5 border-2 border-dashed border-[var(--color-flist-accent)] rounded-xl animate-pulse" />
+        )}
+        
+        {(isOver || isDropping) && (
+          <div className="absolute inset-0 flex items-center justify-center z-10">
+            <div className="bg-[var(--color-flist-accent)] text-white px-3 py-1 rounded-full text-xs font-medium shadow-lg">
+              Drop here
+            </div>
+          </div>
+        )}
+        
+        <div className={`relative z-10 ${(isOver || isDropping) ? "opacity-50" : ""}`}>
+          {children}
+        </div>
       </div>
     );
   }
@@ -402,10 +423,18 @@ export default function CalendarPage({ onSelectTask, selectedBlockId }) {
       <DragOverlay dropAnimation={null} modifiers={overlayModifiers}>
         {draggingTask && (
           <div
-            className="truncate text-xs px-4 py-2 rounded-xl border shadow-2xl bg-[var(--color-flist-accent)] text-white border-[var(--color-flist-accent)] opacity-80 scale-110 transition-all duration-150 z-50 select-none pointer-events-none"
+            className="truncate text-xs px-4 py-2 rounded-xl border shadow-2xl bg-[var(--color-flist-accent)] text-white border-[var(--color-flist-accent)] opacity-90 scale-110 transition-all duration-150 z-50 select-none pointer-events-none transform rotate-2"
             style={{ minWidth: 120, maxWidth: 220 }}
           >
-            {draggingTask.html.replace(/^- \[[ xX]\] /, "")}
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-white rounded-full"></div>
+              <span className="font-medium">
+                {draggingTask.html.replace(/^- \[[ xX]\] /, "")}
+              </span>
+              <div className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">
+                Moving...
+              </div>
+            </div>
           </div>
         )}
       </DragOverlay>

@@ -63,20 +63,32 @@ const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitl
   return (
     <div
       ref={setNodeRef}
-      {...attributes}
-      {...listeners}
-      className={`w-full flex items-center px-4 py-2 rounded-lg cursor-pointer text-sm transition-all duration-200 ${
+      className={`w-full flex items-center px-4 py-2 rounded-lg cursor-pointer text-sm transition-all duration-200 relative group ${
         isSelected 
           ? "bg-[var(--color-flist-blue-light)] text-[var(--color-flist-accent)]" 
           : "text-[var(--color-flist-dark)] hover:bg-[var(--color-flist-surface-hover)]"
-      } ${isDragging ? "opacity-50" : ""}`}
+      } ${isDragging ? "opacity-50 scale-105 shadow-lg" : ""}`}
       onClick={onClick}
       onContextMenu={handleContextMenu}
     >
+      {/* ドラッグハンドル */}
+      <div
+        {...attributes}
+        {...listeners}
+        className="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity duration-200 p-1 rounded hover:bg-[var(--color-flist-surface-hover)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="w-1 h-4 bg-[var(--color-flist-muted)] rounded-full flex flex-col gap-0.5">
+          <div className="w-full h-0.5 bg-[var(--color-flist-muted)] rounded-full"></div>
+          <div className="w-full h-0.5 bg-[var(--color-flist-muted)] rounded-full"></div>
+          <div className="w-full h-0.5 bg-[var(--color-flist-muted)] rounded-full"></div>
+        </div>
+      </div>
+
       {editingId === list.id ? (
         <input
           ref={inputRef}
-          className="w-full px-2 py-1 text-sm border border-[var(--color-flist-border)] rounded-md focus:outline-none focus:border-[var(--color-flist-accent)] bg-[var(--color-flist-surface)]"
+          className="w-full px-2 py-1 text-sm border border-[var(--color-flist-border)] rounded-md focus:outline-none focus:border-[var(--color-flist-accent)] bg-[var(--color-flist-surface)] ml-6"
           value={draftTitle}
           onChange={(e) => setDraftTitle(e.target.value)}
           onBlur={() => onEdit(list.id)}
@@ -86,7 +98,7 @@ const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitl
           }}
         />
       ) : (
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 ml-6">
           <List className="w-4 h-4 text-[var(--color-flist-muted)]" />
           <span className="truncate">{list.title || "Untitled"}</span>
         </div>
@@ -159,7 +171,7 @@ const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, chi
     <div className="space-y-1">
       <div
         ref={setNodeRef}
-        className={`flex items-center justify-between px-2 py-1 rounded-lg hover:bg-[var(--color-flist-surface-hover)] cursor-pointer transition-all duration-200 ${
+        className={`flex items-center justify-between px-2 py-1 rounded-lg hover:bg-[var(--color-flist-surface-hover)] cursor-pointer transition-all duration-200 relative ${
           isOver ? "bg-[var(--color-flist-blue-light)] border-2 border-[var(--color-flist-accent)] shadow-sm" : ""
         }`}
         onClick={onToggle}
@@ -167,7 +179,11 @@ const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, chi
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <div className="flex items-center space-x-2">
+        {isOver && (
+          <div className="absolute inset-0 bg-[var(--color-flist-accent)]/10 border-2 border-dashed border-[var(--color-flist-accent)] rounded-lg animate-pulse" />
+        )}
+        
+        <div className="flex items-center space-x-2 relative z-10">
           {isExpanded ? (
             <ChevronDown size={16} className={`${isOver ? "text-[var(--color-flist-accent)]" : "text-[var(--color-flist-muted)]"}`} />
           ) : (
@@ -177,6 +193,11 @@ const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, chi
           <span className={`text-sm font-medium ${isOver ? "text-[var(--color-flist-accent)]" : "text-[var(--color-flist-dark)]"}`}>
             {folder.title}
           </span>
+          {isOver && (
+            <span className="text-xs text-[var(--color-flist-accent)] font-medium ml-2">
+              Drop here
+            </span>
+          )}
         </div>
         {isHovered && (
           <button
@@ -184,7 +205,7 @@ const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, chi
               e.stopPropagation();
               onAddList(folder.id);
             }}
-            className="p-1 rounded-md hover:bg-[var(--color-flist-surface-hover)] text-[var(--color-flist-muted)] transition-colors"
+            className="p-1 rounded-md hover:bg-[var(--color-flist-surface-hover)] text-[var(--color-flist-muted)] transition-colors relative z-10"
             title="Add List"
           >
             <Plus size={14} />
@@ -228,6 +249,24 @@ const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, chi
           </button>
         </div>
       )}
+    </div>
+  );
+};
+
+/** UnorganizedDropZone: フォルダ外にリストをドロップするためのドロップエリア */
+const UnorganizedDropZone = ({ isOver, children }) => {
+  const { setNodeRef, isOver: isDropping } = useDroppable({ id: 'unorganized' });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`transition-all duration-200 ${
+        isOver || isDropping
+          ? 'border-2 border-dashed border-[var(--color-flist-accent)] bg-[var(--color-flist-blue-light)]/30 animate-pulse rounded-lg'
+          : ''
+      }`}
+      style={{ padding: 0, margin: 0 }}
+    >
+      {children}
     </div>
   );
 };
@@ -296,7 +335,11 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
 
     if (active && over && active.id !== over.id) {
       try {
-        await moveListToFolder(active.id, over.id.replace('folder-', ''));
+        if (over.id === 'unorganized') {
+          await moveListToFolder(active.id, null); // フォルダ外に移動
+        } else {
+          await moveListToFolder(active.id, over.id.replace('folder-', ''));
+        }
         await refreshLists();
       } catch (error) {
         console.error("Failed to move list:", error);
@@ -483,37 +526,49 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
                 </DroppableFolder>
               ))}
 
-              {/* Unorganized Lists */}
-              {listsByFolder['unorganized']?.length > 0 && (
-                <div className="space-y-1">
-                  {listsByFolder['unorganized'].map((list) => (
-                    <DraggableList
-                      key={list.id}
-                      list={list}
-                      isSelected={selectedListId === list.id}
-                      onClick={() => setSelectedListId(list.id)}
-                      onEdit={handleSaveTitle}
-                      editingId={editingId}
-                      draftTitle={draftTitle}
-                      setDraftTitle={setDraftTitle}
-                      inputRef={inputRef}
-                      onDelete={handleDeleteList}
-                      onRename={(id) => {
-                        setEditingId(id);
-                        setDraftTitle(list.title || "");
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
+              {/* Unorganized Drop Zone: フォルダの下に移動 */}
+              <UnorganizedDropZone>
+                {listsByFolder['unorganized']?.length > 0 && (
+                  <div className="space-y-1">
+                    {listsByFolder['unorganized'].map((list) => (
+                      <DraggableList
+                        key={list.id}
+                        list={list}
+                        isSelected={selectedListId === list.id}
+                        onClick={() => setSelectedListId(list.id)}
+                        onEdit={handleSaveTitle}
+                        editingId={editingId}
+                        draftTitle={draftTitle}
+                        setDraftTitle={setDraftTitle}
+                        inputRef={inputRef}
+                        onDelete={handleDeleteList}
+                        onRename={(id) => {
+                          setEditingId(id);
+                          setDraftTitle(list.title || "");
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </UnorganizedDropZone>
             </div>
 
-            <DragOverlay>
+            <DragOverlay
+              modifiers={[
+                ({ transform }) => ({
+                  ...transform,
+                  y: transform.y - 20, // リストの高さの半分だけ上に補正
+                }),
+              ]}
+            >
               {activeList ? (
-                <div className="w-full flex items-center px-4 py-2 rounded-lg bg-white shadow-lg border border-gray-200">
+                <div className="w-full flex items-center px-4 py-2 rounded-lg bg-white shadow-xl border-2 border-[var(--color-flist-accent)] transform rotate-2 scale-105">
                   <div className="flex items-center space-x-3">
-                    <List className="w-4 h-4 text-gray-400" />
-                    <span className="truncate">{activeList.title || "Untitled"}</span>
+                    <List className="w-4 h-4 text-[var(--color-flist-accent)]" />
+                    <span className="truncate font-medium text-[var(--color-flist-accent)]">{activeList.title || "Untitled"}</span>
+                    <div className="text-xs text-[var(--color-flist-accent)] bg-[var(--color-flist-accent)]/10 px-2 py-1 rounded-full">
+                      Moving...
+                    </div>
                   </div>
                 </div>
               ) : null}

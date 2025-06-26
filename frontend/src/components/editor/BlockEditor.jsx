@@ -17,6 +17,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragOverlay,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -37,6 +38,7 @@ export default function BlockEditor({
 
   const [editingBlockId, setEditingBlockId] = useState(null);
   const [focusBlockId, setFocusBlockId] = useState(null);
+  const [activeId, setActiveId] = useState(null);
   const blockRefs = useRef({});
   const caretX = useRef(null);
   const caretToStart = useRef(false);
@@ -160,8 +162,14 @@ export default function BlockEditor({
   };
 
   const sensors = useSensors(useSensor(PointerSensor));
+  
+  const handleDragStart = (event) => {
+    setActiveId(event.active.id);
+  };
+  
   const handleDragEnd = (event) => {
     const { active, over } = event;
+    setActiveId(null);
     if (active.id !== over?.id) {
       const oldIndex = blocks.findIndex((b) => b.id === active.id);
       const newIndex = blocks.findIndex((b) => b.id === over.id);
@@ -172,10 +180,13 @@ export default function BlockEditor({
     }
   };
 
+  const activeBlock = activeId ? blocks.find(block => block.id === activeId) : null;
+
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
       <SortableContext
@@ -214,6 +225,30 @@ export default function BlockEditor({
             ))}
         </div>
       </SortableContext>
+      
+      <DragOverlay
+        modifiers={[
+          ({ transform }) => ({
+            ...transform,
+            x: transform.x - 280,
+            y: transform.y,
+          }),
+        ]}
+      >
+        {activeBlock ? (
+          <div className="bg-white shadow-xl border-2 border-[var(--color-flist-accent)] rounded-lg p-3 transform rotate-1 scale-105">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-[var(--color-flist-accent)] rounded-full"></div>
+              <span className="text-sm font-medium text-[var(--color-flist-accent)]">
+                {activeBlock.content || "Empty block"}
+              </span>
+              <div className="text-xs text-[var(--color-flist-accent)] bg-[var(--color-flist-accent)]/10 px-2 py-1 rounded-full">
+                Moving...
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 }
