@@ -64,6 +64,8 @@ const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitl
   return (
     <div
       ref={setNodeRef}
+      {...attributes}
+      {...listeners}
       className={`w-full flex items-center px-4 py-2 rounded-lg cursor-pointer text-sm transition-all duration-200 relative group ${
         isSelected 
           ? "bg-[var(--color-flist-blue-light)] text-[var(--color-flist-accent)]" 
@@ -74,31 +76,6 @@ const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitl
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* ドラッグハンドル - Notion風 */}
-      <div
-        {...attributes}
-        {...listeners}
-        className={`absolute left-1 top-1/2 -translate-y-1/2 transition-all duration-200 ${
-          isHovered || isDragging
-            ? "opacity-100 scale-100"
-            : "opacity-0 scale-75"
-        }`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex flex-col items-center gap-1 p-1 rounded-md hover:bg-[var(--color-flist-surface-hover)] cursor-grab active:cursor-grabbing">
-          <div className="flex flex-col gap-0.5">
-            <div className="w-1 h-1 bg-[var(--color-flist-muted)] rounded-full"></div>
-            <div className="w-1 h-1 bg-[var(--color-flist-muted)] rounded-full"></div>
-            <div className="w-1 h-1 bg-[var(--color-flist-muted)] rounded-full"></div>
-          </div>
-          <div className="flex flex-col gap-0.5">
-            <div className="w-1 h-1 bg-[var(--color-flist-muted)] rounded-full"></div>
-            <div className="w-1 h-1 bg-[var(--color-flist-muted)] rounded-full"></div>
-            <div className="w-1 h-1 bg-[var(--color-flist-muted)] rounded-full"></div>
-          </div>
-        </div>
-      </div>
-
       {/* ドラッグ中のオーバーレイ */}
       {isDragging && (
         <div className="absolute inset-0 bg-[var(--color-flist-accent)]/10 border-2 border-dashed border-[var(--color-flist-accent)] rounded-lg animate-pulse" />
@@ -335,12 +312,11 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
 
   const handleSaveTitle = async (id, isFolder = false) => {
     if (draftTitle.trim() === "") return;
-    
     try {
       if (isFolder) {
         await editFolder(id, draftTitle);
       } else {
-        await updateList(id, draftTitle);
+        await updateList(id, { title: draftTitle });
       }
       setEditingId(null);
       setDraftTitle("");

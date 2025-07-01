@@ -17,21 +17,6 @@ export default function SortableItem({ block, index, renderBlock, onAddBlock, on
 
   const isMenuActive = activeMenuBlockId === block.id;
 
-  const handleSixDotsClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    setMenuPosition({
-      x: rect.left + window.scrollX - 310, // 310px左にオフセット
-      y: rect.top + window.scrollY - 95 // 95px上にオフセット
-    });
-    
-    // 他のメニューを閉じて、このメニューを開く
-    onMenuOpen?.(block.id);
-    setShowMenu(true);
-  };
-
   const handleDelete = () => {
     onDeleteBlock?.(block.id);
     setShowMenu(false);
@@ -105,6 +90,17 @@ export default function SortableItem({ block, index, renderBlock, onAddBlock, on
                 ? "opacity-100 scale-100"
                 : "opacity-0 scale-75"
             }`}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const rect = e.currentTarget.getBoundingClientRect();
+              setMenuPosition({
+                x: rect.left + window.scrollX - 310,
+                y: rect.top + window.scrollY - 95
+              });
+              onMenuOpen?.(block.id);
+              setShowMenu(true);
+            }}
           >
             <div className={`flex flex-col gap-0.5 p-1 rounded-md hover:bg-[var(--color-flist-surface-hover)] cursor-grab active:cursor-grabbing transition-colors ${
               isMenuActive ? "bg-[var(--color-flist-accent)]/20" : ""
@@ -137,13 +133,8 @@ export default function SortableItem({ block, index, renderBlock, onAddBlock, on
             {/* 6点クリック用の透明オーバーレイ */}
             <div
               {...listeners}
-              className="absolute inset-0 cursor-grab active:cursor-grabbing"
-            />
-            {/* 6点クリック用のメニューボタン */}
-            <button
-              onClick={handleSixDotsClick}
-              className="absolute inset-0 cursor-pointer"
-              title="Block menu"
+              className="absolute inset-0 cursor-grab active:cursor-grabbing z-10"
+              style={{ pointerEvents: 'auto' }}
             />
           </div>
         </div>

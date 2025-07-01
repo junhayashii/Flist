@@ -165,7 +165,13 @@ export default function BlockEditor({
     }
   };
 
-  const sensors = useSensors(useSensor(PointerSensor));
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    })
+  );
   
   const handleDragStart = (event) => {
     setActiveId(event.active.id);

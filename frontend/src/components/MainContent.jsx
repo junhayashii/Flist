@@ -363,22 +363,6 @@ export default function MainContent({
           </div>
         </div>
       )}
-
-      {/* ブロック詳細パネル */}
-      {selectedBlock && (
-        <BlockDetails
-          block={selectedBlock}
-          onClose={() => setSelectedBlock(null)}
-          onUpdate={(updatedBlock) => {
-            setSelectedBlock(updatedBlock);
-            // タスクリストも更新
-            const event = new CustomEvent('taskUpdated', { 
-              detail: updatedBlock 
-            });
-            window.dispatchEvent(event);
-          }}
-        />
-      )}
     </div>
   );
 }
