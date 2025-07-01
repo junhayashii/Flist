@@ -39,6 +39,7 @@ const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitl
   });
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
   const contextMenuRef = useRef(null);
 
   const handleContextMenu = (e) => {
@@ -67,23 +68,41 @@ const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitl
         isSelected 
           ? "bg-[var(--color-flist-blue-light)] text-[var(--color-flist-accent)]" 
           : "text-[var(--color-flist-dark)] hover:bg-[var(--color-flist-surface-hover)]"
-      } ${isDragging ? "opacity-50 scale-105 shadow-lg" : ""}`}
+      } ${isDragging ? "opacity-60 scale-105 shadow-xl rotate-1" : ""}`}
       onClick={onClick}
       onContextMenu={handleContextMenu}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      {/* ドラッグハンドル */}
+      {/* ドラッグハンドル - Notion風 */}
       <div
         {...attributes}
         {...listeners}
-        className="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity duration-200 p-1 rounded hover:bg-[var(--color-flist-surface-hover)]"
+        className={`absolute left-1 top-1/2 -translate-y-1/2 transition-all duration-200 ${
+          isHovered || isDragging
+            ? "opacity-100 scale-100"
+            : "opacity-0 scale-75"
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="w-1 h-4 bg-[var(--color-flist-muted)] rounded-full flex flex-col gap-0.5">
-          <div className="w-full h-0.5 bg-[var(--color-flist-muted)] rounded-full"></div>
-          <div className="w-full h-0.5 bg-[var(--color-flist-muted)] rounded-full"></div>
-          <div className="w-full h-0.5 bg-[var(--color-flist-muted)] rounded-full"></div>
+        <div className="flex flex-col items-center gap-1 p-1 rounded-md hover:bg-[var(--color-flist-surface-hover)] cursor-grab active:cursor-grabbing">
+          <div className="flex flex-col gap-0.5">
+            <div className="w-1 h-1 bg-[var(--color-flist-muted)] rounded-full"></div>
+            <div className="w-1 h-1 bg-[var(--color-flist-muted)] rounded-full"></div>
+            <div className="w-1 h-1 bg-[var(--color-flist-muted)] rounded-full"></div>
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <div className="w-1 h-1 bg-[var(--color-flist-muted)] rounded-full"></div>
+            <div className="w-1 h-1 bg-[var(--color-flist-muted)] rounded-full"></div>
+            <div className="w-1 h-1 bg-[var(--color-flist-muted)] rounded-full"></div>
+          </div>
         </div>
       </div>
+
+      {/* ドラッグ中のオーバーレイ */}
+      {isDragging && (
+        <div className="absolute inset-0 bg-[var(--color-flist-accent)]/10 border-2 border-dashed border-[var(--color-flist-accent)] rounded-lg animate-pulse" />
+      )}
 
       {editingId === list.id ? (
         <input
@@ -94,13 +113,28 @@ const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitl
           onBlur={() => onEdit(list.id)}
           onKeyDown={(e) => {
             if (e.key === "Enter") onEdit(list.id);
-            if (e.key === "Escape") setEditingId(null);
+            if (e.key === "Escape") onRename(null);
           }}
         />
       ) : (
         <div className="flex items-center space-x-3 ml-6">
-          <List className="w-4 h-4 text-[var(--color-flist-muted)]" />
+          <List size={16} className="text-[var(--color-flist-muted)]" />
           <span className="truncate">{list.title || "Untitled"}</span>
+        </div>
+      )}
+
+      {/* アクションボタン - Notion風 */}
+      {isHovered && !isDragging && editingId !== list.id && (
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onRename(list.id);
+            }}
+            className="p-1 rounded-md hover:bg-[var(--color-flist-surface-hover)] text-[var(--color-flist-muted)] hover:text-[var(--color-flist-dark)] transition-colors"
+          >
+            <Edit2 size={14} />
+          </button>
         </div>
       )}
 
@@ -172,17 +206,13 @@ const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, chi
       <div
         ref={setNodeRef}
         className={`flex items-center justify-between px-2 py-1 rounded-lg hover:bg-[var(--color-flist-surface-hover)] cursor-pointer transition-all duration-200 relative ${
-          isOver ? "bg-[var(--color-flist-blue-light)] border-2 border-[var(--color-flist-accent)] shadow-sm" : ""
+          isOver ? "bg-[var(--color-flist-accent)]/5 border border-[var(--color-flist-accent)]" : ""
         }`}
         onClick={onToggle}
         onContextMenu={handleContextMenu}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {isOver && (
-          <div className="absolute inset-0 bg-[var(--color-flist-accent)]/10 border-2 border-dashed border-[var(--color-flist-accent)] rounded-lg animate-pulse" />
-        )}
-        
         <div className="flex items-center space-x-2 relative z-10">
           {isExpanded ? (
             <ChevronDown size={16} className={`${isOver ? "text-[var(--color-flist-accent)]" : "text-[var(--color-flist-muted)]"}`} />
@@ -193,11 +223,6 @@ const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, chi
           <span className={`text-sm font-medium ${isOver ? "text-[var(--color-flist-accent)]" : "text-[var(--color-flist-dark)]"}`}>
             {folder.title}
           </span>
-          {isOver && (
-            <span className="text-xs text-[var(--color-flist-accent)] font-medium ml-2">
-              Drop here
-            </span>
-          )}
         </div>
         {isHovered && (
           <button
@@ -213,7 +238,7 @@ const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, chi
         )}
       </div>
       {isExpanded && (
-        <div className={`ml-6 space-y-1 transition-all duration-200 ${isOver ? "bg-[var(--color-flist-blue-light)] rounded-lg p-1" : ""}`}>
+        <div className={`ml-6 space-y-1 transition-all duration-200 ${isOver ? "bg-[var(--color-flist-accent)]/5 rounded-lg p-1" : ""}`}>
           {children}
         </div>
       )}
@@ -261,7 +286,7 @@ const UnorganizedDropZone = ({ isOver, children }) => {
       ref={setNodeRef}
       className={`transition-all duration-200 ${
         isOver || isDropping
-          ? 'border-2 border-dashed border-[var(--color-flist-accent)] bg-[var(--color-flist-blue-light)]/30 animate-pulse rounded-lg'
+          ? 'bg-[var(--color-flist-accent)]/5 border border-[var(--color-flist-accent)] rounded-lg p-2'
           : ''
       }`}
       style={{ padding: 0, margin: 0 }}
@@ -557,18 +582,21 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
               modifiers={[
                 ({ transform }) => ({
                   ...transform,
-                  y: transform.y - 20, // リストの高さの半分だけ上に補正
+                  y: transform.y - 20,
                 }),
               ]}
+              dropAnimation={{
+                duration: 200,
+                easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+              }}
             >
               {activeList ? (
-                <div className="w-full flex items-center px-4 py-2 rounded-lg bg-white shadow-xl border-2 border-[var(--color-flist-accent)] transform rotate-2 scale-105">
-                  <div className="flex items-center space-x-3">
+                <div className="w-full flex items-center px-3 py-2 rounded-lg bg-white shadow-lg border border-[var(--color-flist-accent)] opacity-90">
+                  <div className="flex items-center space-x-2">
                     <List className="w-4 h-4 text-[var(--color-flist-accent)]" />
-                    <span className="truncate font-medium text-[var(--color-flist-accent)]">{activeList.title || "Untitled"}</span>
-                    <div className="text-xs text-[var(--color-flist-accent)] bg-[var(--color-flist-accent)]/10 px-2 py-1 rounded-full">
-                      Moving...
-                    </div>
+                    <span className="truncate text-sm text-[var(--color-flist-dark)] max-w-32">
+                      {activeList.title || "Untitled"}
+                    </span>
                   </div>
                 </div>
               ) : null}

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import TaskBlock from "../components/blocks/TaskBlock";
-import { fetchTasks, createTask, updateTask, deleteBlock } from "../api/blocks";
+import { fetchTasks, updateTask, deleteBlock } from "../api/blocks";
 import { fetchListMap } from "../api/lists";
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
 import {
   Filter,
   SortAsc,
@@ -20,11 +20,10 @@ const TaskListView = ({ onSelectTask, selectedBlockId }) => {
   const [selectedLists, setSelectedLists] = useState([]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
-  const [newTaskText, setNewTaskText] = useState("");
   const [statusFilter, setStatusFilter] = useState("all"); // all, completed, pending
   const [dateFilter, setDateFilter] = useState("all"); // all, today, tomorrow, this-week
   const [sortBy, setSortBy] = useState("due-date"); // due-date, created, updated, title
-  const [sortOrder, setSortOrder] = useState("asc"); // asc, desc
+  const [sortOrder] = useState("asc"); // asc, desc
   const [editingBlockId, setEditingBlockId] = useState(null);
   const taskRefs = useRef({});
 
@@ -52,15 +51,6 @@ const TaskListView = ({ onSelectTask, selectedBlockId }) => {
       window.removeEventListener('taskUpdated', handleTaskUpdate);
     };
   }, []);
-
-  const addTask = async () => {
-    if (!newTaskText.trim()) return;
-    const base = newTaskText.trim();
-    const html = /^- \[[ xX]\] /.test(base) ? base : `- [ ] ${base}`;
-    const newTask = await createTask(html);
-    setTasks((prev) => [...prev, newTask]);
-    setNewTaskText("");
-  };
 
   const handleDelete = async (task) => {
     try {
@@ -176,6 +166,63 @@ const TaskListView = ({ onSelectTask, selectedBlockId }) => {
   };
 
   const filteredTasks = getFilteredAndSortedTasks();
+
+  const handleKeyDown = async (e, task, index) => {
+    const el = taskRefs.current[task.id];
+    if (!el) return;
+
+    const html = el.innerText || "";
+    
+    // 空のタスクをテキストに戻す処理
+    const isEmptyTask = 
+      (task.type === "task" || task.type === "task-done") &&
+      /^-\s\[[ x]?\]\s*$/.test(html.trim());
+
+    if (isEmptyTask && (e.key === "Enter" || e.key === "Backspace")) {
+      e.preventDefault();
+      const updatedTask = { ...task, type: "text", html: "" };
+      setTasks((prev) =>
+        prev.map((t) => (t.id === task.id ? updatedTask : t))
+      );
+      setEditingBlockId(task.id);
+      await updateTask(updatedTask);
+      return;
+    }
+
+    // 上下キーでの移動処理
+    if (["ArrowUp", "ArrowDown"].includes(e.key)) {
+      const targetIndex = e.key === "ArrowUp" ? index - 1 : index + 1;
+      const targetTask = filteredTasks[targetIndex];
+
+      if (targetTask) {
+        e.preventDefault();
+        setEditingBlockId(targetTask.id);
+        onSelectTask?.(targetTask);
+
+        requestAnimationFrame(() => {
+          const targetEl = taskRefs.current[targetTask.id];
+          if (targetEl) {
+            targetEl.focus();
+            const sel = window.getSelection();
+            const range = document.createRange();
+            range.selectNodeContents(targetEl);
+            range.collapse(false);
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
+        });
+      }
+    }
+  };
+
+  const handleEmptyTaskEnterOrBackspace = async (task) => {
+    const updatedTask = { ...task, type: "text", html: "" };
+    setTasks((prev) =>
+      prev.map((t) => (t.id === task.id ? updatedTask : t))
+    );
+    setEditingBlockId(task.id);
+    await updateTask(updatedTask);
+  };
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -325,7 +372,7 @@ const TaskListView = ({ onSelectTask, selectedBlockId }) => {
 
         {/* Task List */}
         <div className="max-w-8xl mx-auto space-y-1">
-          {filteredTasks.map((task) => (
+          {filteredTasks.map((task, index) => (
             <TaskBlock
               key={task.id}
               block={task}
@@ -336,10 +383,11 @@ const TaskListView = ({ onSelectTask, selectedBlockId }) => {
               isEditable={editingBlockId === task.id}
               onBlur={handleBlur}
               editableRef={(el) => (taskRefs.current[task.id] = el)}
-              onEmptyTaskEnterOrBackspace={() => handleDelete(task)}
+              onEmptyTaskEnterOrBackspace={() => handleEmptyTaskEnterOrBackspace(task)}
               isSelected={selectedBlockId === task.id}
               onDelete={() => handleDelete(task)}
               editingBlockId={editingBlockId}
+              onKeyDown={(e) => handleKeyDown(e, task, index)}
             />
           ))}
         </div>

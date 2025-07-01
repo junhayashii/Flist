@@ -2,7 +2,16 @@ import React, { useEffect, useState } from "react";
 import { fetchTasks, createBlock, createTask, updateBlockDueDate } from "../api/blocks";
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, format, isSameMonth, isSameDay, parseISO, addWeeks, subWeeks, isWithinInterval, setHours, setMinutes, getHours, getDay } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
-import { DndContext, useDraggable, useDroppable, PointerSensor, useSensor, useSensors, DragOverlay } from "@dnd-kit/core";
+import {
+  DndContext,
+  closestCenter,
+  useSensor,
+  useSensors,
+  PointerSensor,
+  DragOverlay,
+  useDraggable,
+  useDroppable,
+} from "@dnd-kit/core";
 
 const getMonthMatrix = (currentMonth) => {
   const startMonth = startOfMonth(currentMonth);
@@ -105,7 +114,11 @@ export default function CalendarPage({ onSelectTask, selectedBlockId }) {
         {...listeners}
         style={{ cursor: "grab" }}
         onClick={handleClick}
-        className={`transition-all duration-200 select-none group ${isDragging ? "opacity-80 scale-105 shadow-2xl z-50" : ""}`}
+        className={`transition-all duration-200 select-none group ${
+          isDragging 
+            ? "opacity-80 scale-110 shadow-2xl z-50 rotate-2" 
+            : "hover:scale-105 hover:shadow-lg"
+        }`}
       >
         {/* ドラッグ中のオーバーレイ */}
         {isDragging && (
@@ -423,15 +436,15 @@ export default function CalendarPage({ onSelectTask, selectedBlockId }) {
       <DragOverlay dropAnimation={null} modifiers={overlayModifiers}>
         {draggingTask && (
           <div
-            className="truncate text-xs px-4 py-2 rounded-xl border shadow-2xl bg-[var(--color-flist-accent)] text-white border-[var(--color-flist-accent)] opacity-90 scale-110 transition-all duration-150 z-50 select-none pointer-events-none transform rotate-2"
+            className="truncate text-xs px-4 py-3 rounded-xl border shadow-2xl bg-[var(--color-flist-accent)] text-white border-[var(--color-flist-accent)] opacity-90 scale-110 transition-all duration-150 z-50 select-none pointer-events-none transform rotate-2 backdrop-blur-sm"
             style={{ minWidth: 120, maxWidth: 220 }}
           >
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-white rounded-full"></div>
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
               <span className="font-medium">
                 {draggingTask.html.replace(/^- \[[ xX]\] /, "")}
               </span>
-              <div className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">
+              <div className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-medium">
                 Moving...
               </div>
             </div>

@@ -28,14 +28,27 @@ export default function NoteBlock({
     }
   }, [isEditable]);
 
+  const handleBlur = () => {
+    if (!localRef.current) return;
+    
+    const newTitle = localRef.current.innerText.trim();
+    if (!newTitle) return;
+
+    // 新しいタイトルでマークダウン形式を作成
+    const newHtml = `[[${newTitle}]]`;
+    const updatedBlock = { ...block, html: newHtml, type: "note" };
+    
+    onBlur?.(updatedBlock);
+  };
+
   return (
     <div
       id={`block-${block.id}`}
       tabIndex={-1}
-      className={`flex items-center justify-between gap-2 px-3 py-2 cursor-pointer transition-colors ${
+      className={`flex items-center justify-between gap-2 px-2 py-1.5 cursor-pointer transition-colors ${
         isSelected
-          ? "bg-[var(--color-flist-accent)]/10 rounded-xl"
-          : "hover:bg-[var(--color-flist-surface)] rounded-xl"
+          ? "bg-[var(--color-flist-accent)]/10 rounded-lg"
+          : "hover:bg-[var(--color-flist-surface)] rounded-lg"
       }`}
       onClick={() => {
         onClick?.(block.id);
@@ -54,7 +67,7 @@ export default function NoteBlock({
               contentEditable
               suppressContentEditableWarning
               className="outline-none"
-              onBlur={() => onBlur?.(block)}
+              onBlur={handleBlur}
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => onKeyDown?.(e)}
             >

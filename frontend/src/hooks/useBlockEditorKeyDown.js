@@ -7,24 +7,12 @@ export function useBlockEditorKeyDown({
   updateBlock,
   saveBlock,
   deleteBlock,
-  selectedBlockId,
   onSelectedBlock,
   moveCaretToClosestXAndLine,
   caretX,
   caretToStart,
+  isSlashMenuVisible = false,
 }) {
-  const isEmptyBlock = (el) => {
-    const text = el?.innerText.replace(/\u200B/g, "").trim();
-    return text === "" || el.innerHTML === "<br>";
-  };
-
-  const isCursorAtStart = () => {
-    const sel = window.getSelection();
-    if (!sel.rangeCount) return false;
-    const range = sel.getRangeAt(0);
-    return range.startOffset === 0 && range.endOffset === 0;
-  };
-
   const handleKeyDown = async (e, block, index) => {
     const el = blockRefs.current[block.id];
     const html = el?.innerText || "";
@@ -33,6 +21,11 @@ export function useBlockEditorKeyDown({
 
     const prevBlock = blocks[index - 1];
     const nextBlock = blocks[index + 1];
+
+    // スラッシュメニューが開いている時は矢印キーでのブロック移動を無効にする
+    if (isSlashMenuVisible && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter"].includes(e.key)) {
+      return;
+    }
 
     // --- Shift+Enter = <br> 改行挿入
     if (e.key === "Enter" && e.shiftKey) {
@@ -100,7 +93,7 @@ export function useBlockEditorKeyDown({
           if (!el) return;
           el.focus();
 
-          const isEditable = ["text", "task", "task-done"].includes(
+          const isEditable = ["text", "task", "task-done", "note", "heading1", "heading2", "heading3", "bullet", "numbered", "quote"].includes(
             targetBlock.type
           );
 

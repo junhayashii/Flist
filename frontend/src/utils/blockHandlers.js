@@ -1,4 +1,4 @@
-import { updateBlock as apiUpdateBlock, createBlock } from "../api/blocks";
+import { updateBlock as apiUpdateBlock } from "../api/blocks";
 
 export const getBlockType = (text) => {
   const trimmed = text.trim();
@@ -28,7 +28,21 @@ export const handleBlur = async ({
   const newType = getBlockType(html);
 
   const correctedType =
-    (block.type === "task" || block.type === "task-done") && newType === "text"
+    ((block.type === "task" || block.type === "task-done") && newType === "text")
+      ? block.type
+      : (block.type === "note" && newType === "text")
+      ? block.type
+      : (block.type === "heading1" && newType === "text")
+      ? block.type
+      : (block.type === "heading2" && newType === "text")
+      ? block.type
+      : (block.type === "heading3" && newType === "text")
+      ? block.type
+      : (block.type === "bullet" && newType === "text")
+      ? block.type
+      : (block.type === "numbered" && newType === "text")
+      ? block.type
+      : (block.type === "quote" && newType === "text")
       ? block.type
       : newType;
 

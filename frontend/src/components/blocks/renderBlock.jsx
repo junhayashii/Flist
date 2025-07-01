@@ -22,6 +22,7 @@ export default function renderBlock({
   setBlocks,
   saveBlock,
   updateBlock,
+  setIsSlashMenuVisible,
 }) {
   const isTask = block.type === "task" || block.type === "task-done";
   const isEditing = editingBlockId === block.id;
@@ -52,56 +53,133 @@ export default function renderBlock({
     );
   }
 
-  if (editingBlockId !== block.id) {
-    switch (block.type) {
-      case "heading1":
-        return (
-          <HeadingBlock block={block} level={1} onClick={handleBlockClick} />
-        );
-      case "heading2":
-        return (
-          <HeadingBlock block={block} level={2} onClick={handleBlockClick} />
-        );
-      case "heading3":
-        return (
-          <HeadingBlock block={block} level={3} onClick={handleBlockClick} />
-        );
-      case "bullet":
-        return (
-          <ListItemBlock
-            block={block}
-            type="bullet"
-            onClick={handleBlockClick}
-          />
-        );
-      case "numbered":
-        return (
-          <ListItemBlock
-            block={block}
-            type="numbered"
-            onClick={handleBlockClick}
-          />
-        );
-      case "quote":
-        return <QuoteBlock block={block} onClick={handleBlockClick} />;
-      case "divider":
-        return <DividerBlock block={block} onClick={handleBlockClick} />;
-      case "note":
-        return (
-          <NoteBlock
-            block={block}
-            onClick={() => handleBlockClick(block.id)}
-            onOpenDetail={handleBlockClick}
-            isEditable={isEditing}
-            onBlur={() => handleBlur(block)}
-            editableRef={(el) => {
-              if (el) blockRefs.current[block.id] = el;
-            }}
-            onKeyDown={(e) => handleKeyDown(e, block, index)}
-            isSelected={block.id === selectedBlockId}
-          />
-        );
-    }
+  if (block.type === "note") {
+    return (
+      <NoteBlock
+        key={`note-${block.id}`}
+        block={block}
+        onClick={() => handleBlockClick(block.id)}
+        onOpenDetail={handleBlockClick}
+        isEditable={isEditing}
+        onBlur={() => handleBlur(block)}
+        editableRef={(el) => {
+          if (el) blockRefs.current[block.id] = el;
+        }}
+        onKeyDown={(e) => handleKeyDown(e, block, index)}
+        isSelected={block.id === selectedBlockId}
+      />
+    );
+  }
+
+  if (block.type === "heading1") {
+    return (
+      <HeadingBlock
+        key={`heading1-${block.id}`}
+        block={block}
+        level={1}
+        onClick={() => handleBlockClick(block.id)}
+        isEditable={isEditing}
+        onBlur={() => handleBlur(block)}
+        editableRef={(el) => {
+          if (el) blockRefs.current[block.id] = el;
+        }}
+        onKeyDown={(e) => handleKeyDown(e, block, index)}
+        isSelected={block.id === selectedBlockId}
+      />
+    );
+  }
+
+  if (block.type === "heading2") {
+    return (
+      <HeadingBlock
+        key={`heading2-${block.id}`}
+        block={block}
+        level={2}
+        onClick={() => handleBlockClick(block.id)}
+        isEditable={isEditing}
+        onBlur={() => handleBlur(block)}
+        editableRef={(el) => {
+          if (el) blockRefs.current[block.id] = el;
+        }}
+        onKeyDown={(e) => handleKeyDown(e, block, index)}
+        isSelected={block.id === selectedBlockId}
+      />
+    );
+  }
+
+  if (block.type === "heading3") {
+    return (
+      <HeadingBlock
+        key={`heading3-${block.id}`}
+        block={block}
+        level={3}
+        onClick={() => handleBlockClick(block.id)}
+        isEditable={isEditing}
+        onBlur={() => handleBlur(block)}
+        editableRef={(el) => {
+          if (el) blockRefs.current[block.id] = el;
+        }}
+        onKeyDown={(e) => handleKeyDown(e, block, index)}
+        isSelected={block.id === selectedBlockId}
+      />
+    );
+  }
+
+  if (block.type === "bullet") {
+    return (
+      <ListItemBlock
+        key={`bullet-${block.id}`}
+        block={block}
+        type="bullet"
+        onClick={() => handleBlockClick(block.id)}
+        isEditable={isEditing}
+        onBlur={() => handleBlur(block)}
+        editableRef={(el) => {
+          if (el) blockRefs.current[block.id] = el;
+        }}
+        onKeyDown={(e) => handleKeyDown(e, block, index)}
+        isSelected={block.id === selectedBlockId}
+      />
+    );
+  }
+
+  if (block.type === "numbered") {
+    return (
+      <ListItemBlock
+        key={`numbered-${block.id}`}
+        block={block}
+        type="numbered"
+        onClick={() => handleBlockClick(block.id)}
+        isEditable={isEditing}
+        onBlur={() => handleBlur(block)}
+        editableRef={(el) => {
+          if (el) blockRefs.current[block.id] = el;
+        }}
+        onKeyDown={(e) => handleKeyDown(e, block, index)}
+        isSelected={block.id === selectedBlockId}
+      />
+    );
+  }
+
+  if (block.type === "quote") {
+    return (
+      <QuoteBlock
+        key={`quote-${block.id}`}
+        block={block}
+        onClick={() => handleBlockClick(block.id)}
+        isEditable={isEditing}
+        onBlur={() => handleBlur(block)}
+        editableRef={(el) => {
+          if (el) blockRefs.current[block.id] = el;
+        }}
+        onKeyDown={(e) => handleKeyDown(e, block, index)}
+        isSelected={block.id === selectedBlockId}
+      />
+    );
+  }
+
+  if (block.type === "divider") {
+    return <DividerBlock block={block} onClick={handleBlockClick} />;
   }
 
   return (
@@ -132,6 +210,12 @@ export default function renderBlock({
       editableRef={(el) => {
         if (el) blockRefs.current[block.id] = el;
       }}
+      onSelectCommand={(command, block) => {
+        // スラッシュコマンドが選択された時の処理
+        // 必要に応じてブロックタイプを変更するなどの処理を追加
+        console.log("Selected command:", command, "for block:", block);
+      }}
+      setIsSlashMenuVisible={setIsSlashMenuVisible}
     />
   );
 }

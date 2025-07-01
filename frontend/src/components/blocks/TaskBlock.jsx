@@ -14,6 +14,7 @@ const TaskBlock = forwardRef(({
   isSelected = false,
   onDelete,
   editingBlockId,
+  onKeyDown,
 }, ref) => {
   const isDone = block.type === "task-done";
   const label = block.html.replace(/^(- \[[ xX]\]\s*)+/, "");
@@ -57,13 +58,16 @@ const TaskBlock = forwardRef(({
       e.preventDefault();
       onEmptyTaskEnterOrBackspace?.();
     }
+    
+    // 親コンポーネントのキーボード処理を呼び出し
+    onKeyDown?.(e);
   };
 
   return (
     <div
       id={`block-${block.id}`}
       ref={ref}
-      className={`p-4 cursor-pointer rounded-xl transition-all duration-200 ${
+      className={`p-2 cursor-pointer rounded-lg transition-all duration-200 ${
         isSelected 
           ? "bg-[var(--color-flist-blue-light)] border border-[var(--color-flist-accent)]" 
           : "bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] hover:border-[var(--color-flist-accent)] hover:bg-[var(--color-flist-surface-hover)]"
