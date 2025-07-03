@@ -454,15 +454,6 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
           <FileText className={`w-4 h-4 ${selectedListId === "notes" ? "text-blue-600" : "text-gray-400"}`} />
           <span>Notes</span>
         </button>
-
-        {/* Calendar */}
-        <button
-          className={`${baseButton} ${selectedListId === "calendar" ? selected : unselected}`}
-          onClick={() => setSelectedListId("calendar")}
-        >
-          <Calendar className={`w-4 h-4 ${selectedListId === "calendar" ? "text-blue-600" : "text-gray-400"}`} />
-          <span>Calendar</span>
-        </button>
       </div>
 
       {/* Explorer */}

@@ -15,14 +15,16 @@ export default function MainContent({
   selectedListId,
   sidebarOpen,
   setSidebarOpen,
+  selectedTask,
+  setSelectedTask,
+  onTaskDueDateChange,
+  refreshKey,
 }) {
   const [lists, setLists] = useState([]);
-  const [selectedBlock, setSelectedBlock] = useState(null);
   const [listBlocks, setListBlocks] = useState([]);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [selectedTags, setSelectedTags] = useState([]);
-
   const [editing, setEditing] = useState(false);
   const [draftTitle, setDraftTitle] = useState("");
 
@@ -39,7 +41,7 @@ export default function MainContent({
   }, []);
 
   useEffect(() => {
-    setSelectedBlock(null);
+    setSelectedTask(null);
   }, [selectedListId]);
 
   const selectedList = lists.find((list) => list.id === selectedListId);
@@ -86,7 +88,7 @@ export default function MainContent({
     
     try {
       const newTask = await createTask(newTaskTitle.trim(), selectedTags);
-      setSelectedBlock(newTask);
+      setSelectedTask(newTask);
       handleCloseTaskModal();
     } catch (error) {
       console.error("タスク作成失敗:", error);
@@ -96,7 +98,7 @@ export default function MainContent({
   // 見出しクリック時のハンドラー
   const handleHeadingClick = (headingBlock) => {
     // 該当の見出しブロックを選択状態にする
-    setSelectedBlock(headingBlock);
+    setSelectedTask(headingBlock);
     
     // メインコンテンツエリアで該当ブロックにスクロール
     const event = new CustomEvent('scrollToBlock', { 
@@ -170,7 +172,7 @@ export default function MainContent({
               <button
                 onClick={async () => {
                   const newNote = await createNote("New Note");
-                  setSelectedBlock(newNote);
+                  setSelectedTask(newNote);
                 }}
                 className="flex items-center gap-2 px-4 py-2 bg-[var(--color-flist-accent)] text-white text-sm rounded-lg hover:bg-[var(--color-flist-accent-hover)] transition-all duration-200 shadow-sm hover:shadow-md"
               >
@@ -186,23 +188,27 @@ export default function MainContent({
               <Dashboard />
             ) : selectedListId === "tasks" ? (
               <TaskListView
-                onSelectTask={setSelectedBlock}
-                selectedBlockId={selectedBlock?.id}
+                onSelectTask={setSelectedTask}
+                selectedBlockId={selectedTask?.id}
               />
             ) : selectedListId === "notes" ? (
               <NoteListView
-                onSelectNote={setSelectedBlock}
-                selectedNote={selectedBlock}
+                onSelectNote={setSelectedTask}
+                selectedNote={selectedTask}
               />
             ) : selectedListId === "calendar" ? (
-              <CalendarPage onSelectTask={setSelectedBlock} selectedBlockId={selectedBlock?.id} />
+              <CalendarPage 
+                onSelectTask={setSelectedTask} 
+                selectedBlockId={selectedTask?.id}
+                refreshKey={refreshKey}
+              />
             ) : selectedListId ? (
               <div className="max-w-8xl mx-auto p-8">
                 <BlockEditor
                   listId={selectedListId}
-                  onSelectedBlock={(block) => setSelectedBlock(block)}
-                  selectedBlockId={selectedBlock?.id}
-                  selectedBlock={selectedBlock}
+                  onSelectedBlock={(block) => setSelectedTask(block)}
+                  selectedBlockId={selectedTask?.id}
+                  selectedBlock={selectedTask}
                   onBlocksUpdate={handleListBlocksUpdate}
                 />
               </div>
@@ -241,15 +247,15 @@ export default function MainContent({
           {/* リストページ（BlockEditor使用）では常に表示 */}
           {!["tasks", "notes", "calendar"].includes(selectedListId) && (
             <div className="w-[32rem] shrink-0 overflow-y-auto border-l border-[var(--color-flist-border)] bg-[var(--color-flist-surface)] backdrop-blur-md">
-              {selectedBlock && 
-               (selectedBlock.type === "task" ||
-                selectedBlock.type === "task-done" ||
-                selectedBlock.type === "note") ? (
+              {selectedTask && 
+               (selectedTask.type === "task" ||
+                selectedTask.type === "task-done" ||
+                selectedTask.type === "note") ? (
                 <BlockDetails
-                  block={selectedBlock}
-                  onClose={() => setSelectedBlock(null)}
+                  block={selectedTask}
+                  onClose={() => setSelectedTask(null)}
                   onUpdate={(updated) => {
-                    setSelectedBlock(updated);
+                    setSelectedTask(updated);
                     // Update the block in the main content
                     if (selectedListId === "tasks") {
                       // For TaskListView, we need to trigger a refresh
@@ -273,13 +279,13 @@ export default function MainContent({
           )}
           
           {/* タスク、ノート、カレンダーページでは従来通り */}
-          {["tasks", "notes", "calendar"].includes(selectedListId) && selectedBlock && (
+          {["tasks", "notes", "calendar"].includes(selectedListId) && selectedTask && (
             <div className="w-[32rem] shrink-0 overflow-y-auto border-l border-[var(--color-flist-border)] bg-[var(--color-flist-surface)] backdrop-blur-md">
               <BlockDetails
-                block={selectedBlock}
-                onClose={() => setSelectedBlock(null)}
+                block={selectedTask}
+                onClose={() => setSelectedTask(null)}
                 onUpdate={(updated) => {
-                  setSelectedBlock(updated);
+                  setSelectedTask(updated);
                   // Update the block in the main content
                   if (selectedListId === "tasks") {
                     // For TaskListView, we need to trigger a refresh

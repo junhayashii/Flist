@@ -21,13 +21,16 @@ export default function BlockDetails({ block, onClose, onUpdate }) {
   }, [block.id]);
 
   const handleDueDateChange = async (e) => {
-    const newDueDate = e.target.value;
+    let newDueDate = e.target.value;
+    if (!newDueDate) newDueDate = null;
     const updatedBlock = { ...localBlock, due_date: newDueDate };
 
     try {
       await updateBlockDueDate(block.id, newDueDate);
       setLocalBlock(updatedBlock);
       onUpdate?.(updatedBlock);
+      // カレンダー・サイドバーの即時リフレッシュ
+      window.dispatchEvent(new CustomEvent('taskUpdated', { detail: updatedBlock }));
     } catch (err) {
       console.error("期日更新失敗:", err);
     }
@@ -65,6 +68,8 @@ export default function BlockDetails({ block, onClose, onUpdate }) {
       const data = await updateBlock(updatedBlock);
       setLocalBlock(data);
       onUpdate?.(data);
+      // タグ追加も即時リフレッシュ
+      window.dispatchEvent(new CustomEvent('taskUpdated', { detail: data }));
     } catch (err) {
       console.error("タグ更新失敗:", err);
     }

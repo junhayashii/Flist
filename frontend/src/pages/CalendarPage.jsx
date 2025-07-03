@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { fetchTasks, createTask, updateBlockDueDate } from "../api/blocks";
+import { fetchTasks, deleteBlock } from "../api/blocks";
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, format, isSameDay, parseISO, addWeeks, subWeeks, getHours, addMonths, subMonths, isSameMonth } from "date-fns";
-import { DndContext, useSensor, useSensors, PointerSensor, DragOverlay, useDraggable, useDroppable } from "@dnd-kit/core";
+import { DragOverlay, useDraggable, useDroppable } from "@dnd-kit/core";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { createPortal } from "react-dom";
 
 const getMonthMatrix = (currentMonth) => {
   const startMonth = startOfMonth(currentMonth);
@@ -132,24 +133,28 @@ function MiniCalendar({ currentMonth, onDateSelect, selectedDate, tasksByDate })
   );
 }
 
-export default function CalendarPage({ onSelectTask, selectedBlockId }) {
+export default function CalendarPage({ onSelectTask, selectedBlockId, refreshKey }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [currentWeek, setCurrentWeek] = useState(startOfWeek(new Date(), { weekStartsOn: 0 }));
   const [view, setView] = useState("month"); // "month" or "week"
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeDrag, setActiveDrag] = useState(null); // {taskId, fromDate}
   const [showMoreModal, setShowMoreModal] = useState(false);
   const [modalTasks, setModalTasks] = useState([]);
   const [modalDate, setModalDate] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, task: null });
+  const [localRefreshKey, setLocalRefreshKey] = useState(0);
 
-  // DnD用センサー（クリックとドラッグを分離）
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 5 },
-    })
-  );
+  // 親からのrefreshKeyまたはwindowイベントでリフレッシュ
+  useEffect(() => {
+    setLocalRefreshKey(k => k + 1);
+  }, [refreshKey]);
+  useEffect(() => {
+    const handler = () => setLocalRefreshKey(k => k + 1);
+    window.addEventListener('taskUpdated', handler);
+    return () => window.removeEventListener('taskUpdated', handler);
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -162,13 +167,14 @@ export default function CalendarPage({ onSelectTask, selectedBlockId }) {
       }
     };
     load();
-  }, []);
+  }, [localRefreshKey]);
 
-  // 日付ごとにタスクをグループ化
+  // 日付ごとにタスクをグループ化（UTC日付で）
   const tasksByDate = {};
   tasks.forEach(task => {
     if (!task.due_date) return;
-    const dateKey = format(parseISO(task.due_date), "yyyy-MM-dd");
+    const utcDate = new Date(task.due_date);
+    const dateKey = `${utcDate.getUTCFullYear()}-${String(utcDate.getUTCMonth()+1).padStart(2,'0')}-${String(utcDate.getUTCDate()).padStart(2,'0')}`;
     if (!tasksByDate[dateKey]) tasksByDate[dateKey] = [];
     tasksByDate[dateKey].push(task);
   });
@@ -213,6 +219,11 @@ export default function CalendarPage({ onSelectTask, selectedBlockId }) {
       if (isDragging) return;
       if (onSelectTask) onSelectTask(task);
     };
+    // 右クリックでカスタムメニュー
+    const handleContextMenu = (e) => {
+      e.preventDefault();
+      setContextMenu({ visible: true, x: e.pageX, y: e.pageY, task });
+    };
     return (
       <div
         ref={setNodeRef}
@@ -220,6 +231,7 @@ export default function CalendarPage({ onSelectTask, selectedBlockId }) {
         {...listeners}
         style={{ cursor: "grab" }}
         onClick={handleClick}
+        onContextMenu={handleContextMenu}
         className={`transition-all duration-200 select-none group ${
           isDragging 
             ? "opacity-80 scale-110 shadow-2xl z-50 rotate-2" 
@@ -274,58 +286,6 @@ export default function CalendarPage({ onSelectTask, selectedBlockId }) {
     );
   }
 
-  // DnDハンドラ
-  const handleDragStart = (event) => {
-    if (event.active && event.active.data) {
-      setActiveDrag(event.active.data.current);
-    }
-  };
-  const handleDragEnd = async (event) => {
-    setActiveDrag(null);
-    const { active, over } = event;
-    if (!active || !over) return;
-    const taskId = active.data.current.taskId;
-    const fromDate = active.data.current.fromDate;
-    const toDate = over.data.current.date;
-    if (fromDate === toDate) return;
-    try {
-      await updateBlockDueDate(taskId, toDate);
-      setTasks((prev) => prev.map(t => t.id === taskId ? { ...t, due_date: toDate } : t));
-    } catch {
-      alert("Failed to update due date");
-    }
-  };
-
-  // ドラッグ中のタスク情報を取得
-  const draggingTask = activeDrag ? tasks.find(t => t.id === activeDrag.taskId) : null;
-
-  // DragOverlayのmodifiers
-  const overlayModifiers = [
-    ({ transform }) => {
-      // タスクの中心がマウスカーソルの真下になるように補正
-      // 詳細パネルが開いている場合は追加のオフセットを適用
-      const detailPanelOffset = selectedBlockId ? 150 : 0;
-      return {
-        ...transform,
-        x: transform.x - 200 - detailPanelOffset, // 基本オフセットをさらに大きくして詳細パネルが開いていない時のずれを修正
-        y: transform.y - 25, // 上オフセット
-      };
-    },
-  ];
-
-  // 新しいタスクを作成して詳細パネルで表示
-  const handleCreateNewTask = async (date) => {
-    try {
-      const newTask = await createTask("New Task");
-      await updateBlockDueDate(newTask.id, date);
-      const taskWithDueDate = { ...newTask, due_date: date };
-      setTasks((prev) => [...prev, taskWithDueDate]);
-      if (onSelectTask) onSelectTask(taskWithDueDate);
-    } catch {
-      alert("タスク作成に失敗しました");
-    }
-  };
-
   // 日付選択ハンドラー
   const handleDateSelect = (date) => {
     setSelectedDate(date);
@@ -336,8 +296,60 @@ export default function CalendarPage({ onSelectTask, selectedBlockId }) {
     }
   };
 
+  // 新しいタスクを作成して詳細パネルで表示
+  const handleCreateNewTask = async (date) => {
+    try {
+      const { createTask, updateBlockDueDate } = await import("../api/blocks");
+      const newTask = await createTask("New Task");
+      await updateBlockDueDate(newTask.id, date);
+      const taskWithDueDate = { ...newTask, due_date: date };
+      setTasks((prev) => [...prev, taskWithDueDate]);
+      if (onSelectTask) onSelectTask(taskWithDueDate);
+    } catch {
+      alert("タスク作成に失敗しました");
+    }
+  };
+
+  // タスク削除ハンドラ
+  const handleDeleteTask = async (taskId) => {
+    if (!window.confirm("このタスクを削除しますか？")) return;
+    await deleteBlock(taskId);
+    setTasks((prev) => prev.filter(t => t.id !== taskId));
+    setContextMenu({ visible: false, x: 0, y: 0, task: null });
+  };
+
+  // 右クリックメニューの描画
+  useEffect(() => {
+    const handleClick = () => setContextMenu({ visible: false, x: 0, y: 0, task: null });
+    if (contextMenu.visible) {
+      window.addEventListener("click", handleClick);
+      return () => window.removeEventListener("click", handleClick);
+    }
+  }, [contextMenu.visible]);
+
+  const renderContextMenu = () => {
+    if (!contextMenu.visible || !contextMenu.task) return null;
+    // スクロール量を加味
+    const top = contextMenu.y - window.scrollY;
+    const left = contextMenu.x - window.scrollX;
+    return createPortal(
+      <div
+        style={{ position: "fixed", top, left, zIndex: 10000 }}
+        className="bg-white border border-gray-300 rounded shadow-lg py-1 px-2 min-w-[120px]"
+      >
+        <button
+          className="w-full text-left px-2 py-1 text-sm text-red-600 hover:bg-red-50 rounded"
+          onClick={() => handleDeleteTask(contextMenu.task.id)}
+        >
+          削除
+        </button>
+      </div>,
+      document.body
+    );
+  };
+
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <>
       <div className="flex gap-6 max-w-screen-2xl mx-auto p-8">
         {/* メインカレンダー */}
         <div className="flex-1 bg-white rounded-xl shadow-lg border border-[var(--color-flist-border)] backdrop-blur-md p-6">
@@ -406,7 +418,7 @@ export default function CalendarPage({ onSelectTask, selectedBlockId }) {
                   const maxShow = 2;
                   const showTasks = tasksForDay.slice(0, maxShow);
                   const moreCount = tasksForDay.length - maxShow;
-                  const isOver = activeDrag && activeDrag.taskId && activeDrag.fromDate !== dateKey && activeDrag.overDate === dateKey;
+                  const isOver = false;
                   return (
                     <DroppableDateCell
                       key={dateKey}
@@ -530,60 +542,8 @@ export default function CalendarPage({ onSelectTask, selectedBlockId }) {
             </div>
           )}
         </div>
-        {/* サイドバー（右側に移動） */}
-        <div className="w-64 space-y-4">
-          {/* ミニカレンダー */}
-          <MiniCalendar 
-            currentMonth={currentMonth}
-            onDateSelect={handleDateSelect}
-            selectedDate={selectedDate}
-            tasksByDate={tasksByDate}
-          />
-          {/* 日付がないタスク */}
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-[var(--color-flist-border)]">
-            <h3 className="text-sm font-medium text-[var(--color-flist-dark)] mb-3">No Date Tasks</h3>
-            <div className="space-y-2">
-              {tasks.filter(task => !task.due_date).length > 0 ? (
-                tasks.filter(task => !task.due_date).map(task => (
-                  <DraggableTask key={task.id} task={task}>
-                    <div
-                      className="text-xs p-2 rounded-lg bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] cursor-pointer hover:bg-[var(--color-flist-surface-hover)] transition-colors"
-                      onClick={() => onSelectTask && onSelectTask(task)}
-                    >
-                      <div className="font-medium text-[var(--color-flist-dark)]">
-                        {(task.html || "").replace(/^- \[[ xX]\] /, "")}
-                      </div>
-                    </div>
-                  </DraggableTask>
-                ))
-              ) : (
-                <div className="text-xs text-[var(--color-flist-muted)] text-center py-4">
-                  No undated tasks
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
       </div>
-      {/* DragOverlay: ドラッグ中はマウスに追従してタスクカードを表示 */}
-      <DragOverlay dropAnimation={null} modifiers={overlayModifiers}>
-        {draggingTask && (
-          <div
-            className="truncate text-xs px-4 py-3 rounded-xl border shadow-2xl bg-[var(--color-flist-accent)] text-white border-[var(--color-flist-accent)] opacity-90 scale-110 transition-all duration-150 z-50 select-none pointer-events-none transform rotate-2 backdrop-blur-sm"
-            style={{ minWidth: 120, maxWidth: 220 }}
-          >
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-              <span className="font-medium">
-                {(draggingTask.html || "").replace(/^- \[[ xX]\] /, "")}
-              </span>
-              <div className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-medium">
-                Moving...
-              </div>
-            </div>
-          </div>
-        )}
-      </DragOverlay>
-    </DndContext>
+      {renderContextMenu()}
+    </>
   );
 }
