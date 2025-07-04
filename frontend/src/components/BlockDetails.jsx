@@ -206,8 +206,21 @@ export default function BlockDetails({ block, onClose, onUpdate }) {
           </div>
           <div className="flex flex-wrap gap-2 mb-2">
             {localBlock.tags?.map(tag => (
-              <span key={tag.id} className="bg-[var(--color-flist-blue-light)] text-[var(--color-flist-accent)] px-2 py-1 rounded text-xs flex items-center gap-1">
-                {tag.name}
+              <span
+                key={tag.id}
+                title={tag.name.length > 16 ? tag.name : undefined}
+                className="px-2 py-0.5 rounded-full text-xs font-semibold shadow-sm transition-all duration-150 cursor-default flex items-center gap-1"
+                style={{
+                  background: 'var(--color-flist-accent-light)',
+                  color: 'var(--color-flist-accent)',
+                  border: '1px solid var(--color-flist-accent)',
+                  maxWidth: 120,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                #{tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
                 <button onClick={() => handleRemoveTag(tag.id)} className="ml-1 text-[var(--color-flist-muted)] hover:text-red-500">×</button>
               </span>
             ))}

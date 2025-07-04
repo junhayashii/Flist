@@ -88,11 +88,12 @@ export default function NoteListView({ onSelectNote, selectedNote }) {
         case "created_at":
           comparison = new Date(a.created_at) - new Date(b.created_at);
           break;
-        case "title":
+        case "title": {
           const aTitle = a.html.match(/\[\[(.+?)\]\]/)?.[1] || "";
           const bTitle = b.html.match(/\[\[(.+?)\]\]/)?.[1] || "";
           comparison = aTitle.localeCompare(bTitle);
           break;
+        }
         default:
           comparison = 0;
       }
@@ -269,6 +270,29 @@ export default function NoteListView({ onSelectNote, selectedNote }) {
               <h3 className="font-medium text-[var(--color-flist-text)] mb-2">
                 {note.html.match(/\[\[(.+?)\]\]/)?.[1] || "(無題ノート)"}
               </h3>
+              {/* Tag chips */}
+              {note.tags && note.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {note.tags.map(tag => (
+                    <span
+                      key={tag.id}
+                      title={tag.name.length > 16 ? tag.name : undefined}
+                      className="px-2 py-0.5 rounded-full text-xs font-semibold shadow-sm transition-all duration-150 cursor-default"
+                      style={{
+                        background: 'var(--color-flist-accent-light)',
+                        color: 'var(--color-flist-accent)',
+                        border: '1px solid var(--color-flist-accent)',
+                        maxWidth: 120,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      #{tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
+                    </span>
+                  ))}
+                </div>
+              )}
               <div className="flex items-center gap-4 text-sm text-[var(--color-flist-text-secondary)]">
                 <div className="flex items-center gap-1">
                   <Calendar size={16} />

@@ -76,6 +76,29 @@ export default function NoteBlock({
             <div>{noteTitle}</div>
           )}
         </div>
+        {/* Tag chips */}
+        {block.tags && block.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {block.tags.map(tag => (
+              <span
+                key={tag.id}
+                title={tag.name.length > 16 ? tag.name : undefined}
+                className="px-2 py-0.5 rounded-full text-xs font-semibold shadow-sm transition-all duration-150 cursor-default"
+                style={{
+                  background: 'var(--color-flist-accent-light)',
+                  color: 'var(--color-flist-accent)',
+                  border: '1px solid var(--color-flist-accent)',
+                  maxWidth: 120,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                #{tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       <button

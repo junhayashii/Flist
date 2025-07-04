@@ -63,6 +63,28 @@ const TaskBlock = forwardRef(({
     onKeyDown?.(e);
   };
 
+  // Utility to get a color for a tag based on its name
+  function getTagColor(name) {
+    // Simple hash to pick a color
+    const colors = [
+      '#6366f1', // indigo
+      '#10b981', // emerald
+      '#f59e42', // orange
+      '#f43f5e', // rose
+      '#3b82f6', // blue
+      '#a21caf', // purple
+      '#eab308', // yellow
+      '#14b8a6', // teal
+      '#ef4444', // red
+      '#8b5cf6', // violet
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  }
+
   return (
     <div
       id={`block-${block.id}`}
@@ -114,6 +136,30 @@ const TaskBlock = forwardRef(({
               }
             >
               {label}
+            </div>
+          )}
+
+          {/* Tag chips */}
+          {block.tags && block.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {block.tags.map(tag => (
+                <span
+                  key={tag.id}
+                  title={tag.name.length > 16 ? tag.name : undefined}
+                  className="px-2 py-0.5 rounded-full text-xs font-semibold shadow-sm transition-all duration-150 cursor-default"
+                  style={{
+                    background: 'var(--color-flist-accent-light)',
+                    color: 'var(--color-flist-accent)',
+                    border: '1px solid var(--color-flist-accent)',
+                    maxWidth: 120,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  #{tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
+                </span>
+              ))}
             </div>
           )}
 
