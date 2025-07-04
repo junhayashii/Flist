@@ -17,7 +17,6 @@ export default function MainContent({
   setSidebarOpen,
   selectedTask,
   setSelectedTask,
-  onTaskDueDateChange,
   refreshKey,
 }) {
   const [lists, setLists] = useState([]);
@@ -42,7 +41,7 @@ export default function MainContent({
 
   useEffect(() => {
     setSelectedTask(null);
-  }, [selectedListId]);
+  }, [selectedListId, setSelectedTask]);
 
   const selectedList = lists.find((list) => list.id === selectedListId);
 
