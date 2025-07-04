@@ -45,10 +45,17 @@ const TaskListView = ({ onSelectTask, selectedBlockId }) => {
         task.id === updatedTask.id ? updatedTask : task
       ));
     };
+    // Add event listener for task creation
+    const handleTaskCreated = (event) => {
+      const newTask = event.detail;
+      setTasks(prev => [newTask, ...prev]);
+    };
 
     window.addEventListener('taskUpdated', handleTaskUpdate);
+    window.addEventListener('taskCreated', handleTaskCreated);
     return () => {
       window.removeEventListener('taskUpdated', handleTaskUpdate);
+      window.removeEventListener('taskCreated', handleTaskCreated);
     };
   }, []);
 

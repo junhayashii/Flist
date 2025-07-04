@@ -84,6 +84,8 @@ export default function MainContent({
     try {
       const newTask = await createTask(newTaskTitle.trim());
       setSelectedTask(newTask);
+      // Dispatch event for TaskListView
+      window.dispatchEvent(new CustomEvent('taskCreated', { detail: newTask }));
       handleCloseTaskModal();
     } catch (error) {
       console.error("タスク作成失敗:", error);
