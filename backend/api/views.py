@@ -4,17 +4,6 @@ from django.db import models
 from .models import Block, List, Folder, Tag
 from .serializers import BlockSerializer, ListSerializer, FolderSerializer, TagSerializer
 
-class TagViewSet(viewsets.ModelViewSet):
-    serializer_class = TagSerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['name']
-
-    def get_queryset(self):
-        return Tag.objects.filter(user=self.request.user)
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
 class FolderViewSet(viewsets.ModelViewSet):
     serializer_class = FolderSerializer
     
@@ -71,3 +60,12 @@ class BlockViewSet(viewsets.ModelViewSet):
             max_order = Block.objects.filter(user=self.request.user).aggregate(models.Max('order'))['order__max'] or 0
             order = max_order + 1
         serializer.save(user=self.request.user, order=order)
+
+class TagViewSet(viewsets.ModelViewSet):
+    serializer_class = TagSerializer
+
+    def get_queryset(self):
+        return Tag.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

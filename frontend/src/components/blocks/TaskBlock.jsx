@@ -18,7 +18,7 @@ const TaskBlock = forwardRef(({
 }, ref) => {
   const isDone = block.type === "task-done";
   const label = block.html.replace(/^(- \[[ xX]\]\s*)+/, "");
-  const hasMeta = block.due_date || listName || (block.tags && block.tags.length > 0);
+  const hasMeta = block.due_date || listName;
 
   const localRef = useRef(null);
 
@@ -127,14 +127,6 @@ const TaskBlock = forwardRef(({
               )}
               {listName && (
                 <span className="text-[var(--color-flist-muted)]">{listName}</span>
-              )}
-              {block.tags && block.tags.length > 0 && (
-                <div className="flex items-center gap-1">
-                  <Tag className="w-4 h-4 text-[var(--color-flist-muted)]" />
-                  <span className="text-[var(--color-flist-muted)]">
-                    {block.tags.map(tag => tag.name).join(", ")}
-                  </span>
-                </div>
               )}
             </div>
           )}

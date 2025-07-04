@@ -11,7 +11,7 @@ export const fetchAllBlocks = async () => {
 export const createBlock = async (block) => {
   const response = await apiClient.post('/blocks/', {
     ...block,
-    tag_ids: block.tag_ids || []
+    tag_ids: block.tag_ids || [],
   });
   return response.data;
 };
@@ -19,7 +19,7 @@ export const createBlock = async (block) => {
 export const updateBlock = async (block) => {
   const response = await apiClient.patch(`/blocks/${block.id}/`, {
     ...block,
-    tag_ids: block.tag_ids || []
+    tag_ids: block.tag_ids || [],
   });
   return response.data;
 };
@@ -39,17 +39,13 @@ export const fetchTasks = async () => {
   return data.filter((b) => b.type === "task" || b.type === "task-done");
 };
 
-export const createTask = async (text, tagIds = []) => {
-  const payload = {
-    html: "- [ ] " + text,
-    type: "task",
-    order: Date.now(),
+export const createTask = async (text) => {
+  const response = await apiClient.post('/blocks/', {
+    html: text,
+    type: 'task',
     list: null,
     parent_block: null,
-    tag_ids: tagIds
-  };
-
-  const response = await apiClient.post('/blocks/', payload);
+  });
   return response.data;
 };
 
@@ -58,21 +54,36 @@ export const updateTask = async (task) => {
   return response.data;
 };
 
-export const createNote = async (title = "New Note", tagIds = []) => {
-  const payload = {
-    html: `[[${title}]]`,
-    type: "note",
-    order: Date.now(),
+export const createNote = async (title = "New Note") => {
+  const response = await apiClient.post('/blocks/', {
+    html: title,
+    type: 'note',
     list: null,
     parent_block: null,
-    tag_ids: tagIds
-  };
-
-  const response = await apiClient.post('/blocks/', payload);
+  });
   return response.data;
 };
 
 export const fetchBlock = async (id) => {
   const response = await apiClient.get(`/blocks/${id}/`);
   return response.data;
+};
+
+export const fetchTags = async () => {
+  const response = await apiClient.get('/tags/');
+  return response.data;
+};
+
+export const createTag = async (name) => {
+  const response = await apiClient.post('/tags/', { name });
+  return response.data;
+};
+
+export const updateTag = async (id, name) => {
+  const response = await apiClient.patch(`/tags/${id}/`, { name });
+  return response.data;
+};
+
+export const deleteTag = async (id) => {
+  await apiClient.delete(`/tags/${id}/`);
 };

@@ -9,7 +9,6 @@ import CalendarPage from "../pages/CalendarPage";
 import { fetchLists, updateListTitle } from "../api/lists";
 import { createTask, createNote } from "../api/blocks";
 import { Plus, Menu, ChevronRight, X } from "lucide-react";
-import TagSelector from "./TagSelector";
 
 export default function MainContent({
   selectedListId,
@@ -23,7 +22,6 @@ export default function MainContent({
   const [listBlocks, setListBlocks] = useState([]);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [selectedTags, setSelectedTags] = useState([]);
   const [editing, setEditing] = useState(false);
   const [draftTitle, setDraftTitle] = useState("");
 
@@ -71,14 +69,12 @@ export default function MainContent({
   const handleOpenTaskModal = () => {
     setShowTaskModal(true);
     setNewTaskTitle("");
-    setSelectedTags([]);
   };
 
   // タスク作成モーダルを閉じる
   const handleCloseTaskModal = () => {
     setShowTaskModal(false);
     setNewTaskTitle("");
-    setSelectedTags([]);
   };
 
   // タスクを作成する
@@ -86,7 +82,7 @@ export default function MainContent({
     if (!newTaskTitle.trim()) return;
     
     try {
-      const newTask = await createTask(newTaskTitle.trim(), selectedTags);
+      const newTask = await createTask(newTaskTitle.trim());
       setSelectedTask(newTask);
       handleCloseTaskModal();
     } catch (error) {
@@ -336,16 +332,6 @@ export default function MainContent({
                     }
                   }}
                   autoFocus
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-[var(--color-flist-dark)] mb-2">
-                  タグ
-                </label>
-                <TagSelector
-                  selectedTags={selectedTags}
-                  onChange={setSelectedTags}
                 />
               </div>
             </div>

@@ -1,12 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import BlockEditor from "./editor/BlockEditor";
-import { updateBlockDueDate, updateBlock, fetchBlock } from "../api/blocks";
-import TagSelector from "./TagSelector";
+import { updateBlockDueDate, updateBlock, fetchBlock, fetchTags, createTag } from "../api/blocks";
 import { Tag } from "lucide-react";
 
 export default function BlockDetails({ block, onClose, onUpdate }) {
   const [localBlock, setLocalBlock] = useState(block);
+  const [allTags, setAllTags] = useState([]);
+  const [tagInput, setTagInput] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
   const titleRef = useRef(null);
+  const inputRef = useRef(null);
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     const loadBlock = async () => {
@@ -19,6 +24,43 @@ export default function BlockDetails({ block, onClose, onUpdate }) {
     };
     loadBlock();
   }, [block.id]);
+
+  useEffect(() => {
+    const loadTags = async () => {
+      try {
+        const tags = await fetchTags();
+        setAllTags(tags);
+      } catch (err) {
+        console.error("タグ取得失敗:", err);
+      }
+    };
+    loadTags();
+  }, []);
+
+  // Filtered suggestions for dropdown
+  const filteredTags = allTags.filter(
+    t => t.name.toLowerCase().includes(tagInput.toLowerCase()) && !localBlock.tags?.some(tag => tag.id === t.id)
+  );
+  const exactMatch = allTags.find(t => t.name.toLowerCase() === tagInput.trim().toLowerCase());
+  const canCreate = tagInput.trim() && !exactMatch;
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target) &&
+        inputRef.current &&
+        !inputRef.current.contains(e.target)
+      ) {
+        setShowDropdown(false);
+      }
+    }
+    if (showDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showDropdown]);
 
   const handleDueDateChange = async (e) => {
     let newDueDate = e.target.value;
@@ -62,17 +104,68 @@ export default function BlockDetails({ block, onClose, onUpdate }) {
     }
   };
 
-  const handleTagsChange = async (tagIds) => {
-    const updatedBlock = { ...localBlock, tag_ids: tagIds };
-    try {
-      const data = await updateBlock(updatedBlock);
-      setLocalBlock(data);
-      onUpdate?.(data);
-      // タグ追加も即時リフレッシュ
-      window.dispatchEvent(new CustomEvent('taskUpdated', { detail: data }));
-    } catch (err) {
-      console.error("タグ更新失敗:", err);
+  const handleAddTag = async (tag) => {
+    if (!tag) return;
+    if (!localBlock.tags.some(t => t.id === tag.id)) {
+      const updatedBlock = {
+        ...localBlock,
+        tag_ids: [...(localBlock.tags?.map(t => t.id) || []), tag.id],
+      };
+      const saved = await updateBlock(updatedBlock);
+      setLocalBlock(saved);
+      onUpdate?.(saved);
     }
+    setTagInput("");
+    setShowDropdown(false);
+    setHighlightedIndex(0);
+  };
+
+  const handleCreateAndAddTag = async (name) => {
+    if (!name.trim()) return;
+    const tag = await createTag(name.trim());
+    setAllTags([...allTags, tag]);
+    await handleAddTag(tag);
+  };
+
+  const handleInputChange = (e) => {
+    setTagInput(e.target.value);
+    setShowDropdown(true);
+    setHighlightedIndex(0);
+  };
+
+  const handleInputKeyDown = (e) => {
+    if (!showDropdown && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+      setShowDropdown(true);
+      return;
+    }
+    if (showDropdown) {
+      if (e.key === "ArrowDown") {
+        setHighlightedIndex(i => Math.min(i + 1, (canCreate ? filteredTags.length : filteredTags.length - 1)));
+        e.preventDefault();
+      } else if (e.key === "ArrowUp") {
+        setHighlightedIndex(i => Math.max(i - 1, 0));
+        e.preventDefault();
+      } else if (e.key === "Enter") {
+        if (canCreate && highlightedIndex === filteredTags.length) {
+          handleCreateAndAddTag(tagInput);
+        } else if (filteredTags[highlightedIndex]) {
+          handleAddTag(filteredTags[highlightedIndex]);
+        }
+        e.preventDefault();
+      } else if (e.key === "Escape") {
+        setShowDropdown(false);
+      }
+    }
+  };
+
+  const handleRemoveTag = async (tagId) => {
+    const updatedBlock = {
+      ...localBlock,
+      tag_ids: (localBlock.tags?.map(t => t.id) || []).filter(id => id !== tagId),
+    };
+    const saved = await updateBlock(updatedBlock);
+    setLocalBlock(saved);
+    onUpdate?.(saved);
   };
 
   const getTitleText = () => {
@@ -111,10 +204,51 @@ export default function BlockDetails({ block, onClose, onUpdate }) {
               タグ
             </span>
           </div>
-          <TagSelector
-            selectedTags={localBlock.tags?.map(tag => tag.id) || []}
-            onChange={handleTagsChange}
-          />
+          <div className="flex flex-wrap gap-2 mb-2">
+            {localBlock.tags?.map(tag => (
+              <span key={tag.id} className="bg-[var(--color-flist-blue-light)] text-[var(--color-flist-accent)] px-2 py-1 rounded text-xs flex items-center gap-1">
+                {tag.name}
+                <button onClick={() => handleRemoveTag(tag.id)} className="ml-1 text-[var(--color-flist-muted)] hover:text-red-500">×</button>
+              </span>
+            ))}
+          </div>
+          <div className="relative" ref={dropdownRef}>
+            <input
+              ref={inputRef}
+              type="text"
+              className="flex-1 text-sm bg-transparent border-b border-[var(--color-flist-border)] focus:outline-none focus:border-[var(--color-flist-accent)] px-1 py-1"
+              placeholder="タグを追加..."
+              value={tagInput}
+              onChange={handleInputChange}
+              onFocus={() => setShowDropdown(true)}
+              onKeyDown={handleInputKeyDown}
+              autoComplete="off"
+              style={{ minWidth: 120 }}
+            />
+            {showDropdown && (filteredTags.length > 0 || canCreate) && (
+              <div className="absolute z-10 mt-1 w-full bg-white border border-[var(--color-flist-border)] rounded shadow-lg max-h-40 overflow-auto">
+                {filteredTags.map((tag, idx) => (
+                  <div
+                    key={tag.id}
+                    className={`px-3 py-2 cursor-pointer text-sm ${highlightedIndex === idx ? 'bg-[var(--color-flist-blue-light)] text-[var(--color-flist-accent)]' : ''}`}
+                    onMouseDown={() => handleAddTag(tag)}
+                    onMouseEnter={() => setHighlightedIndex(idx)}
+                  >
+                    {tag.name}
+                  </div>
+                ))}
+                {canCreate && (
+                  <div
+                    className={`px-3 py-2 cursor-pointer text-sm font-semibold ${highlightedIndex === filteredTags.length ? 'bg-[var(--color-flist-blue-light)] text-[var(--color-flist-accent)]' : ''}`}
+                    onMouseDown={() => handleCreateAndAddTag(tagInput)}
+                    onMouseEnter={() => setHighlightedIndex(filteredTags.length)}
+                  >
+                    + 新しいタグ「{tagInput}」を作成
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* タスク用の期日入力 */}

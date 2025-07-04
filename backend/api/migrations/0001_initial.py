@@ -45,9 +45,6 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='tags', to=settings.AUTH_USER_MODEL)),
             ],
-            options={
-                'unique_together': {('name', 'user')},
-            },
         ),
         migrations.CreateModel(
             name='Block',

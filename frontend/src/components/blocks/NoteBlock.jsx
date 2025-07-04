@@ -12,7 +12,6 @@ export default function NoteBlock({
   onKeyDown,
 }) {
   const noteTitle = block.html.match(/\[\[(.+?)\]\]/)?.[1] || "Note";
-  const hasTags = block.tags && block.tags.length > 0;
 
   const localRef = useRef(null);
 
@@ -77,12 +76,6 @@ export default function NoteBlock({
             <div>{noteTitle}</div>
           )}
         </div>
-        {hasTags && (
-          <div className="flex items-center gap-1 text-xs text-[var(--color-flist-text-secondary)] mt-1">
-            <Tag className="w-3 h-3 text-[var(--color-flist-muted)]" />
-            <span>{block.tags.map(tag => tag.name).join(", ")}</span>
-          </div>
-        )}
       </div>
 
       <button
