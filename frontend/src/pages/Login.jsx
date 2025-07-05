@@ -59,30 +59,30 @@ export default function Login() {
               <label htmlFor="email" className="block text-sm font-medium text-[var(--color-flist-text-primary)] mb-2">
                 Email address
               </label>
-              <input
+        <input
                 id="email"
-                type="email"
+          type="email"
                 placeholder="Enter your email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+          value={email}
+          onChange={e => setEmail(e.target.value)}
                 className="input"
-                required
-              />
+          required
+        />
             </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-[var(--color-flist-text-primary)] mb-2">
                 Password
               </label>
-              <input
+        <input
                 id="password"
-                type="password"
+          type="password"
                 placeholder="Enter your password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
+          value={password}
+          onChange={e => setPassword(e.target.value)}
                 className="input"
-                required
-              />
+          required
+        />
             </div>
 
             <button 

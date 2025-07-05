@@ -49,6 +49,7 @@ export default function AppLayout() {
         ) : (
           <Sidebar
             sidebarOpen={sidebarOpen}
+            setSidebarOpen={setSidebarOpen}
             selectedListId={selectedListId}
             setSelectedListId={setSelectedListId}
           />

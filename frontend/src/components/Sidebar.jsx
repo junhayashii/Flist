@@ -13,7 +13,7 @@ import {
   Trash2,
   Edit2,
   Calendar,
-  ChevronLeft,
+  PanelLeftClose,
   Inbox as InboxIcon,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
@@ -387,17 +387,17 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
         {/* Close button */}
         {sidebarOpen && setSidebarOpen && (
           <button
-            className="absolute top-4 right-4 p-2 rounded-lg hover:bg-[var(--color-flist-surface-hover)] text-[var(--color-flist-text-muted)] hover:text-[var(--color-flist-text-primary)] transition-all duration-200 hover-scale focus-ring z-10"
+            className="absolute top-2 right-2 p-1.5 rounded-lg hover:bg-[var(--color-flist-surface-hover)] text-[var(--color-flist-text-muted)] hover:text-[var(--color-flist-text-primary)] transition-all duration-200 hover-scale focus-ring z-10"
             onClick={() => setSidebarOpen(false)}
             title="Close sidebar"
           >
-            <ChevronLeft size={18} />
+            <PanelLeftClose size={16} />
           </button>
         )}
 
         {/* Inbox */}
         <button
-          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover-lift ${
+          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover-lift mt-2 ${
             selectedListId === "inbox"
               ? "bg-[var(--color-flist-primary-light)] text-[var(--color-flist-primary)] shadow-sm"
               : "text-[var(--color-flist-text-secondary)] hover:bg-[var(--color-flist-surface-hover)] hover:text-[var(--color-flist-text-primary)]"

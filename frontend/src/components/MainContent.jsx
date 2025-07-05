@@ -8,7 +8,7 @@ import Dashboard from "../pages/Dashboard";
 import CalendarPage from "../pages/CalendarPage";
 import { fetchLists, updateListTitle } from "../api/lists";
 import { createTask, createNote } from "../api/blocks";
-import { Plus, Menu, ChevronRight, X } from "lucide-react";
+import { Plus, Menu, PanelLeftOpen, X } from "lucide-react";
 
 export default function MainContent({
   selectedListId,
@@ -47,12 +47,15 @@ export default function MainContent({
     const trimmed = draftTitle.trim();
     if (trimmed && selectedList?.id) {
       try {
-        const updated = await updateListTitle(selectedList.id, trimmed);
+        const updated = await updateListTitle(selectedList.id, { title: trimmed });
         setLists((prev) =>
           prev.map((l) =>
             l.id === updated.id ? { ...l, title: updated.title } : l
           )
         );
+        
+        // Dispatch event for real-time sidebar updates
+        window.dispatchEvent(new CustomEvent('listUpdated', { detail: updated }));
       } catch (err) {
         console.error("タイトル更新失敗:", err);
       }
@@ -109,11 +112,11 @@ export default function MainContent({
       {/* Sidebar open button when closed */}
       {!sidebarOpen && setSidebarOpen && (
         <button
-          className="fixed top-4 left-2 z-50 p-2 rounded-lg bg-[var(--color-flist-surface)] shadow-md hover:bg-[var(--color-flist-surface-hover)] text-[var(--color-flist-primary)] transition-all duration-200 hover-scale focus-ring border border-[var(--color-flist-border)] glass"
+          className="fixed top-4 left-16 z-50 p-2 rounded-lg bg-[var(--color-flist-surface)] shadow-md hover:bg-[var(--color-flist-surface-hover)] text-[var(--color-flist-primary)] transition-all duration-200 hover-scale focus-ring border border-[var(--color-flist-border)] glass"
           onClick={() => setSidebarOpen(true)}
           title="Open sidebar"
         >
-          <ChevronRight size={18} />
+          <PanelLeftOpen size={18} />
         </button>
       )}
       {/* Main content area */}

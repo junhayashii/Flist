@@ -224,9 +224,9 @@ export default function BlockDetails({ block, onClose, onUpdate }) {
               const tagColor = colors[Math.abs(hash) % colors.length];
               
               return (
-                <span
-                  key={tag.id}
-                  title={tag.name.length > 16 ? tag.name : undefined}
+              <span
+                key={tag.id}
+                title={tag.name.length > 16 ? tag.name : undefined}
                   className={`tag ${tagColor}`}
                 >
                   <Tag size={10} />
@@ -237,7 +237,7 @@ export default function BlockDetails({ block, onClose, onUpdate }) {
                   >
                     ×
                   </button>
-                </span>
+              </span>
               );
             })}
           </div>

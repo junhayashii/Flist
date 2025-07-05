@@ -283,22 +283,22 @@ export default function NoteListView({ onSelectNote, selectedNote }) {
                   <Calendar className="w-3 h-3" />
                   {format(new Date(note.created_at), "yyyy-MM-dd")}
                 </span>
-                {note.tags && note.tags.length > 0 && (
+              {note.tags && note.tags.length > 0 && (
                   <div className="flex items-center gap-1">
                     <Tag className="w-3 h-3" />
                     <div className="flex flex-wrap gap-1">
-                      {note.tags.map(tag => (
-                        <span
-                          key={tag.id}
-                          title={tag.name.length > 16 ? tag.name : undefined}
+                  {note.tags.map(tag => (
+                    <span
+                      key={tag.id}
+                      title={tag.name.length > 16 ? tag.name : undefined}
                           className="tag tag-primary"
-                        >
+                    >
                           {tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
-                        </span>
-                      ))}
+                    </span>
+                  ))}
                     </div>
-                  </div>
-                )}
+                </div>
+              )}
               </div>
             </div>
           ))}

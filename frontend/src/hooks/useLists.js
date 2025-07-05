@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   fetchLists,
   createList,
@@ -14,7 +14,7 @@ export default function useLists(selectedListId, setSelectedListId) {
   const [error, setError] = useState(null);
 
   // Function to recalculate task counts
-  const recalculateTaskCounts = async () => {
+  const recalculateTaskCounts = useCallback(async () => {
     try {
       const tasks = await fetchTasks();
       const counts = {};
@@ -28,36 +28,9 @@ export default function useLists(selectedListId, setSelectedListId) {
     } catch (err) {
       console.error("Error recalculating task counts:", err);
     }
-  };
-
-  useEffect(() => {
-    loadLists();
-
-    // Add event listeners for real-time task count updates
-    const handleTaskUpdated = () => {
-      recalculateTaskCounts();
-    };
-
-    const handleTaskCreated = () => {
-      recalculateTaskCounts();
-    };
-
-    const handleTaskDeleted = () => {
-      recalculateTaskCounts();
-    };
-
-    window.addEventListener('taskUpdated', handleTaskUpdated);
-    window.addEventListener('taskCreated', handleTaskCreated);
-    window.addEventListener('taskDeleted', handleTaskDeleted);
-
-    return () => {
-      window.removeEventListener('taskUpdated', handleTaskUpdated);
-      window.removeEventListener('taskCreated', handleTaskCreated);
-      window.removeEventListener('taskDeleted', handleTaskDeleted);
-    };
   }, []);
 
-  const loadLists = async () => {
+  const loadLists = useCallback(async () => {
     try {
       setLoading(true);
       const [data, tasks] = await Promise.all([
@@ -85,7 +58,44 @@ export default function useLists(selectedListId, setSelectedListId) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedListId, setSelectedListId]);
+
+  useEffect(() => {
+    loadLists();
+
+    // Add event listeners for real-time task count updates
+    const handleTaskUpdated = () => {
+      recalculateTaskCounts();
+    };
+
+    const handleTaskCreated = () => {
+      recalculateTaskCounts();
+    };
+
+    const handleTaskDeleted = () => {
+      recalculateTaskCounts();
+    };
+
+    // Add event listener for real-time list updates
+    const handleListUpdated = (event) => {
+      const updatedList = event.detail;
+      setLists(prev => prev.map(list => 
+        list.id === updatedList.id ? { ...list, ...updatedList } : list
+      ));
+    };
+
+    window.addEventListener('taskUpdated', handleTaskUpdated);
+    window.addEventListener('taskCreated', handleTaskCreated);
+    window.addEventListener('taskDeleted', handleTaskDeleted);
+    window.addEventListener('listUpdated', handleListUpdated);
+
+    return () => {
+      window.removeEventListener('taskUpdated', handleTaskUpdated);
+      window.removeEventListener('taskCreated', handleTaskCreated);
+      window.removeEventListener('taskDeleted', handleTaskDeleted);
+      window.removeEventListener('listUpdated', handleListUpdated);
+    };
+  }, [loadLists, recalculateTaskCounts]);
 
   const addList = async (title, folderId = null) => {
     try {
