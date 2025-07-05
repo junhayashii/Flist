@@ -106,23 +106,23 @@ export default function MainContent({
 
   return (
     <div className="flex-1 flex overflow-hidden">
-      {/* サイドバーが閉じているときだけ表示する開くボタン */}
+      {/* Sidebar open button when closed */}
       {!sidebarOpen && setSidebarOpen && (
         <button
-          className="fixed top-4 left-2 z-50 p-2 rounded-full bg-white/80 shadow-md hover:bg-[var(--color-flist-blue-light)]/40 text-[var(--color-flist-accent)] transition-colors border border-[var(--color-flist-border)]"
+          className="fixed top-4 left-2 z-50 p-2 rounded-lg bg-[var(--color-flist-surface)] shadow-md hover:bg-[var(--color-flist-surface-hover)] text-[var(--color-flist-primary)] transition-all duration-200 hover-scale focus-ring border border-[var(--color-flist-border)] glass"
           onClick={() => setSidebarOpen(true)}
-          title="サイドバーを開く"
+          title="Open sidebar"
         >
-          <ChevronRight size={22} />
+          <ChevronRight size={18} />
         </button>
       )}
-      {/* メイン編集ペイン */}
-      <div className="flex-1 flex flex-col bg-[var(--color-flist-bg)] backdrop-blur-md overflow-hidden">
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col bg-[var(--color-flist-bg)] overflow-hidden">
         <div className="flex-1 overflow-y-auto">
-          <div className="flex justify-between items-center w-full max-w-8xl px-8 pt-8">
+          <div className="flex justify-between items-center w-full max-w-7xl px-8 pt-8">
             {selectedListId &&
               (["tasks", "notes", "dashboard", "calendar"].includes(selectedListId) ? (
-                <h2 className="text-xl font-medium tracking-tight text-[var(--color-flist-dark)]">
+                <h2 className="text-2xl font-semibold tracking-tight text-[var(--color-flist-text-primary)]">
                   {selectedListId === "tasks"
                     ? "Tasks"
                     : selectedListId === "notes"
@@ -133,7 +133,7 @@ export default function MainContent({
                 </h2>
               ) : editing ? (
                 <input
-                  className="text-xl font-medium tracking-tight border-b border-[var(--color-flist-border)] focus:outline-none focus:border-[var(--color-flist-accent)] bg-transparent px-1 py-0.5 transition-colors"
+                  className="text-2xl font-semibold tracking-tight border-b border-[var(--color-flist-border)] focus:outline-none focus:border-[var(--color-flist-primary)] bg-transparent px-1 py-0.5 transition-colors input"
                   value={draftTitle}
                   onChange={(e) => setDraftTitle(e.target.value)}
                   onBlur={handleSaveTitle}
@@ -145,7 +145,7 @@ export default function MainContent({
                 />
               ) : (
                 <h2
-                  className="text-xl font-medium tracking-tight text-[var(--color-flist-dark)] cursor-text hover:text-[var(--color-flist-accent)] transition-colors"
+                  className="text-2xl font-semibold tracking-tight text-[var(--color-flist-text-primary)] cursor-text hover:text-[var(--color-flist-primary)] transition-colors"
                   onClick={() => {
                     setDraftTitle(selectedList?.title || "");
                     setEditing(true);
@@ -155,11 +155,11 @@ export default function MainContent({
                 </h2>
               ))}
 
-            {/* Newボタン */}
+            {/* Action buttons */}
             {selectedListId === "tasks" && (
               <button
                 onClick={handleOpenTaskModal}
-                className="flex items-center gap-2 px-4 py-2 bg-[var(--color-flist-accent)] text-white text-sm rounded-lg hover:bg-[var(--color-flist-accent-hover)] transition-all duration-200 shadow-sm hover:shadow-md"
+                className="btn btn-primary"
               >
                 <Plus size={16} />
                 New Task
@@ -171,7 +171,7 @@ export default function MainContent({
                   const newNote = await createNote("New Note");
                   setSelectedTask(newNote);
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-[var(--color-flist-accent)] text-white text-sm rounded-lg hover:bg-[var(--color-flist-accent-hover)] transition-all duration-200 shadow-sm hover:shadow-md"
+                className="btn btn-primary"
               >
                 <Plus size={16} />
                 New Note

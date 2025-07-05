@@ -1,5 +1,5 @@
 import { useEffect, useRef, forwardRef } from "react";
-import { CheckCircle, Circle, ChevronRight, CalendarDays, Tag } from "lucide-react";
+import { CheckCircle, Circle, ChevronRight, CalendarDays, Tag, List } from "lucide-react";
 
 const TaskBlock = forwardRef(({
   block,
@@ -18,7 +18,6 @@ const TaskBlock = forwardRef(({
 }, ref) => {
   const isDone = block.type === "task-done";
   const label = block.html.replace(/^(- \[[ xX]\]\s*)+/, "");
-  const hasMeta = block.due_date || listName;
 
   const localRef = useRef(null);
 
@@ -63,27 +62,8 @@ const TaskBlock = forwardRef(({
     onKeyDown?.(e);
   };
 
-  // Utility to get a color for a tag based on its name
-  function getTagColor(name) {
-    // Simple hash to pick a color
-    const colors = [
-      '#6366f1', // indigo
-      '#10b981', // emerald
-      '#f59e42', // orange
-      '#f43f5e', // rose
-      '#3b82f6', // blue
-      '#a21caf', // purple
-      '#eab308', // yellow
-      '#14b8a6', // teal
-      '#ef4444', // red
-      '#8b5cf6', // violet
-    ];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return colors[Math.abs(hash) % colors.length];
-  }
+  // All tags use the same color for consistency
+  const tagColor = 'tag-primary';
 
   return (
     <div
@@ -112,6 +92,7 @@ const TaskBlock = forwardRef(({
         </div>
 
         <div className="flex-1 min-w-0">
+          {/* First line: Task name */}
           {isEditable ? (
             <div
               ref={(el) => {
@@ -120,7 +101,7 @@ const TaskBlock = forwardRef(({
               }}
               contentEditable
               suppressContentEditableWarning
-              className={`outline-none flex-1 ${
+              className={`outline-none flex-1 text-base font-medium ${
                 isDone ? "line-through text-[var(--color-flist-muted)]" : "text-[var(--color-flist-dark)]"
               }`}
               onBlur={() => onBlur?.(block)}
@@ -131,51 +112,45 @@ const TaskBlock = forwardRef(({
             </div>
           ) : (
             <div
-              className={
+              className={`text-base font-medium ${
                 isDone ? "line-through text-[var(--color-flist-muted)]" : "text-[var(--color-flist-dark)]"
-              }
+              }`}
             >
               {label}
             </div>
           )}
 
-          {/* Tag chips */}
-          {block.tags && block.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1">
-              {block.tags.map(tag => (
-                <span
-                  key={tag.id}
-                  title={tag.name.length > 16 ? tag.name : undefined}
-                  className="px-2 py-0.5 rounded-full text-xs font-semibold shadow-sm transition-all duration-150 cursor-default"
-                  style={{
-                    background: 'var(--color-flist-accent-light)',
-                    color: 'var(--color-flist-accent)',
-                    border: '1px solid var(--color-flist-accent)',
-                    maxWidth: 120,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  #{tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {hasMeta && (
-            <div className="flex items-center gap-4 text-xs mt-2">
-              {block.due_date && (
-                <div className="flex items-center text-sm text-[var(--color-flist-muted)] gap-1">
-                  <CalendarDays className="w-4 h-4" />
-                  {formatDateLocal(block.due_date)}
+          {/* Second line: List, Date, Tags */}
+          <div className="flex items-center gap-3 mt-2 text-sm text-[var(--color-flist-muted)]">
+            {listName && (
+              <span className="flex items-center gap-1">
+                <List className="w-3 h-3" />
+                {listName}
+              </span>
+            )}
+            {block.due_date && (
+              <span className="flex items-center gap-1">
+                <CalendarDays className="w-3 h-3" />
+                {formatDateLocal(block.due_date)}
+              </span>
+            )}
+            {block.tags && block.tags.length > 0 && (
+              <div className="flex items-center gap-1">
+                <Tag className="w-3 h-3" />
+                <div className="flex flex-wrap gap-1">
+                  {block.tags.map(tag => (
+                    <span
+                      key={tag.id}
+                      title={tag.name.length > 16 ? tag.name : undefined}
+                      className={`tag ${tagColor}`}
+                    >
+                      {tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
+                    </span>
+                  ))}
                 </div>
-              )}
-              {listName && (
-                <span className="text-[var(--color-flist-muted)]">{listName}</span>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-2">

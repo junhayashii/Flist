@@ -75,6 +75,11 @@ export const handleBlur = async ({
       prev.map((b) => (b.id === block.id ? updatedBlock : b))
     );
   }
+
+  // Dispatch event for real-time task count updates if this is a task
+  if (updatedBlock.type === "task" || updatedBlock.type === "task-done") {
+    window.dispatchEvent(new CustomEvent('taskUpdated', { detail: updatedBlock }));
+  }
 };
 
 export const handleInput = async ({
@@ -121,5 +126,10 @@ export const handleToggleDone = async ({
   setBlocks(updatedBlocks);
 
   const updatedBlock = updatedBlocks.find((b) => b.id === blockId);
-  if (updatedBlock) await updateBlock(updatedBlock);
+  if (updatedBlock) {
+    await updateBlock(updatedBlock);
+    
+    // Dispatch event for real-time task count updates
+    window.dispatchEvent(new CustomEvent('taskUpdated', { detail: updatedBlock }));
+  }
 };

@@ -63,6 +63,9 @@ const TaskListView = ({ onSelectTask, selectedBlockId }) => {
     try {
       await deleteBlock(task.id);
       setTasks((prev) => prev.filter((t) => t.id !== task.id));
+      
+      // Dispatch event for real-time task count updates
+      window.dispatchEvent(new CustomEvent('taskDeleted', { detail: task }));
     } catch (err) {
       console.error("タスク削除失敗:", err);
     }
@@ -78,6 +81,9 @@ const TaskListView = ({ onSelectTask, selectedBlockId }) => {
     };
     setTasks((prev) => prev.map((t) => (t.id === task.id ? updated : t)));
     await updateTask(updated);
+    
+    // Dispatch event for real-time task count updates
+    window.dispatchEvent(new CustomEvent('taskUpdated', { detail: updated }));
   };
 
   const handleBlur = async (task) => {
@@ -97,6 +103,9 @@ const TaskListView = ({ onSelectTask, selectedBlockId }) => {
       prev.map((t) => (t.id === task.id ? { ...t, html: updated.html } : t))
     );
     await updateTask(updated);
+    
+    // Dispatch event for real-time task count updates
+    window.dispatchEvent(new CustomEvent('taskUpdated', { detail: updated }));
   };
 
   const getFilteredAndSortedTasks = () => {
@@ -193,6 +202,9 @@ const TaskListView = ({ onSelectTask, selectedBlockId }) => {
       );
       setEditingBlockId(task.id);
       await updateTask(updatedTask);
+      
+      // Dispatch event for real-time task count updates
+      window.dispatchEvent(new CustomEvent('taskUpdated', { detail: updatedTask }));
       return;
     }
 
@@ -229,6 +241,9 @@ const TaskListView = ({ onSelectTask, selectedBlockId }) => {
     );
     setEditingBlockId(task.id);
     await updateTask(updatedTask);
+    
+    // Dispatch event for real-time task count updates
+    window.dispatchEvent(new CustomEvent('taskUpdated', { detail: updatedTask }));
   };
 
   return (

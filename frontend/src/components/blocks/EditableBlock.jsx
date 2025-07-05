@@ -102,20 +102,20 @@ export default function EditableBlock({
         id={`block-${block.id}`}
         contentEditable
         suppressContentEditableWarning
-        className={`px-2 py-1.5 rounded-lg bg-white outline-none whitespace-pre-wrap break-words focus:bg-blue-50 ${
+        className={`px-3 py-2 rounded-lg bg-[var(--color-flist-surface)] outline-none whitespace-pre-wrap break-words transition-all duration-200 focus:bg-[var(--color-flist-surface)] focus:border focus:border-[var(--color-flist-primary)] focus:shadow-sm ${
           block.type === "heading1"
-            ? "text-2xl font-bold"
+            ? "text-2xl font-bold text-[var(--color-flist-text-primary)]"
             : block.type === "heading2"
-            ? "text-xl font-semibold"
+            ? "text-xl font-semibold text-[var(--color-flist-text-primary)]"
             : block.type === "heading3"
-            ? "text-lg font-medium"
+            ? "text-lg font-medium text-[var(--color-flist-text-primary)]"
             : block.type === "bullet"
-            ? "list-disc ml-6"
+            ? "list-disc ml-6 text-[var(--color-flist-text-primary)]"
             : block.type === "numbered"
-            ? "list-decimal ml-6"
+            ? "list-decimal ml-6 text-[var(--color-flist-text-primary)]"
             : block.type === "quote"
-            ? "border-l-4 pl-4 text-gray-600 italic"
-            : ""
+            ? "border-l-4 border-[var(--color-flist-primary)] pl-4 text-[var(--color-flist-text-secondary)] italic"
+            : "text-[var(--color-flist-text-primary)]"
         }`}
         ref={(el) => {
           ref.current = el;

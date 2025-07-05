@@ -185,7 +185,7 @@ export default function SlashCommandMenu({
   return (
     <div
       ref={menuRef}
-      className="absolute z-50 bg-white border border-[var(--color-flist-border)] rounded-lg shadow-lg backdrop-blur-md min-w-64 max-w-80 transition-all duration-150 ease-out"
+      className="absolute z-50 bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] rounded-lg shadow-lg backdrop-blur-md min-w-64 max-w-80 transition-all duration-150 ease-out glass-strong"
       style={{
         top: adjustedPosition.top,
         left: adjustedPosition.left,
@@ -195,8 +195,8 @@ export default function SlashCommandMenu({
       }}
     >
       <div className="p-2">
-        <div className="text-xs font-medium text-[var(--color-flist-muted)] px-2 py-1 mb-1">
-          BLOCKS
+        <div className="text-xs font-medium text-[var(--color-flist-text-muted)] px-2 py-1 mb-1 uppercase tracking-wide">
+          Blocks
         </div>
         <div className="max-h-64 overflow-y-auto">
           {filteredCommands.map((command, index) => {
@@ -204,10 +204,10 @@ export default function SlashCommandMenu({
             return (
               <button
                 key={command.id}
-                className={`w-full flex items-center gap-3 px-2 py-2 rounded-md text-left transition-colors ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200 ${
                   index === selectedIndex
-                    ? "bg-[var(--color-flist-blue-light)] text-[var(--color-flist-accent)]"
-                    : "text-[var(--color-flist-dark)] hover:bg-[var(--color-flist-surface-hover)]"
+                    ? "bg-[var(--color-flist-primary-light)] text-[var(--color-flist-primary)] border border-[var(--color-flist-primary)]"
+                    : "text-[var(--color-flist-text-primary)] hover:bg-[var(--color-flist-surface-hover)] border border-transparent"
                 }`}
                 onClick={() => onSelect(command)}
               >
@@ -215,15 +215,15 @@ export default function SlashCommandMenu({
                   size={16}
                   className={`${
                     index === selectedIndex
-                      ? "text-[var(--color-flist-accent)]"
-                      : "text-[var(--color-flist-muted)]"
+                      ? "text-[var(--color-flist-primary)]"
+                      : "text-[var(--color-flist-text-muted)]"
                   }`}
                 />
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-sm truncate">
                     {command.title}
                   </div>
-                  <div className="text-xs text-[var(--color-flist-muted)] truncate">
+                  <div className="text-xs text-[var(--color-flist-text-muted)] truncate">
                     {command.description}
                   </div>
                 </div>

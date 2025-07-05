@@ -165,6 +165,9 @@ export function useBlockEditorKeyDown({
       setEditingBlockId(block.id);
       setFocusBlockId(block.id);
       await updateBlock(updatedBlock);
+      
+      // Dispatch event for real-time task count updates
+      window.dispatchEvent(new CustomEvent('taskUpdated', { detail: updatedBlock }));
       return;
     }
 
@@ -180,29 +183,34 @@ export function useBlockEditorKeyDown({
       const htmlContent = el.innerHTML.replace(/\u200B/g, "").trim();
       const isTrulyEmpty = htmlContent === "" || htmlContent === "<br>";
 
-      // ブロック削除
-      if (isAtStart && isTrulyEmpty) {
-        e.preventDefault();
-        if (blocks.length === 1) return;
+              // ブロック削除
+        if (isAtStart && isTrulyEmpty) {
+          e.preventDefault();
+          if (blocks.length === 1) return;
 
-        const deleteBlockId = block.id;
-        const newBlocks = blocks.filter((b) => b.id !== deleteBlockId);
-        setBlocks(newBlocks);
+          const deleteBlockId = block.id;
+          const newBlocks = blocks.filter((b) => b.id !== deleteBlockId);
+          setBlocks(newBlocks);
 
-        if (!String(deleteBlockId).startsWith("tmp-")) {
-          await deleteBlock(deleteBlockId);
+          if (!String(deleteBlockId).startsWith("tmp-")) {
+            await deleteBlock(deleteBlockId);
+            
+            // Dispatch event for real-time task count updates if this was a task
+            if (block.type === "task" || block.type === "task-done") {
+              window.dispatchEvent(new CustomEvent('taskDeleted', { detail: block }));
+            }
+          }
+
+          const prevBlock = blocks[index - 1];
+          if (prevBlock) {
+            setEditingBlockId(prevBlock.id);
+            setFocusBlockId(prevBlock.id);
+          } else if (newBlocks.length > 0) {
+            setEditingBlockId(newBlocks[0].id);
+            setFocusBlockId(newBlocks[0].id);
+          }
+          return;
         }
-
-        const prevBlock = blocks[index - 1];
-        if (prevBlock) {
-          setEditingBlockId(prevBlock.id);
-          setFocusBlockId(prevBlock.id);
-        } else if (newBlocks.length > 0) {
-          setEditingBlockId(newBlocks[0].id);
-          setFocusBlockId(newBlocks[0].id);
-        }
-        return;
-      }
 
       // <br> の削除
       const container = range.startContainer;

@@ -5,21 +5,77 @@ import {
   deleteList as apiDeleteList,
   updateListTitle as apiUpdateListTitle,
 } from "../api/lists";
+import { fetchTasks } from "../api/blocks";
 
 export default function useLists(selectedListId, setSelectedListId) {
   const [lists, setLists] = useState([]);
+  const [taskCounts, setTaskCounts] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Function to recalculate task counts
+  const recalculateTaskCounts = async () => {
+    try {
+      const tasks = await fetchTasks();
+      const counts = {};
+      tasks.forEach(task => {
+        if (task.type === "task") { // Only count uncompleted tasks
+          const listId = task.list;
+          counts[listId] = (counts[listId] || 0) + 1;
+        }
+      });
+      setTaskCounts(counts);
+    } catch (err) {
+      console.error("Error recalculating task counts:", err);
+    }
+  };
+
   useEffect(() => {
     loadLists();
+
+    // Add event listeners for real-time task count updates
+    const handleTaskUpdated = () => {
+      recalculateTaskCounts();
+    };
+
+    const handleTaskCreated = () => {
+      recalculateTaskCounts();
+    };
+
+    const handleTaskDeleted = () => {
+      recalculateTaskCounts();
+    };
+
+    window.addEventListener('taskUpdated', handleTaskUpdated);
+    window.addEventListener('taskCreated', handleTaskCreated);
+    window.addEventListener('taskDeleted', handleTaskDeleted);
+
+    return () => {
+      window.removeEventListener('taskUpdated', handleTaskUpdated);
+      window.removeEventListener('taskCreated', handleTaskCreated);
+      window.removeEventListener('taskDeleted', handleTaskDeleted);
+    };
   }, []);
 
   const loadLists = async () => {
     try {
       setLoading(true);
-      const data = await fetchLists();
+      const [data, tasks] = await Promise.all([
+        fetchLists(),
+        fetchTasks()
+      ]);
       setLists(data);
+      
+      // Calculate task counts for each list
+      const counts = {};
+      tasks.forEach(task => {
+        if (task.type === "task") { // Only count uncompleted tasks
+          const listId = task.list;
+          counts[listId] = (counts[listId] || 0) + 1;
+        }
+      });
+      setTaskCounts(counts);
+      
       if (data.length > 0 && !selectedListId) {
         setSelectedListId(data[0].id);
       }
@@ -69,8 +125,14 @@ export default function useLists(selectedListId, setSelectedListId) {
     }
   };
 
+  const getTaskCount = (listId) => {
+    return taskCounts[listId] || 0;
+  };
+
   return {
     lists,
+    taskCounts,
+    getTaskCount,
     loading,
     error,
     addList,

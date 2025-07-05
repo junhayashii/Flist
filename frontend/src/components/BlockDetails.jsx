@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import BlockEditor from "./editor/BlockEditor";
 import { updateBlockDueDate, updateBlock, fetchBlock, fetchTags, createTag } from "../api/blocks";
-import { Tag } from "lucide-react";
+import { Tag, X } from "lucide-react";
 
 export default function BlockDetails({ block, onClose, onUpdate }) {
   const [localBlock, setLocalBlock] = useState(block);
@@ -176,27 +176,27 @@ export default function BlockDetails({ block, onClose, onUpdate }) {
   };
 
   return (
-    <div className="w-[32rem] border-l border-[var(--color-flist-border)] bg-[var(--color-flist-bg)] backdrop-blur-md h-screen flex flex-col">
+    <div className="w-[32rem] border-l border-[var(--color-flist-border)] bg-[var(--color-flist-bg)] h-screen flex flex-col glass">
       <div className="flex-none p-8 pt-10 relative">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-[var(--color-flist-muted)] hover:text-[var(--color-flist-dark)] transition-colors"
+          className="absolute top-4 right-4 p-2 rounded-lg text-[var(--color-flist-text-muted)] hover:text-[var(--color-flist-text-primary)] hover:bg-[var(--color-flist-surface-hover)] transition-all duration-200 hover-scale focus-ring"
         >
-          ✕
+          <X size={18} />
         </button>
 
-        {/* タイトル */}
+        {/* Title */}
         <h2
           ref={titleRef}
           contentEditable
           suppressContentEditableWarning
           onBlur={handleTitleBlur}
-          className="text-lg font-medium mb-6 outline-none border-b border-transparent focus:border-[var(--color-flist-accent)] transition-colors"
+          className="text-xl font-semibold mb-6 outline-none border-b border-transparent focus:border-[var(--color-flist-primary)] transition-colors text-[var(--color-flist-text-primary)]"
         >
           {getTitleText()}
         </h2>
 
-        {/* タグ選択 */}
+        {/* Tag selection */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-2">
             <Tag size={16} className="text-[var(--color-flist-muted)]" />
@@ -205,25 +205,41 @@ export default function BlockDetails({ block, onClose, onUpdate }) {
             </span>
           </div>
           <div className="flex flex-wrap gap-2 mb-2">
-            {localBlock.tags?.map(tag => (
-              <span
-                key={tag.id}
-                title={tag.name.length > 16 ? tag.name : undefined}
-                className="px-2 py-0.5 rounded-full text-xs font-semibold shadow-sm transition-all duration-150 cursor-default flex items-center gap-1"
-                style={{
-                  background: 'var(--color-flist-accent-light)',
-                  color: 'var(--color-flist-accent)',
-                  border: '1px solid var(--color-flist-accent)',
-                  maxWidth: 120,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                #{tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
-                <button onClick={() => handleRemoveTag(tag.id)} className="ml-1 text-[var(--color-flist-muted)] hover:text-red-500">×</button>
-              </span>
-            ))}
+            {localBlock.tags?.map(tag => {
+              // Simple hash to pick a color
+              const colors = [
+                'tag-primary',
+                'tag-success', 
+                'tag-warning',
+                'tag-purple',
+                'tag-pink',
+                'tag-indigo',
+                'tag-teal',
+                'tag-error'
+              ];
+              let hash = 0;
+              for (let i = 0; i < tag.name.length; i++) {
+                hash = tag.name.charCodeAt(i) + ((hash << 5) - hash);
+              }
+              const tagColor = colors[Math.abs(hash) % colors.length];
+              
+              return (
+                <span
+                  key={tag.id}
+                  title={tag.name.length > 16 ? tag.name : undefined}
+                  className={`tag ${tagColor}`}
+                >
+                  <Tag size={10} />
+                  {tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
+                  <button 
+                    onClick={() => handleRemoveTag(tag.id)} 
+                    className="tag-remove"
+                  >
+                    ×
+                  </button>
+                </span>
+              );
+            })}
           </div>
           <div className="relative" ref={dropdownRef}>
             <input

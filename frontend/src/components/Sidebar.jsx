@@ -1,7 +1,5 @@
 import useLists from "../hooks/useLists";
 import useFolders from "../hooks/useFolders";
-import { useAuth } from "../hooks/useAuth";
-import logo from "../assets/flist-icon.png";
 import {
   CheckSquare,
   FileText,
@@ -16,9 +14,7 @@ import {
   Edit2,
   Calendar,
   ChevronLeft,
-  User,
-  LogOut,
-  Settings,
+  Inbox as InboxIcon,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import {
@@ -33,13 +29,12 @@ import {
 } from "@dnd-kit/core";
 import { moveListToFolder } from "../api/folders";
 
-const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitle, setDraftTitle, inputRef, onDelete, onRename }) => {
+const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitle, setDraftTitle, inputRef, onDelete, onRename, taskCount }) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: list.id,
   });
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
-  const [isHovered, setIsHovered] = useState(false);
   const contextMenuRef = useRef(null);
 
   const handleContextMenu = (e) => {
@@ -66,25 +61,23 @@ const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitl
       ref={setNodeRef}
       {...attributes}
       {...listeners}
-      className={`w-full flex items-center px-4 py-2 rounded-lg cursor-pointer text-sm transition-all duration-200 relative group ${
+      className={`w-full flex items-center px-3 py-2 rounded-lg cursor-pointer text-sm font-medium transition-all duration-200 relative group hover-lift ${
         isSelected 
-          ? "bg-[var(--color-flist-blue-light)] text-[var(--color-flist-accent)]" 
-          : "text-[var(--color-flist-dark)] hover:bg-[var(--color-flist-surface-hover)]"
+          ? "bg-[var(--color-flist-primary-light)] text-[var(--color-flist-primary)] shadow-sm" 
+          : "text-[var(--color-flist-text-secondary)] hover:bg-[var(--color-flist-surface-hover)] hover:text-[var(--color-flist-text-primary)]"
       } ${isDragging ? "opacity-60 scale-105 shadow-xl rotate-1" : ""}`}
       onClick={onClick}
       onContextMenu={handleContextMenu}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
-      {/* ドラッグ中のオーバーレイ */}
+      {/* Drag overlay */}
       {isDragging && (
-        <div className="absolute inset-0 bg-[var(--color-flist-accent)]/10 border-2 border-dashed border-[var(--color-flist-accent)] rounded-lg animate-pulse" />
+        <div className="absolute inset-0 bg-[var(--color-flist-primary)]/10 border-2 border-dashed border-[var(--color-flist-primary)] rounded-lg animate-pulse" />
       )}
 
       {editingId === list.id ? (
         <input
           ref={inputRef}
-          className="w-full px-2 py-1 text-sm border border-[var(--color-flist-border)] rounded-md focus:outline-none focus:border-[var(--color-flist-accent)] bg-[var(--color-flist-surface)] ml-6"
+          className="input w-full text-sm"
           value={draftTitle}
           onChange={(e) => setDraftTitle(e.target.value)}
           onBlur={() => onEdit(list.id)}
@@ -94,38 +87,32 @@ const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitl
           }}
         />
       ) : (
-        <div className="flex items-center space-x-3 ml-6">
-          <List size={16} className="text-[var(--color-flist-muted)]" />
-          <span className="truncate">{list.title || "Untitled"}</span>
+        <div className="flex items-center space-x-2">
+          <List size={14} className="text-[var(--color-flist-text-muted)]" />
+          <span className="truncate font-medium">{list.title || "Untitled"}</span>
         </div>
       )}
 
-      {/* アクションボタン - Notion風 */}
-      {isHovered && !isDragging && editingId !== list.id && (
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onRename(list.id);
-            }}
-            className="p-1 rounded-md hover:bg-[var(--color-flist-surface-hover)] text-[var(--color-flist-muted)] hover:text-[var(--color-flist-dark)] transition-colors"
-          >
-            <Edit2 size={14} />
-          </button>
+      {/* Task count */}
+      {taskCount > 0 && (
+        <div className="absolute right-2 top-1/2 -translate-y-1/2">
+          <span className="bg-[var(--color-flist-accent)] text-white text-xs font-medium px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+            {taskCount}
+          </span>
         </div>
       )}
 
       {showContextMenu && (
         <div
           ref={contextMenuRef}
-          className="fixed bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] rounded-lg shadow-lg py-1 z-50 min-w-[160px] backdrop-blur-md"
+          className="fixed bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] rounded-lg shadow-lg py-1 z-50 min-w-[160px] glass-strong fade-in"
           style={{
             top: contextMenuPosition.y,
             left: contextMenuPosition.x,
           }}
         >
           <button
-            className="w-full px-4 py-2 text-sm text-left text-[var(--color-flist-dark)] hover:bg-[var(--color-flist-surface-hover)] flex items-center space-x-2 transition-colors"
+            className="w-full px-4 py-2 text-sm text-left text-[var(--color-flist-text-primary)] hover:bg-[var(--color-flist-surface-hover)] flex items-center space-x-2 transition-colors"
             onClick={() => {
               onRename(list.id);
               setShowContextMenu(false);
@@ -135,7 +122,7 @@ const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitl
             <span>Rename List</span>
           </button>
           <button
-            className="w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-red-50 flex items-center space-x-2 transition-colors"
+            className="w-full px-4 py-2 text-sm text-left text-[var(--color-flist-error)] hover:bg-[var(--color-flist-error-light)] flex items-center space-x-2 transition-colors"
             onClick={() => {
               onDelete(list.id);
               setShowContextMenu(false);
@@ -179,11 +166,11 @@ const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, chi
   }, []);
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-0.5">
       <div
         ref={setNodeRef}
-        className={`flex items-center justify-between px-2 py-1 rounded-lg hover:bg-[var(--color-flist-surface-hover)] cursor-pointer transition-all duration-200 relative ${
-          isOver ? "bg-[var(--color-flist-accent)]/5 border border-[var(--color-flist-accent)]" : ""
+        className={`flex items-center justify-between px-3 py-2 rounded-lg hover:bg-[var(--color-flist-surface-hover)] cursor-pointer transition-all duration-200 relative hover-lift ${
+          isOver ? "bg-[var(--color-flist-primary-light)]" : ""
         }`}
         onClick={onToggle}
         onContextMenu={handleContextMenu}
@@ -192,12 +179,12 @@ const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, chi
       >
         <div className="flex items-center space-x-2 relative z-10">
           {isExpanded ? (
-            <ChevronDown size={16} className={`${isOver ? "text-[var(--color-flist-accent)]" : "text-[var(--color-flist-muted)]"}`} />
+            <ChevronDown size={14} className={`${isOver ? "text-[var(--color-flist-primary)]" : "text-[var(--color-flist-text-muted)]"}`} />
           ) : (
-            <ChevronRight size={16} className={`${isOver ? "text-[var(--color-flist-accent)]" : "text-[var(--color-flist-muted)]"}`} />
+            <ChevronRight size={14} className={`${isOver ? "text-[var(--color-flist-primary)]" : "text-[var(--color-flist-text-muted)]"}`} />
           )}
-          <Folder size={16} className={`${isOver ? "text-[var(--color-flist-accent)]" : "text-[var(--color-flist-muted)]"}`} />
-          <span className={`text-sm font-medium ${isOver ? "text-[var(--color-flist-accent)]" : "text-[var(--color-flist-dark)]"}`}>
+          <Folder size={14} className={`${isOver ? "text-[var(--color-flist-primary)]" : "text-[var(--color-flist-text-muted)]"}`} />
+          <span className={`text-sm font-medium ${isOver ? "text-[var(--color-flist-primary)]" : "text-[var(--color-flist-text-primary)]"}`}>
             {folder.title}
           </span>
         </div>
@@ -215,7 +202,7 @@ const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, chi
         )}
       </div>
       {isExpanded && (
-        <div className={`ml-6 space-y-1 transition-all duration-200 ${isOver ? "bg-[var(--color-flist-accent)]/5 rounded-lg p-1" : ""}`}>
+        <div className={`ml-4 space-y-0.5 transition-all duration-200 ${isOver ? "bg-[var(--color-flist-accent)]/5 rounded-lg p-1" : ""}`}>
           {children}
         </div>
       )}
@@ -274,9 +261,8 @@ const UnorganizedDropZone = ({ isOver, children }) => {
 };
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListId }) => {
-  const { lists, addList, updateList, refreshLists, deleteList } = useLists(selectedListId, setSelectedListId);
+  const { lists, addList, updateList, refreshLists, deleteList, getTaskCount } = useLists(selectedListId, setSelectedListId);
   const { folders, addFolder, editFolder, removeFolder } = useFolders();
-  const { user, logout } = useAuth();
 
   const [editingId, setEditingId] = useState(null);
   const [draftTitle, setDraftTitle] = useState("");
@@ -381,19 +367,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
     setDraftTitle(folders.find(f => f.id === folderId)?.title || "");
   };
 
-  const handleLogout = async () => {
-    if (confirm("ログアウトしますか？")) {
-      try {
-        await logout();
-      } catch (error) {
-        console.error("ログアウトエラー:", error);
-      }
-    }
-  };
 
-  const baseButton = "w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-sm font-medium transition";
-  const selected = "bg-blue-50 text-blue-600 font-semibold";
-  const unselected = "text-gray-600 hover:bg-gray-100";
 
   // Group lists by folder
   const listsByFolder = lists.reduce((acc, list) => {
@@ -408,70 +382,101 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
   const activeList = activeId ? lists.find(list => list.id === activeId) : null;
 
   return (
-    <div className={`${sidebarOpen ? "w-72" : "w-0"} transition-all duration-300 bg-[var(--color-flist-surface)] border-r border-[var(--color-flist-border)] flex flex-col overflow-hidden shadow-sm`}>
-      <div className="p-6 border-b border-[var(--color-flist-border)] relative">
+    <div className={`${sidebarOpen ? "w-64" : "w-0"} transition-all duration-300 bg-[var(--color-flist-surface)] border-r border-[var(--color-flist-border)] flex flex-col overflow-hidden shadow-sm glass`}>
+      <div className="p-4 border-b border-[var(--color-flist-border)] relative">
         {/* Close button */}
         {sidebarOpen && setSidebarOpen && (
           <button
-            className="absolute top-4 right-4 p-1 rounded-full hover:bg-[var(--color-flist-blue-light)]/40 text-[var(--color-flist-accent)] transition-colors z-10"
+            className="absolute top-4 right-4 p-2 rounded-lg hover:bg-[var(--color-flist-surface-hover)] text-[var(--color-flist-text-muted)] hover:text-[var(--color-flist-text-primary)] transition-all duration-200 hover-scale focus-ring z-10"
             onClick={() => setSidebarOpen(false)}
-            title="サイドバーを閉じる"
+            title="Close sidebar"
           >
-            <ChevronLeft size={22} />
+            <ChevronLeft size={18} />
           </button>
         )}
-        {/* Logo */}
-        <div className="flex items-center space-x-2 mb-6">
-          <img src={logo} alt="Flist Logo" className="w-8 h-8" />
-          <h1 className="text-xl font-bold text-[var(--color-flist-blue-dark)] tracking-tight">
-            Flist
-          </h1>
-        </div>
+
+        {/* Inbox */}
+        <button
+          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover-lift ${
+            selectedListId === "inbox"
+              ? "bg-[var(--color-flist-primary-light)] text-[var(--color-flist-primary)] shadow-sm"
+              : "text-[var(--color-flist-text-secondary)] hover:bg-[var(--color-flist-surface-hover)] hover:text-[var(--color-flist-text-primary)]"
+          }`}
+          onClick={() => setSelectedListId("inbox")}
+        >
+          <InboxIcon size={16} />
+          <span>Inbox</span>
+        </button>
+
+        {/* Today */}
+        <button
+          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover-lift ${
+            selectedListId === "today"
+              ? "bg-[var(--color-flist-primary-light)] text-[var(--color-flist-primary)] shadow-sm"
+              : "text-[var(--color-flist-text-secondary)] hover:bg-[var(--color-flist-surface-hover)] hover:text-[var(--color-flist-text-primary)]"
+          }`}
+          onClick={() => setSelectedListId("today")}
+        >
+          <Calendar size={16} />
+          <span>Today</span>
+        </button>
 
         {/* Dashboard */}
         <button
-          className={`${baseButton} ${selectedListId === "dashboard" ? selected : unselected}`}
+          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover-lift ${
+            selectedListId === "dashboard" 
+              ? "bg-[var(--color-flist-primary-light)] text-[var(--color-flist-primary)] shadow-sm" 
+              : "text-[var(--color-flist-text-secondary)] hover:bg-[var(--color-flist-surface-hover)] hover:text-[var(--color-flist-text-primary)]"
+          }`}
           onClick={() => setSelectedListId("dashboard")}
         >
-          <LayoutDashboard className={`w-4 h-4 ${selectedListId === "dashboard" ? "text-blue-600" : "text-gray-400"}`} />
+          <LayoutDashboard size={16} />
           <span>Dashboard</span>
         </button>
 
         {/* Tasks */}
         <button
-          className={`${baseButton} ${selectedListId === "tasks" ? selected : unselected}`}
+          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover-lift ${
+            selectedListId === "tasks" 
+              ? "bg-[var(--color-flist-primary-light)] text-[var(--color-flist-primary)] shadow-sm" 
+              : "text-[var(--color-flist-text-secondary)] hover:bg-[var(--color-flist-surface-hover)] hover:text-[var(--color-flist-text-primary)]"
+          }`}
           onClick={() => setSelectedListId("tasks")}
         >
-          <CheckSquare className={`w-4 h-4 ${selectedListId === "tasks" ? "text-blue-600" : "text-gray-400"}`} />
+          <CheckSquare size={16} />
           <span>Tasks</span>
         </button>
 
         {/* Notes */}
         <button
-          className={`${baseButton} ${selectedListId === "notes" ? selected : unselected}`}
+          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover-lift ${
+            selectedListId === "notes" 
+              ? "bg-[var(--color-flist-primary-light)] text-[var(--color-flist-primary)] shadow-sm" 
+              : "text-[var(--color-flist-text-secondary)] hover:bg-[var(--color-flist-surface-hover)] hover:text-[var(--color-flist-text-primary)]"
+          }`}
           onClick={() => setSelectedListId("notes")}
         >
-          <FileText className={`w-4 h-4 ${selectedListId === "notes" ? "text-blue-600" : "text-gray-400"}`} />
+          <FileText size={16} />
           <span>Notes</span>
         </button>
       </div>
 
       {/* Explorer */}
       <div className="flex-1 overflow-y-auto">
-        <div className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-sm font-semibold text-gray-500">My Lists</h2>
+        <div className="p-3">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xs font-normal text-[var(--color-flist-text-muted)]">My Lists</h2>
             <div className="flex space-x-1">
               <button
                 onClick={handleAddFolder}
-                className="p-1 rounded-md hover:bg-gray-100 text-gray-500"
+                className="p-1.5 rounded-lg hover:bg-[var(--color-flist-surface-hover)] text-[var(--color-flist-text-muted)] hover:text-[var(--color-flist-text-primary)] transition-all duration-200 hover-scale focus-ring"
                 title="New Folder"
               >
                 <Folder size={16} />
               </button>
               <button
                 onClick={() => handleAddList()}
-                className="p-1 rounded-md hover:bg-gray-100 text-gray-500"
+                className="p-1.5 rounded-lg hover:bg-[var(--color-flist-surface-hover)] text-[var(--color-flist-text-muted)] hover:text-[var(--color-flist-text-primary)] transition-all duration-200 hover-scale focus-ring"
                 title="New List"
               >
                 <Plus size={16} />
@@ -485,7 +490,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {/* Folders */}
               {folders.map((folder) => (
                 <DroppableFolder
@@ -513,6 +518,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
                         setEditingId(id);
                         setDraftTitle(list.title || "");
                       }}
+                      taskCount={getTaskCount(list.id)}
                     />
                   ))}
                 </DroppableFolder>
@@ -521,7 +527,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
               {/* Unorganized Drop Zone: フォルダの下に移動 */}
               <UnorganizedDropZone>
                 {listsByFolder['unorganized']?.length > 0 && (
-                  <div className="space-y-1">
+                  <div className="space-y-0.5">
                     {listsByFolder['unorganized'].map((list) => (
                       <DraggableList
                         key={list.id}
@@ -538,6 +544,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
                           setEditingId(id);
                           setDraftTitle(list.title || "");
                         }}
+                        taskCount={getTaskCount(list.id)}
                       />
                     ))}
                   </div>
@@ -572,40 +579,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
         </div>
       </div>
 
-      {/* Account Section */}
-      <div className="p-4 border-t border-[var(--color-flist-border)] bg-[var(--color-flist-surface)]">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-[var(--color-flist-accent)] rounded-full flex items-center justify-center">
-              <User size={16} className="text-white" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-[var(--color-flist-dark)] truncate max-w-[160px]">
-                {user?.email || "User"}
-              </span>
-              <span className="text-xs text-[var(--color-flist-muted)]">
-                {user?.is_staff ? "Admin" : "User"}
-              </span>
-            </div>
-          </div>
-          <div className="flex space-x-1">
-            <button
-              onClick={() => {/* TODO: Settings */}}
-              className="p-1 rounded-md hover:bg-[var(--color-flist-surface-hover)] text-[var(--color-flist-muted)] transition-colors"
-              title="Settings"
-            >
-              <Settings size={16} />
-            </button>
-            <button
-              onClick={handleLogout}
-              className="p-1 rounded-md hover:bg-red-50 text-[var(--color-flist-muted)] hover:text-red-600 transition-colors"
-              title="Log Out"
-            >
-              <LogOut size={16} />
-            </button>
-          </div>
-        </div>
-      </div>
+
     </div>
   );
 };

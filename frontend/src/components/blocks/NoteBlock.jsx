@@ -79,24 +79,35 @@ export default function NoteBlock({
         {/* Tag chips */}
         {block.tags && block.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1">
-            {block.tags.map(tag => (
-              <span
-                key={tag.id}
-                title={tag.name.length > 16 ? tag.name : undefined}
-                className="px-2 py-0.5 rounded-full text-xs font-semibold shadow-sm transition-all duration-150 cursor-default"
-                style={{
-                  background: 'var(--color-flist-accent-light)',
-                  color: 'var(--color-flist-accent)',
-                  border: '1px solid var(--color-flist-accent)',
-                  maxWidth: 120,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                #{tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
-              </span>
-            ))}
+            {block.tags.map(tag => {
+              // Simple hash to pick a color
+              const colors = [
+                'tag-primary',
+                'tag-success', 
+                'tag-warning',
+                'tag-purple',
+                'tag-pink',
+                'tag-indigo',
+                'tag-teal',
+                'tag-error'
+              ];
+              let hash = 0;
+              for (let i = 0; i < tag.name.length; i++) {
+                hash = tag.name.charCodeAt(i) + ((hash << 5) - hash);
+              }
+              const tagColor = colors[Math.abs(hash) % colors.length];
+              
+              return (
+                <span
+                  key={tag.id}
+                  title={tag.name.length > 16 ? tag.name : undefined}
+                  className={`tag ${tagColor}`}
+                >
+                  <Tag size={10} />
+                  {tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
+                </span>
+              );
+            })}
           </div>
         )}
       </div>

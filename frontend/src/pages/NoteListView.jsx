@@ -10,6 +10,7 @@ import {
   Calendar,
   List,
   X,
+  Tag,
 } from "lucide-react";
 
 export default function NoteListView({ onSelectNote, selectedNote }) {
@@ -267,41 +268,37 @@ export default function NoteListView({ onSelectNote, selectedNote }) {
                 cursor-pointer transition-all duration-200 ease-in-out
               `}
             >
-              <h3 className="font-medium text-[var(--color-flist-text)] mb-2">
+              <h3 className="text-base font-medium text-[var(--color-flist-dark)] mb-2">
                 {note.html.match(/\[\[(.+?)\]\]/)?.[1] || "(無題ノート)"}
               </h3>
-              {/* Tag chips */}
-              {note.tags && note.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-2">
-                  {note.tags.map(tag => (
-                    <span
-                      key={tag.id}
-                      title={tag.name.length > 16 ? tag.name : undefined}
-                      className="px-2 py-0.5 rounded-full text-xs font-semibold shadow-sm transition-all duration-150 cursor-default"
-                      style={{
-                        background: 'var(--color-flist-accent-light)',
-                        color: 'var(--color-flist-accent)',
-                        border: '1px solid var(--color-flist-accent)',
-                        maxWidth: 120,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      #{tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
-                    </span>
-                  ))}
-                </div>
-              )}
-              <div className="flex items-center gap-4 text-sm text-[var(--color-flist-text-secondary)]">
-                <div className="flex items-center gap-1">
-                  <Calendar size={16} />
+              {/* Second line: List, Date, Tags */}
+              <div className="flex items-center gap-3 mt-2 text-sm text-[var(--color-flist-muted)]">
+                {note.list && (
+                  <span className="flex items-center gap-1">
+                    <List className="w-3 h-3" />
+                    {lists[note.list]}
+                  </span>
+                )}
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
                   {format(new Date(note.created_at), "yyyy-MM-dd")}
-                </div>
-                <div className="flex items-center gap-1">
-                  <List size={16} />
-                  {note.list ? lists[note.list] : "Inbox"}
-                </div>
+                </span>
+                {note.tags && note.tags.length > 0 && (
+                  <div className="flex items-center gap-1">
+                    <Tag className="w-3 h-3" />
+                    <div className="flex flex-wrap gap-1">
+                      {note.tags.map(tag => (
+                        <span
+                          key={tag.id}
+                          title={tag.name.length > 16 ? tag.name : undefined}
+                          className="tag tag-primary"
+                        >
+                          {tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ))}
