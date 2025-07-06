@@ -12,7 +12,6 @@ const TaskBlock = forwardRef(({
   editableRef,
   onEmptyTaskEnterOrBackspace,
   isSelected = false,
-  onDelete,
   editingBlockId,
   onKeyDown,
 }, ref) => {
@@ -163,17 +162,6 @@ const TaskBlock = forwardRef(({
           >
             <ChevronRight size={14} strokeWidth={2} />
           </button>
-          {onDelete && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-              className="text-[var(--color-flist-muted)] hover:text-red-500 text-sm transition-colors"
-            >
-              削除
-            </button>
-          )}
         </div>
       </div>
     </div>

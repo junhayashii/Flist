@@ -287,6 +287,26 @@ export default function BlockEditor({
 
   const activeBlock = activeId ? blocks.find(block => block.id === activeId) : null;
 
+  useEffect(() => {
+    // Listen for taskDeleted and noteDeleted events and remove the block if it matches
+    const handleTaskDeleted = (event) => {
+      const deletedTask = event.detail;
+      setBlocks((prev) => prev.filter((b) => b.id !== deletedTask.id));
+    };
+    
+    const handleNoteDeleted = (event) => {
+      const deletedNote = event.detail;
+      setBlocks((prev) => prev.filter((b) => b.id !== deletedNote.id));
+    };
+    
+    window.addEventListener('taskDeleted', handleTaskDeleted);
+    window.addEventListener('noteDeleted', handleNoteDeleted);
+    return () => {
+      window.removeEventListener('taskDeleted', handleTaskDeleted);
+      window.removeEventListener('noteDeleted', handleNoteDeleted);
+    };
+  }, []);
+
   return (
     <div className={`p-8 mx-8 space-y-8 ${compact ? 'compact' : ''}`}>
       {/* Header with Title */}

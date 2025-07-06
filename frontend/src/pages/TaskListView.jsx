@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import TaskBlock from "../components/blocks/TaskBlock";
-import { fetchTasks, updateTask, deleteBlock, createTask } from "../api/blocks";
+import { fetchTasks, updateTask, createTask } from "../api/blocks";
 import { fetchListMap } from "../api/lists";
 import { parseISO } from "date-fns";
 import {
@@ -54,25 +54,23 @@ const TaskListView = ({ onSelectTask, selectedBlockId }) => {
       setTasks(prev => [newTask, ...prev]);
     };
 
+    // Add event listener for task deletion
+    const handleTaskDeleted = (event) => {
+      const deletedTask = event.detail;
+      setTasks(prev => prev.filter(task => task.id !== deletedTask.id));
+    };
+
     window.addEventListener('taskUpdated', handleTaskUpdate);
     window.addEventListener('taskCreated', handleTaskCreated);
+    window.addEventListener('taskDeleted', handleTaskDeleted);
     return () => {
       window.removeEventListener('taskUpdated', handleTaskUpdate);
       window.removeEventListener('taskCreated', handleTaskCreated);
+      window.removeEventListener('taskDeleted', handleTaskDeleted);
     };
   }, []);
 
-  const handleDelete = async (task) => {
-    try {
-      await deleteBlock(task.id);
-      setTasks((prev) => prev.filter((t) => t.id !== task.id));
-      
-      // Dispatch event for real-time task count updates
-      window.dispatchEvent(new CustomEvent('taskDeleted', { detail: task }));
-    } catch (err) {
-      console.error("タスク削除失敗:", err);
-    }
-  };
+
 
   const handleToggle = async (task) => {
     const updated = {
@@ -442,7 +440,6 @@ const TaskListView = ({ onSelectTask, selectedBlockId }) => {
                 editableRef={(el) => (taskRefs.current[task.id] = el)}
                 onEmptyTaskEnterOrBackspace={() => handleEmptyTaskEnterOrBackspace(task)}
                 isSelected={selectedBlockId === task.id}
-                onDelete={() => handleDelete(task)}
                 editingBlockId={editingBlockId}
                 onKeyDown={(e) => handleKeyDown(e, task, index)}
               />

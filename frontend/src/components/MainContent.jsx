@@ -157,6 +157,15 @@ export default function MainContent({
                     window.dispatchEvent(event);
                   }
                 }}
+                onDelete={(deletedTask) => {
+                  // Remove the task from the main content
+                  if (selectedListId === "tasks") {
+                    // For TaskListView, we need to trigger a refresh
+                    const event = new CustomEvent('taskDeleted', { detail: deletedTask });
+                    window.dispatchEvent(event);
+                  }
+                  setSelectedTask(null);
+                }}
               />
             </div>
           )}
@@ -179,6 +188,15 @@ export default function MainContent({
                     const event = new CustomEvent('noteUpdated', { detail: updated });
                     window.dispatchEvent(event);
                   }
+                }}
+                onDelete={(deletedTask) => {
+                  // Remove the task from the main content
+                  if (selectedListId === "tasks") {
+                    // For TaskListView, we need to trigger a refresh
+                    const event = new CustomEvent('taskDeleted', { detail: deletedTask });
+                    window.dispatchEvent(event);
+                  }
+                  setSelectedTask(null);
                 }}
               />
             </div>

@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
 import BlockEditor from "./editor/BlockEditor";
-import { updateBlockDueDate, updateBlock, fetchBlock, fetchTags, createTag } from "../api/blocks";
-import { Tag, X, CalendarDays } from "lucide-react";
+import { updateBlockDueDate, updateBlock, fetchBlock, fetchTags, createTag, deleteBlock } from "../api/blocks";
+import { Tag, X, CalendarDays, MoreVertical } from "lucide-react";
 import CustomDatePicker from "./CustomDatePicker";
 import CustomTagPicker from "./CustomTagPicker";
 
-export default function BlockDetails({ block, onClose, onUpdate }) {
+export default function BlockDetails({ block, onClose, onUpdate, onDelete }) {
   const [localBlock, setLocalBlock] = useState(block);
   const [allTags, setAllTags] = useState([]);
   const titleRef = useRef(null);
   const [dateMenuOpen, setDateMenuOpen] = useState(false);
   const [tagMenuOpen, setTagMenuOpen] = useState(false);
+  const [contextMenuOpen, setContextMenuOpen] = useState(false);
+  const contextMenuRef = useRef(null);
 
   useEffect(() => {
     const loadBlock = async () => {
@@ -40,6 +42,23 @@ export default function BlockDetails({ block, onClose, onUpdate }) {
     };
     loadTags();
   }, []);
+
+  // Handle clicking outside context menu to close it
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (contextMenuRef.current && !contextMenuRef.current.contains(event.target)) {
+        setContextMenuOpen(false);
+      }
+    };
+
+    if (contextMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [contextMenuOpen]);
 
   const handleDueDateChange = async (e) => {
     let newDueDate = e.target.value;
@@ -123,6 +142,25 @@ export default function BlockDetails({ block, onClose, onUpdate }) {
     onUpdate?.(saved);
   };
 
+  // Handle task deletion
+  const handleDeleteTask = async () => {
+    if (window.confirm("Are you sure you want to delete this task?")) {
+      try {
+        await deleteBlock(block.id);
+        // Dispatch the correct event for instant UI update
+        if (block.type === "note") {
+          window.dispatchEvent(new CustomEvent('noteDeleted', { detail: block }));
+        } else {
+          window.dispatchEvent(new CustomEvent('taskDeleted', { detail: block }));
+        }
+        onDelete?.(block);
+        onClose?.();
+      } catch (err) {
+        console.error("Task deletion failed:", err);
+      }
+    }
+  };
+
   const getTitleText = () => {
     if (localBlock.type === "note") {
       return localBlock.html?.match(/\[\[(.+?)\]\]/)?.[1] || "(無題ノート)";
@@ -133,12 +171,40 @@ export default function BlockDetails({ block, onClose, onUpdate }) {
   return (
     <div className="w-[32rem] border-l border-[var(--color-flist-border)] bg-[var(--color-flist-bg)] h-screen flex flex-col">
       <div className="flex-none p-8 pt-10 relative">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-lg text-[var(--color-flist-text-muted)] hover:text-[var(--color-flist-text-primary)] hover:bg-[var(--color-flist-surface-hover)] transition-all duration-200 hover-scale focus-ring"
-        >
-          <X size={18} />
-        </button>
+        {/* Close button and context menu - top right */}
+        <div className="absolute top-4 right-4 flex items-center gap-2">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-[var(--color-flist-text-muted)] hover:text-[var(--color-flist-text-primary)] hover:bg-[var(--color-flist-surface-hover)] transition-all duration-200 hover-scale focus-ring"
+          >
+            <X size={18} />
+          </button>
+
+          {/* Context menu button */}
+          <div className="relative">
+            <button
+              onClick={() => setContextMenuOpen(!contextMenuOpen)}
+              className="p-2 rounded-lg text-[var(--color-flist-text-muted)] hover:text-[var(--color-flist-text-primary)] hover:bg-[var(--color-flist-surface-hover)] transition-all duration-200 hover-scale focus-ring"
+            >
+              <MoreVertical size={18} />
+            </button>
+            
+            {/* Context menu dropdown */}
+            {contextMenuOpen && (
+              <div
+                ref={contextMenuRef}
+                className="absolute right-0 mt-2 w-48 bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] rounded-lg shadow-lg backdrop-blur-md z-10"
+              >
+                <button
+                  onClick={handleDeleteTask}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors rounded-lg"
+                >
+                  Delete task
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Title */}
         <h2

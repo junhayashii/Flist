@@ -63,9 +63,17 @@ export default function NoteListView({ onSelectNote, selectedNote }) {
       ));
     };
 
+    // Add event listener for note deletion
+    const handleNoteDeleted = (event) => {
+      const deletedNote = event.detail;
+      setNotes(prev => prev.filter(note => note.id !== deletedNote.id));
+    };
+
     window.addEventListener('noteUpdated', handleNoteUpdate);
+    window.addEventListener('noteDeleted', handleNoteDeleted);
     return () => {
       window.removeEventListener('noteUpdated', handleNoteUpdate);
+      window.removeEventListener('noteDeleted', handleNoteDeleted);
     };
   }, [selectedNote]);
 
