@@ -288,7 +288,7 @@ export default function NoteListView({ onSelectNote, selectedNote }) {
         </div>
 
         {/* Notes List */}
-        <div className="space-y-4">
+        <div className="space-y-2">
           {filteredNotes.map((note) => (
             <div
               key={note.id}
