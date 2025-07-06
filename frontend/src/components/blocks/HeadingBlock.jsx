@@ -38,12 +38,8 @@ export default function HeadingBlock({
     const newText = localRef.current.innerText.trim();
     if (!newText) return;
 
-    // 新しいテキストでマークダウン形式を作成
-    const prefix = "#".repeat(level);
-    const newHtml = `${prefix} ${newText}`;
-    const updatedBlock = { ...block, html: newHtml, type: `heading${level}` };
-    
-    onBlur?.(updatedBlock);
+    // Call the parent onBlur handler - it will handle the text processing
+    onBlur?.();
   };
 
   const Tag = `h${level}`;

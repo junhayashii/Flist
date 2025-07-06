@@ -83,34 +83,34 @@ export default function NoteBlock({
           )}
 
           {/* Tags below title */}
-          {block.tags && block.tags.length > 0 && (
+        {block.tags && block.tags.length > 0 && (
             <div className="flex items-center gap-3 mt-2 text-sm text-[var(--color-flist-muted)]">
               <div className="flex flex-wrap gap-1">
-                {block.tags.map(tag => (
-                  <span
-                    key={tag.id}
-                    title={tag.name.length > 16 ? tag.name : undefined}
+            {block.tags.map(tag => (
+              <span
+                key={tag.id}
+                title={tag.name.length > 16 ? tag.name : undefined}
                     className="tag tag-primary flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] text-xs font-medium"
-                  >
-                    <Tag className="w-3 h-3 text-[var(--color-flist-accent)]" />
-                    {tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
-                  </span>
-                ))}
+              >
+                <Tag className="w-3 h-3 text-[var(--color-flist-accent)]" />
+                {tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
+              </span>
+            ))}
               </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenDetail?.(block);
-            }}
-            className="text-[var(--color-flist-muted)] hover:text-[var(--color-flist-accent)] p-1 transition-colors"
-          >
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpenDetail?.(block);
+        }}
+        className="text-[var(--color-flist-muted)] hover:text-[var(--color-flist-accent)] p-1 transition-colors"
+      >
             <ChevronRight size={14} strokeWidth={2} />
-          </button>
+      </button>
         </div>
       </div>
     </div>

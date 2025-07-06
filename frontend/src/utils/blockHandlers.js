@@ -27,34 +27,40 @@ export const handleBlur = async ({
   const html = el.innerText.trim();
   const newType = getBlockType(html);
 
-  const correctedType =
-    ((block.type === "task" || block.type === "task-done") && newType === "text")
-      ? block.type
-      : (block.type === "note" && newType === "text")
-      ? block.type
-      : (block.type === "heading1" && newType === "text")
-      ? block.type
-      : (block.type === "heading2" && newType === "text")
-      ? block.type
-      : (block.type === "heading3" && newType === "text")
-      ? block.type
-      : (block.type === "bullet" && newType === "text")
-      ? block.type
-      : (block.type === "numbered" && newType === "text")
-      ? block.type
-      : (block.type === "quote" && newType === "text")
-      ? block.type
-      : newType;
+  // Preserve the original type for special blocks unless the content clearly indicates a different type
+  const correctedType = (() => {
+    // If the block is a special type and the new content doesn't match any specific pattern, keep the original type
+    if (block.type === "task" || block.type === "task-done") {
+      return newType === "text" ? block.type : newType;
+    }
+    if (block.type === "note") {
+      return newType === "text" ? block.type : newType;
+    }
+    if (block.type === "heading1" || block.type === "heading2" || block.type === "heading3") {
+      return newType === "text" ? block.type : newType;
+    }
+    if (block.type === "bullet" || block.type === "numbered") {
+      return newType === "text" ? block.type : newType;
+    }
+    if (block.type === "quote") {
+      return newType === "text" ? block.type : newType;
+    }
+    return newType;
+  })();
 
-  // ✅ newType に応じてマークダウン補完
+  // Add markdown formatting based on the corrected type
   let finalHtml = html;
-  if (newType === "bullet" && !html.startsWith("- ")) {
+  if (correctedType === "bullet" && !html.startsWith("- ")) {
     finalHtml = `- ${html}`;
-  } else if (newType === "heading1" && !html.startsWith("# ")) {
+  } else if (correctedType === "numbered" && !/^\d+\.\s/.test(html)) {
+    // For numbered lists, preserve the current number if possible
+    const currentNumber = block.html.match(/^(\d+)\./)?.[1] || "1";
+    finalHtml = `${currentNumber}. ${html}`;
+  } else if (correctedType === "heading1" && !html.startsWith("# ")) {
     finalHtml = `# ${html}`;
-  } else if (newType === "heading2" && !html.startsWith("## ")) {
+  } else if (correctedType === "heading2" && !html.startsWith("## ")) {
     finalHtml = `## ${html}`;
-  } else if (newType === "heading3" && !html.startsWith("### ")) {
+  } else if (correctedType === "heading3" && !html.startsWith("### ")) {
     finalHtml = `### ${html}`;
   }
 

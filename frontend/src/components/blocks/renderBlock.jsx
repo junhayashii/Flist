@@ -79,7 +79,13 @@ export default function renderBlock({
         level={1}
         onClick={() => handleBlockClick(block.id)}
         isEditable={isEditing}
-        onBlur={() => handleBlur(block)}
+        onBlur={() => handleBlur({
+          block,
+          el: blockRefs.current[block.id],
+          setBlocks,
+          saveBlock,
+          updateBlock,
+        })}
         editableRef={(el) => {
           if (el) blockRefs.current[block.id] = el;
         }}
@@ -97,7 +103,13 @@ export default function renderBlock({
         level={2}
         onClick={() => handleBlockClick(block.id)}
         isEditable={isEditing}
-        onBlur={() => handleBlur(block)}
+        onBlur={() => handleBlur({
+          block,
+          el: blockRefs.current[block.id],
+          setBlocks,
+          saveBlock,
+          updateBlock,
+        })}
         editableRef={(el) => {
           if (el) blockRefs.current[block.id] = el;
         }}
@@ -115,7 +127,13 @@ export default function renderBlock({
         level={3}
         onClick={() => handleBlockClick(block.id)}
         isEditable={isEditing}
-        onBlur={() => handleBlur(block)}
+        onBlur={() => handleBlur({
+          block,
+          el: blockRefs.current[block.id],
+          setBlocks,
+          saveBlock,
+          updateBlock,
+        })}
         editableRef={(el) => {
           if (el) blockRefs.current[block.id] = el;
         }}
@@ -133,7 +151,13 @@ export default function renderBlock({
         type="bullet"
         onClick={() => handleBlockClick(block.id)}
         isEditable={isEditing}
-        onBlur={() => handleBlur(block)}
+        onBlur={() => handleBlur({
+          block,
+          el: blockRefs.current[block.id],
+          setBlocks,
+          saveBlock,
+          updateBlock,
+        })}
         editableRef={(el) => {
           if (el) blockRefs.current[block.id] = el;
         }}
@@ -151,7 +175,13 @@ export default function renderBlock({
         type="numbered"
         onClick={() => handleBlockClick(block.id)}
         isEditable={isEditing}
-        onBlur={() => handleBlur(block)}
+        onBlur={() => handleBlur({
+          block,
+          el: blockRefs.current[block.id],
+          setBlocks,
+          saveBlock,
+          updateBlock,
+        })}
         editableRef={(el) => {
           if (el) blockRefs.current[block.id] = el;
         }}

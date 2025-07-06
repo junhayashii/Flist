@@ -41,18 +41,8 @@ export default function ListItemBlock({
     const newText = localRef.current.innerText.trim();
     if (!newText) return;
 
-    // 新しいテキストでマークダウン形式を作成
-    let newHtml;
-    if (type === "bullet") {
-      newHtml = `- ${newText}`;
-    } else {
-      // numberedの場合、現在の番号を保持
-      const currentNumber = block.html.match(/^(\d+)\./)?.[1] || "1";
-      newHtml = `${currentNumber}. ${newText}`;
-    }
-    const updatedBlock = { ...block, html: newHtml, type };
-    
-    onBlur?.(updatedBlock);
+    // Call the parent onBlur handler - it will handle the text processing
+    onBlur?.();
   };
 
   return (
