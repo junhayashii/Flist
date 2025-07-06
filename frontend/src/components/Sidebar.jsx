@@ -96,7 +96,7 @@ const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitl
       {/* Task count */}
       {taskCount > 0 && (
         <div className="absolute right-2 top-1/2 -translate-y-1/2">
-          <span className="bg-[var(--color-flist-accent)] text-white text-xs font-medium px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+          <span className="bg-[rgba(59,130,246,0.08)] text-[var(--color-flist-primary)] text-xs font-medium px-1.5 py-0.5 rounded-full min-w-[18px] text-center border border-[rgba(59,130,246,0.12)]">
             {taskCount}
           </span>
         </div>
