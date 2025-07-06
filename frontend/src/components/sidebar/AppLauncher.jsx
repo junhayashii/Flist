@@ -25,7 +25,7 @@ export default function AppLauncher({ selectedListId, setSelectedListId }) {
         {/* List */}
         <button
           className={`p-3 rounded-lg transition-all duration-200 hover-scale focus-ring ${
-            selectedListId === "tasks" 
+            selectedListId && selectedListId !== "calendar"
               ? "bg-[var(--color-flist-primary-light)] text-[var(--color-flist-primary)] shadow-sm" 
               : "text-[var(--color-flist-text-muted)] hover:bg-[var(--color-flist-surface-hover)] hover:text-[var(--color-flist-text-primary)]"
           }`}
