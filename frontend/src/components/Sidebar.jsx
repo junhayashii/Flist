@@ -56,6 +56,10 @@ const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitl
     };
   }, []);
 
+  // Determine if this list is unorganized (not in a folder)
+  const isUnorganized = !list.folder;
+  const inFolder = !!list.folder;
+
   return (
     <div
       ref={setNodeRef}
@@ -68,6 +72,7 @@ const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitl
       } ${isDragging ? "opacity-60 scale-105 shadow-xl rotate-1" : ""}`}
       onClick={onClick}
       onContextMenu={handleContextMenu}
+      style={{ minHeight: 36, alignItems: 'center', paddingLeft: isUnorganized ? 26 : inFolder ? 48 : undefined }}
     >
       {/* Drag overlay */}
       {isDragging && (
@@ -87,9 +92,22 @@ const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitl
           }}
         />
       ) : (
-        <div className="flex items-center space-x-2">
-          <List size={14} className="text-[var(--color-flist-text-muted)]" />
-          <span className="truncate font-medium">{list.title || "Untitled"}</span>
+        <div className="flex items-center gap-2">
+          <List size={16} className="text-[var(--color-flist-text-muted)]" style={{ verticalAlign: 'middle' }} />
+          <span
+            className="font-medium"
+            style={{
+              verticalAlign: 'middle',
+              maxWidth: isUnorganized ? 145 : 120,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              display: 'inline-block',
+            }}
+            title={list.title || "Untitled"}
+          >
+            {list.title || "Untitled"}
+          </span>
         </div>
       )}
 
@@ -169,22 +187,23 @@ const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, chi
     <div className="space-y-0.5">
       <div
         ref={setNodeRef}
-        className={`flex items-center justify-between px-3 py-2 rounded-lg hover:bg-[var(--color-flist-surface-hover)] cursor-pointer transition-all duration-200 relative hover-lift ${
+        className={`flex items-center px-2 py-2 rounded-lg hover:bg-[var(--color-flist-surface-hover)] cursor-pointer transition-all duration-200 relative hover-lift ${
           isOver ? "bg-[var(--color-flist-primary-light)]" : ""
         }`}
         onClick={onToggle}
         onContextMenu={handleContextMenu}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        style={{ paddingLeft: 4 }}
       >
-        <div className="flex items-center space-x-2 relative z-10">
+        <div className="flex items-center gap-1 relative z-10 flex-1 min-w-0">
           {isExpanded ? (
-            <ChevronDown size={14} className={`${isOver ? "text-[var(--color-flist-primary)]" : "text-[var(--color-flist-text-muted)]"}`} />
+            <ChevronDown size={16} className={`mr-0.5 ${isOver ? "text-[var(--color-flist-primary)]" : "text-[var(--color-flist-text-muted)]"}`} />
           ) : (
-            <ChevronRight size={14} className={`${isOver ? "text-[var(--color-flist-primary)]" : "text-[var(--color-flist-text-muted)]"}`} />
+            <ChevronRight size={16} className={`mr-0.5 ${isOver ? "text-[var(--color-flist-primary)]" : "text-[var(--color-flist-text-muted)]"}`} />
           )}
-          <Folder size={14} className={`${isOver ? "text-[var(--color-flist-primary)]" : "text-[var(--color-flist-text-muted)]"}`} />
-          <span className={`text-sm font-medium ${isOver ? "text-[var(--color-flist-primary)]" : "text-[var(--color-flist-text-primary)]"}`}>
+          <Folder size={16} className={`${isOver ? "text-[var(--color-flist-primary)]" : "text-[var(--color-flist-text-muted)]"}`} style={{ verticalAlign: 'middle' }} />
+          <span className={`text-sm font-medium ml-1 truncate ${isOver ? "text-[var(--color-flist-primary)]" : "text-[var(--color-flist-text-primary)]"}`} style={{ verticalAlign: 'middle' }}>
             {folder.title}
           </span>
         </div>
@@ -194,15 +213,16 @@ const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, chi
               e.stopPropagation();
               onAddList(folder.id);
             }}
-            className="p-1 rounded-md hover:bg-[var(--color-flist-surface-hover)] text-[var(--color-flist-muted)] transition-colors relative z-10"
+            className="p-1 rounded-md hover:bg-[var(--color-flist-surface-hover)] text-[var(--color-flist-muted)] transition-colors relative z-10 ml-2"
             title="Add List"
+            style={{ marginLeft: 'auto' }}
           >
             <Plus size={14} />
           </button>
         )}
       </div>
       {isExpanded && (
-        <div className={`ml-4 space-y-0.5 transition-all duration-200 ${isOver ? "bg-[var(--color-flist-accent)]/5 rounded-lg p-1" : ""}`}>
+        <div className="space-y-0.5 transition-all duration-200">
           {children}
         </div>
       )}
@@ -366,8 +386,6 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
     setEditingId(`folder-${folderId}`);
     setDraftTitle(folders.find(f => f.id === folderId)?.title || "");
   };
-
-
 
   // Group lists by folder
   const listsByFolder = lists.reduce((acc, list) => {
@@ -587,8 +605,6 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
           </DndContext>
         </div>
       </div>
-
-
     </div>
   );
 };
