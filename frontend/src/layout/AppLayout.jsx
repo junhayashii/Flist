@@ -61,6 +61,7 @@ export default function AppLayout() {
           selectedTask={selectedTask}
           setSelectedTask={setSelectedTask}
           refreshKey={sidebarRefreshKey}
+          setSelectedListId={setSelectedListId}
         />
       </div>
     </DndContext>

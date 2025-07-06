@@ -23,8 +23,6 @@ export default function NoteListView({ onSelectNote, selectedNote }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("created_at");
   const [sortOrder, setSortOrder] = useState("desc");
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newNoteTitle, setNewNoteTitle] = useState("");
 
   useEffect(() => {
     const loadNotes = async () => {
@@ -121,24 +119,17 @@ export default function NoteListView({ onSelectNote, selectedNote }) {
   };
 
   const handleCreateNote = async () => {
-    if (!newNoteTitle.trim()) return;
-    
     try {
-      const newNote = await createNote(newNoteTitle.trim());
-      setNotes(prev => [newNote, ...prev]);
-      setNewNoteTitle("");
-      setShowAddModal(false);
+      const newNote = await createNote("New Note");
+      
+      // Open the detail panel for the new note
+      onSelectNote?.(newNote);
       
       // Dispatch event for real-time note count updates
       window.dispatchEvent(new CustomEvent('noteCreated', { detail: newNote }));
     } catch (err) {
       console.error("ノート作成失敗:", err);
     }
-  };
-
-  const handleCloseAddModal = () => {
-    setShowAddModal(false);
-    setNewNoteTitle("");
   };
 
   const filteredNotes = getFilteredAndSortedNotes();
@@ -149,7 +140,7 @@ export default function NoteListView({ onSelectNote, selectedNote }) {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold text-[var(--color-flist-dark)]">Notes</h1>
         <button
-          onClick={() => setShowAddModal(true)}
+          onClick={handleCreateNote}
           className="flex items-center gap-2 px-4 py-2 bg-[var(--color-flist-accent)] text-white rounded-lg hover:bg-[var(--color-flist-accent-hover)] transition-colors"
         >
           <Plus size={16} />
@@ -316,10 +307,10 @@ export default function NoteListView({ onSelectNote, selectedNote }) {
               </h3>
               {/* Second line: List, Date, Tags */}
               <div className="flex items-center gap-3 mt-2 text-sm text-[var(--color-flist-muted)]">
-                {note.list && (
+                {note.list && (lists[note.list]?.title || (typeof lists[note.list] === 'string' && lists[note.list])) && (
                   <span className="flex items-center gap-1">
                     <List className="w-3 h-3" />
-                    {lists[note.list]}
+                    {lists[note.list]?.title || (typeof lists[note.list] === 'string' ? lists[note.list] : undefined)}
                   </span>
                 )}
                 <span className="flex items-center gap-1">
@@ -327,82 +318,25 @@ export default function NoteListView({ onSelectNote, selectedNote }) {
                   {format(new Date(note.created_at), "yyyy-MM-dd")}
                 </span>
               {note.tags && note.tags.length > 0 && (
-                  <div className="flex items-center gap-1">
-                    <Tag className="w-3 h-3" />
-                    <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1">
                   {note.tags.map(tag => (
                     <span
                       key={tag.id}
                       title={tag.name.length > 16 ? tag.name : undefined}
-                          className="tag tag-primary"
+                      className={
+                        `tag tag-primary flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] text-xs font-medium`
+                      }
                     >
-                          {tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
+                      <Tag className="w-3 h-3 text-[var(--color-flist-accent)]" />
+                      {tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
                     </span>
                   ))}
-                    </div>
                 </div>
               )}
               </div>
             </div>
           ))}
         </div>
-
-        {/* Add Note Modal */}
-        {showAddModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-            <div className="bg-white rounded-xl shadow-xl p-6 min-w-[400px] max-w-md w-full">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-[var(--color-flist-dark)]">新しいノートを作成</h3>
-                <button
-                  onClick={handleCloseAddModal}
-                  className="text-[var(--color-flist-muted)] hover:text-[var(--color-flist-dark)] transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-[var(--color-flist-dark)] mb-2">
-                    ノート名
-                  </label>
-                  <input
-                    type="text"
-                    value={newNoteTitle}
-                    onChange={(e) => setNewNoteTitle(e.target.value)}
-                    placeholder="ノート名を入力..."
-                    className="w-full p-3 border border-[var(--color-flist-border)] rounded-lg focus:outline-none focus:border-[var(--color-flist-accent)] transition-colors"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        handleCreateNote();
-                      }
-                      if (e.key === "Escape") {
-                        handleCloseAddModal();
-                      }
-                    }}
-                    autoFocus
-                  />
-                </div>
-              </div>
-              
-              <div className="flex justify-end gap-3 mt-6">
-                <button
-                  onClick={handleCloseAddModal}
-                  className="px-4 py-2 text-[var(--color-flist-dark)] hover:bg-[var(--color-flist-surface-hover)] rounded-lg transition-colors"
-                >
-                  キャンセル
-                </button>
-                <button
-                  onClick={handleCreateNote}
-                  disabled={!newNoteTitle.trim()}
-                  className="px-4 py-2 bg-[var(--color-flist-accent)] text-white rounded-lg hover:bg-[var(--color-flist-accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  作成
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
     </div>
   );
 }

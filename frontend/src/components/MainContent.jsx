@@ -5,7 +5,8 @@ import TaskListView from "../pages/TaskListView";
 import NoteListView from "../pages/NoteListView";
 import Dashboard from "../pages/Dashboard";
 import CalendarPage from "../pages/CalendarPage";
-
+import Inbox from "../pages/Inbox";
+import Today from "../pages/Today";
 
 import { Plus, Sidebar, PanelLeftOpen, X } from "lucide-react";
 
@@ -16,6 +17,7 @@ export default function MainContent({
   selectedTask,
   setSelectedTask,
   refreshKey,
+  setSelectedListId,
 }) {
 
 
@@ -24,7 +26,11 @@ export default function MainContent({
 
 
   useEffect(() => {
-    setSelectedTask(null);
+    // Only clear selectedTask when navigating to special pages, not when navigating to a regular list
+    const specialPages = ["dashboard", "inbox", "today", "tasks", "notes", "calendar"];
+    if (specialPages.includes(selectedListId)) {
+      setSelectedTask(null);
+    }
   }, [selectedListId, setSelectedTask]);
 
   // Listen for block updates from main content
@@ -80,6 +86,10 @@ export default function MainContent({
           <div className="mt-2">
             {selectedListId === "dashboard" ? (
               <Dashboard />
+            ) : selectedListId === "inbox" ? (
+              <Inbox />
+            ) : selectedListId === "today" ? (
+              <Today setSelectedListId={setSelectedListId} />
             ) : selectedListId === "tasks" ? (
               <TaskListView
                 onSelectTask={setSelectedTask}
@@ -166,6 +176,7 @@ export default function MainContent({
                   }
                   setSelectedTask(null);
                 }}
+                setSelectedListId={setSelectedListId}
               />
             </div>
           )}
@@ -198,6 +209,7 @@ export default function MainContent({
                   }
                   setSelectedTask(null);
                 }}
+                setSelectedListId={setSelectedListId}
               />
             </div>
           )}

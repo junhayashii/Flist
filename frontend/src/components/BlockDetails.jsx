@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import BlockEditor from "./editor/BlockEditor";
 import { updateBlockDueDate, updateBlock, fetchBlock, fetchTags, createTag, deleteBlock } from "../api/blocks";
-import { Tag, X, CalendarDays, MoreVertical } from "lucide-react";
+import { Tag, X, CalendarDays, MoreVertical, List as ListIcon } from "lucide-react";
 import CustomDatePicker from "./CustomDatePicker";
 import CustomTagPicker from "./CustomTagPicker";
+import { fetchListMap } from "../api/lists";
 
-export default function BlockDetails({ block, onClose, onUpdate, onDelete }) {
+export default function BlockDetails({ block, onClose, onUpdate, onDelete, setSelectedListId }) {
   const [localBlock, setLocalBlock] = useState(block);
   const [allTags, setAllTags] = useState([]);
+  const [lists, setLists] = useState({});
   const titleRef = useRef(null);
   const [dateMenuOpen, setDateMenuOpen] = useState(false);
   const [tagMenuOpen, setTagMenuOpen] = useState(false);
@@ -25,6 +27,21 @@ export default function BlockDetails({ block, onClose, onUpdate, onDelete }) {
     };
     loadBlock();
   }, [block.id]);
+
+  // Fetch list map for showing list name
+  useEffect(() => {
+    async function loadLists() {
+      try {
+        const listMap = await fetchListMap();
+        setLists(listMap);
+      } catch {
+        // ignore
+      }
+    }
+    if (block.type === "task" || block.type === "task-done" || block.type === "note") {
+      loadLists();
+    }
+  }, [block.list, block.type]);
 
   // Update localBlock when block prop changes (e.g., from main content updates)
   useEffect(() => {
@@ -212,10 +229,23 @@ export default function BlockDetails({ block, onClose, onUpdate, onDelete }) {
           contentEditable
           suppressContentEditableWarning
           onBlur={handleTitleBlur}
-          className="text-xl font-semibold mb-6 outline-none border-b border-transparent focus:border-[var(--color-flist-primary)] transition-colors text-[var(--color-flist-text-primary)]"
+          className="text-xl font-semibold mb-2 outline-none border-b border-transparent focus:border-[var(--color-flist-primary)] transition-colors text-[var(--color-flist-text-primary)]"
         >
           {getTitleText()}
         </h2>
+
+        {/* List name pill for tasks and notes */}
+        {((localBlock.type === "task" || localBlock.type === "task-done" || localBlock.type === "note") && localBlock.list && lists[localBlock.list]) && (
+          <div className="mb-4">
+            <button
+              onClick={() => setSelectedListId?.(localBlock.list)}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] text-xs font-medium hover:bg-[var(--color-flist-surface-hover)] hover:border-[var(--color-flist-accent)] transition-all duration-200 cursor-pointer"
+            >
+              <ListIcon className="w-3 h-3 text-[var(--color-flist-accent)]" />
+              {lists[localBlock.list]}
+            </button>
+          </div>
+        )}
 
         {/* Due Date and Tags - Side by Side */}
         <div className="mb-0 flex flex-wrap gap-2 items-center">

@@ -12,6 +12,11 @@ export default function CustomDatePicker({ value, onChange, open, setOpen }) {
   const [selected, setSelected] = useState(value ? new Date(value) : undefined);
   const ref = useRef();
 
+  // Update selected state when value prop changes
+  useEffect(() => {
+    setSelected(value ? new Date(value) : undefined);
+  }, [value]);
+
   const setAndClose = (date) => {
     setSelected(date);
     onChange(date ? date.toISOString().slice(0, 10) : "");

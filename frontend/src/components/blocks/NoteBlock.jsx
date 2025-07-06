@@ -79,35 +79,18 @@ export default function NoteBlock({
         {/* Tag chips */}
         {block.tags && block.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1">
-            {block.tags.map(tag => {
-              // Simple hash to pick a color
-              const colors = [
-                'tag-primary',
-                'tag-success', 
-                'tag-warning',
-                'tag-purple',
-                'tag-pink',
-                'tag-indigo',
-                'tag-teal',
-                'tag-error'
-              ];
-              let hash = 0;
-              for (let i = 0; i < tag.name.length; i++) {
-                hash = tag.name.charCodeAt(i) + ((hash << 5) - hash);
-              }
-              const tagColor = colors[Math.abs(hash) % colors.length];
-              
-              return (
+            {block.tags.map(tag => (
               <span
                 key={tag.id}
                 title={tag.name.length > 16 ? tag.name : undefined}
-                  className={`tag ${tagColor}`}
-                >
-                  <Tag size={10} />
-                  {tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
+                className={
+                  `tag tag-primary flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] text-xs font-medium`
+                }
+              >
+                <Tag className="w-3 h-3 text-[var(--color-flist-accent)]" />
+                {tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
               </span>
-              );
-            })}
+            ))}
           </div>
         )}
       </div>
