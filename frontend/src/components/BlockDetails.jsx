@@ -1,17 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import BlockEditor from "./editor/BlockEditor";
 import { updateBlockDueDate, updateBlock, fetchBlock, fetchTags, createTag } from "../api/blocks";
-import { Tag, X } from "lucide-react";
+import { Tag, X, CalendarDays } from "lucide-react";
+import CustomDatePicker from "./CustomDatePicker";
+import CustomTagPicker from "./CustomTagPicker";
 
 export default function BlockDetails({ block, onClose, onUpdate }) {
   const [localBlock, setLocalBlock] = useState(block);
   const [allTags, setAllTags] = useState([]);
-  const [tagInput, setTagInput] = useState("");
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [highlightedIndex, setHighlightedIndex] = useState(0);
   const titleRef = useRef(null);
-  const inputRef = useRef(null);
-  const dropdownRef = useRef(null);
+  const [dateMenuOpen, setDateMenuOpen] = useState(false);
+  const [tagMenuOpen, setTagMenuOpen] = useState(false);
 
   useEffect(() => {
     const loadBlock = async () => {
@@ -25,6 +24,11 @@ export default function BlockDetails({ block, onClose, onUpdate }) {
     loadBlock();
   }, [block.id]);
 
+  // Update localBlock when block prop changes (e.g., from main content updates)
+  useEffect(() => {
+    setLocalBlock(block);
+  }, [block]);
+
   useEffect(() => {
     const loadTags = async () => {
       try {
@@ -36,31 +40,6 @@ export default function BlockDetails({ block, onClose, onUpdate }) {
     };
     loadTags();
   }, []);
-
-  // Filtered suggestions for dropdown
-  const filteredTags = allTags.filter(
-    t => t.name.toLowerCase().includes(tagInput.toLowerCase()) && !localBlock.tags?.some(tag => tag.id === t.id)
-  );
-  const exactMatch = allTags.find(t => t.name.toLowerCase() === tagInput.trim().toLowerCase());
-  const canCreate = tagInput.trim() && !exactMatch;
-
-  // Handle click outside to close dropdown
-  useEffect(() => {
-    function handleClickOutside(e) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target) &&
-        inputRef.current &&
-        !inputRef.current.contains(e.target)
-      ) {
-        setShowDropdown(false);
-      }
-    }
-    if (showDropdown) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showDropdown]);
 
   const handleDueDateChange = async (e) => {
     let newDueDate = e.target.value;
@@ -115,53 +94,29 @@ export default function BlockDetails({ block, onClose, onUpdate }) {
       setLocalBlock(saved);
       onUpdate?.(saved);
     }
-    setTagInput("");
-    setShowDropdown(false);
-    setHighlightedIndex(0);
   };
 
   const handleCreateAndAddTag = async (name) => {
     if (!name.trim()) return;
     const tag = await createTag(name.trim());
-    setAllTags([...allTags, tag]);
     await handleAddTag(tag);
-  };
-
-  const handleInputChange = (e) => {
-    setTagInput(e.target.value);
-    setShowDropdown(true);
-    setHighlightedIndex(0);
-  };
-
-  const handleInputKeyDown = (e) => {
-    if (!showDropdown && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
-      setShowDropdown(true);
-      return;
-    }
-    if (showDropdown) {
-      if (e.key === "ArrowDown") {
-        setHighlightedIndex(i => Math.min(i + 1, (canCreate ? filteredTags.length : filteredTags.length - 1)));
-        e.preventDefault();
-      } else if (e.key === "ArrowUp") {
-        setHighlightedIndex(i => Math.max(i - 1, 0));
-        e.preventDefault();
-      } else if (e.key === "Enter") {
-        if (canCreate && highlightedIndex === filteredTags.length) {
-          handleCreateAndAddTag(tagInput);
-        } else if (filteredTags[highlightedIndex]) {
-          handleAddTag(filteredTags[highlightedIndex]);
-        }
-        e.preventDefault();
-      } else if (e.key === "Escape") {
-        setShowDropdown(false);
-      }
-    }
   };
 
   const handleRemoveTag = async (tagId) => {
     const updatedBlock = {
       ...localBlock,
       tag_ids: (localBlock.tags?.map(t => t.id) || []).filter(id => id !== tagId),
+    };
+    const saved = await updateBlock(updatedBlock);
+    setLocalBlock(saved);
+    onUpdate?.(saved);
+  };
+
+  // Add a handler to clear all tags at once
+  const handleClearAllTags = async () => {
+    const updatedBlock = {
+      ...localBlock,
+      tag_ids: [],
     };
     const saved = await updateBlock(updatedBlock);
     setLocalBlock(saved);
@@ -176,7 +131,7 @@ export default function BlockDetails({ block, onClose, onUpdate }) {
   };
 
   return (
-    <div className="w-[32rem] border-l border-[var(--color-flist-border)] bg-[var(--color-flist-bg)] h-screen flex flex-col glass">
+    <div className="w-[32rem] border-l border-[var(--color-flist-border)] bg-[var(--color-flist-bg)] h-screen flex flex-col">
       <div className="flex-none p-8 pt-10 relative">
         <button
           onClick={onClose}
@@ -196,147 +151,52 @@ export default function BlockDetails({ block, onClose, onUpdate }) {
           {getTitleText()}
         </h2>
 
-        {/* Tag selection */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Tag size={16} className="text-[var(--color-flist-muted)]" />
-            <span className="text-sm font-medium text-[var(--color-flist-text-secondary)]">
-              タグ
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {localBlock.tags?.map(tag => {
-              // Simple hash to pick a color
-              const colors = [
-                'tag-primary',
-                'tag-success', 
-                'tag-warning',
-                'tag-purple',
-                'tag-pink',
-                'tag-indigo',
-                'tag-teal',
-                'tag-error'
-              ];
-              let hash = 0;
-              for (let i = 0; i < tag.name.length; i++) {
-                hash = tag.name.charCodeAt(i) + ((hash << 5) - hash);
-              }
-              const tagColor = colors[Math.abs(hash) % colors.length];
-              
-              return (
-              <span
-                key={tag.id}
-                title={tag.name.length > 16 ? tag.name : undefined}
-                  className={`tag ${tagColor}`}
-                >
-                  <Tag size={10} />
-                  {tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
-                  <button 
-                    onClick={() => handleRemoveTag(tag.id)} 
-                    className="tag-remove"
-                  >
-                    ×
-                  </button>
-              </span>
-              );
-            })}
-          </div>
-          <div className="relative" ref={dropdownRef}>
-            <input
-              ref={inputRef}
-              type="text"
-              className="flex-1 text-sm bg-transparent border-b border-[var(--color-flist-border)] focus:outline-none focus:border-[var(--color-flist-accent)] px-1 py-1"
-              placeholder="タグを追加..."
-              value={tagInput}
-              onChange={handleInputChange}
-              onFocus={() => setShowDropdown(true)}
-              onKeyDown={handleInputKeyDown}
-              autoComplete="off"
-              style={{ minWidth: 120 }}
+        {/* Due Date and Tags - Side by Side */}
+        <div className="mb-0 flex flex-wrap gap-2 items-center">
+          {/* Due Date (as pill) */}
+          {localBlock.type !== "note" && (
+            <CustomDatePicker
+              value={localBlock.due_date}
+              onChange={async (date) => {
+                await handleDueDateChange({ target: { value: date } });
+              }}
+              open={dateMenuOpen}
+              setOpen={(v) => {
+                setDateMenuOpen(v);
+                if (v) setTagMenuOpen(false);
+              }}
             />
-            {showDropdown && (filteredTags.length > 0 || canCreate) && (
-              <div className="absolute z-10 mt-1 w-full bg-white border border-[var(--color-flist-border)] rounded shadow-lg max-h-40 overflow-auto">
-                {filteredTags.map((tag, idx) => (
-                  <div
-                    key={tag.id}
-                    className={`px-3 py-2 cursor-pointer text-sm ${highlightedIndex === idx ? 'bg-[var(--color-flist-blue-light)] text-[var(--color-flist-accent)]' : ''}`}
-                    onMouseDown={() => handleAddTag(tag)}
-                    onMouseEnter={() => setHighlightedIndex(idx)}
-                  >
-                    {tag.name}
-                  </div>
-                ))}
-                {canCreate && (
-                  <div
-                    className={`px-3 py-2 cursor-pointer text-sm font-semibold ${highlightedIndex === filteredTags.length ? 'bg-[var(--color-flist-blue-light)] text-[var(--color-flist-accent)]' : ''}`}
-                    onMouseDown={() => handleCreateAndAddTag(tagInput)}
-                    onMouseEnter={() => setHighlightedIndex(filteredTags.length)}
-                  >
-                    + 新しいタグ「{tagInput}」を作成
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+          )}
 
-        {/* タスク用の期日入力 */}
-        {localBlock.type !== "note" && (
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-2">
-              <svg
-                className="w-4 h-4 text-[var(--color-flist-muted)]"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-              <span className="text-sm font-medium text-[var(--color-flist-text-secondary)]">
-                期日
-              </span>
-            </div>
-            <div className="flex items-center gap-2 bg-[var(--color-flist-surface)] rounded-lg border border-[var(--color-flist-border)] px-3 py-2 shadow-sm hover:border-[var(--color-flist-accent)] transition-colors">
-              <input
-                type="date"
-                className="flex-1 text-sm bg-transparent focus:outline-none text-[var(--color-flist-dark)]"
-                value={localBlock.due_date?.slice(0, 10) || ""}
-                onChange={handleDueDateChange}
-              />
-            </div>
-          </div>
-        )}
+          {/* Tags (as pills) */}
+          <CustomTagPicker
+            tags={localBlock.tags || []}
+            allTags={allTags}
+            onAddTag={async (tag) => await handleAddTag(tag)}
+            onRemoveTag={async (tag) => await handleRemoveTag(tag.id)}
+            onCreateTag={async (name) => await handleCreateAndAddTag(name)}
+            onClear={handleClearAllTags}
+            open={tagMenuOpen}
+            setOpen={(v) => {
+              if (typeof v === 'function') {
+                setTagMenuOpen(prev => {
+                  const next = v(prev);
+                  if (next) setDateMenuOpen(false);
+                  return next;
+                });
+              } else {
+                setTagMenuOpen(v);
+                if (v) setDateMenuOpen(false);
+              }
+            }}
+          />
+        </div>
       </div>
 
-      {/* メモセクション */}
-      <div className="flex-1 flex flex-col p-8 pt-0">
-        <div className="space-y-2 flex-1 flex flex-col">
-          <div className="flex items-center gap-2">
-            <svg
-              className="w-4 h-4 text-[var(--color-flist-muted)]"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-              />
-            </svg>
-            <span className="text-sm font-medium text-[var(--color-flist-text-secondary)]">
-              メモ
-            </span>
-          </div>
-          <div className="flex-1 rounded-lg overflow-hidden">
-            <BlockEditor parentBlockId={block.id} listId={block.list} />
-          </div>
+      {/* BlockEditor section, no label */}
+      <div className="flex-1 flex flex-col">
+        <div className="flex-1">
+          <BlockEditor parentBlockId={block.id} listId={block.list} hideTitle={true} compact={true} />
         </div>
       </div>
     </div>

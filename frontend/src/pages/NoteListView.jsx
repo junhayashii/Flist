@@ -1,6 +1,6 @@
 // src/components/NoteListView.jsx
 import React, { useEffect, useState } from "react";
-import { fetchAllBlocks } from "../api/blocks";
+import { fetchAllBlocks, createNote } from "../api/blocks";
 import { format } from "date-fns";
 import { fetchListMap } from "../api/lists";
 import {
@@ -11,6 +11,7 @@ import {
   List,
   X,
   Tag,
+  Plus,
 } from "lucide-react";
 
 export default function NoteListView({ onSelectNote, selectedNote }) {
@@ -22,6 +23,8 @@ export default function NoteListView({ onSelectNote, selectedNote }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("created_at");
   const [sortOrder, setSortOrder] = useState("desc");
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newNoteTitle, setNewNoteTitle] = useState("");
 
   useEffect(() => {
     const loadNotes = async () => {
@@ -109,13 +112,45 @@ export default function NoteListView({ onSelectNote, selectedNote }) {
     setSearchQuery("");
   };
 
+  const handleCreateNote = async () => {
+    if (!newNoteTitle.trim()) return;
+    
+    try {
+      const newNote = await createNote(newNoteTitle.trim());
+      setNotes(prev => [newNote, ...prev]);
+      setNewNoteTitle("");
+      setShowAddModal(false);
+      
+      // Dispatch event for real-time note count updates
+      window.dispatchEvent(new CustomEvent('noteCreated', { detail: newNote }));
+    } catch (err) {
+      console.error("ノート作成失敗:", err);
+    }
+  };
+
+  const handleCloseAddModal = () => {
+    setShowAddModal(false);
+    setNewNoteTitle("");
+  };
+
   const filteredNotes = getFilteredAndSortedNotes();
 
   return (
-    <div className="flex-1 flex overflow-hidden">
-      <div className="flex-1 overflow-y-auto px-8 py-6 backdrop-blur-md">
-        {/* Filter/Sort + Search */}
-        <div className="bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] rounded-xl shadow-sm px-6 py-4 mb-6 max-w-8xl mx-auto">
+    <div className="p-8 mx-8 space-y-8">
+      {/* Header with Add Button */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-semibold text-[var(--color-flist-dark)]">Notes</h1>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--color-flist-accent)] text-white rounded-lg hover:bg-[var(--color-flist-accent-hover)] transition-colors"
+        >
+          <Plus size={16} />
+          New Note
+        </button>
+      </div>
+
+      {/* Filter/Sort + Search */}
+      <div className="bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] rounded-xl shadow-sm px-6 py-4">
           <div className="flex flex-wrap items-center gap-4">
             {/* Filter Button */}
             <div className="relative">
@@ -254,7 +289,7 @@ export default function NoteListView({ onSelectNote, selectedNote }) {
         </div>
 
         {/* Notes List */}
-        <div className="space-y-4 max-w-8xl mx-auto">
+        <div className="space-y-4">
           {filteredNotes.map((note) => (
             <div
               key={note.id}
@@ -303,7 +338,63 @@ export default function NoteListView({ onSelectNote, selectedNote }) {
             </div>
           ))}
         </div>
-      </div>
+
+        {/* Add Note Modal */}
+        {showAddModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+            <div className="bg-white rounded-xl shadow-xl p-6 min-w-[400px] max-w-md w-full">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-[var(--color-flist-dark)]">新しいノートを作成</h3>
+                <button
+                  onClick={handleCloseAddModal}
+                  className="text-[var(--color-flist-muted)] hover:text-[var(--color-flist-dark)] transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-[var(--color-flist-dark)] mb-2">
+                    ノート名
+                  </label>
+                  <input
+                    type="text"
+                    value={newNoteTitle}
+                    onChange={(e) => setNewNoteTitle(e.target.value)}
+                    placeholder="ノート名を入力..."
+                    className="w-full p-3 border border-[var(--color-flist-border)] rounded-lg focus:outline-none focus:border-[var(--color-flist-accent)] transition-colors"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleCreateNote();
+                      }
+                      if (e.key === "Escape") {
+                        handleCloseAddModal();
+                      }
+                    }}
+                    autoFocus
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={handleCloseAddModal}
+                  className="px-4 py-2 text-[var(--color-flist-dark)] hover:bg-[var(--color-flist-surface-hover)] rounded-lg transition-colors"
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={handleCreateNote}
+                  disabled={!newNoteTitle.trim()}
+                  className="px-4 py-2 bg-[var(--color-flist-accent)] text-white rounded-lg hover:bg-[var(--color-flist-accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  作成
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 }

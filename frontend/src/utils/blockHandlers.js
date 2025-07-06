@@ -102,6 +102,13 @@ export const handleInput = async ({
 
   if (!id.toString().startsWith("tmp-")) {
     await updateBlock(updatedBlock);
+    
+    // Dispatch event for real-time updates if this is a task or note
+    if (updatedBlock.type === "task" || updatedBlock.type === "task-done") {
+      window.dispatchEvent(new CustomEvent('taskUpdated', { detail: updatedBlock }));
+    } else if (updatedBlock.type === "note") {
+      window.dispatchEvent(new CustomEvent('noteUpdated', { detail: updatedBlock }));
+    }
   }
 };
 

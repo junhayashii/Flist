@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import TaskBlock from "../components/blocks/TaskBlock";
-import { fetchTasks, updateTask, deleteBlock } from "../api/blocks";
+import { fetchTasks, updateTask, deleteBlock, createTask } from "../api/blocks";
 import { fetchListMap } from "../api/lists";
 import { parseISO } from "date-fns";
 import {
@@ -12,6 +12,7 @@ import {
   Clock,
   List,
   X,
+  Plus,
 } from "lucide-react";
 
 const TaskListView = ({ onSelectTask, selectedBlockId }) => {
@@ -25,6 +26,8 @@ const TaskListView = ({ onSelectTask, selectedBlockId }) => {
   const [sortBy, setSortBy] = useState("due-date"); // due-date, created, updated, title
   const [sortOrder] = useState("asc"); // asc, desc
   const [editingBlockId, setEditingBlockId] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState("");
   const taskRefs = useRef({});
 
   useEffect(() => {
@@ -246,11 +249,43 @@ const TaskListView = ({ onSelectTask, selectedBlockId }) => {
     window.dispatchEvent(new CustomEvent('taskUpdated', { detail: updatedTask }));
   };
 
+  const handleCreateTask = async () => {
+    if (!newTaskTitle.trim()) return;
+    
+    try {
+      const newTask = await createTask(newTaskTitle.trim());
+      setTasks(prev => [newTask, ...prev]);
+      setNewTaskTitle("");
+      setShowAddModal(false);
+      
+      // Dispatch event for real-time task count updates
+      window.dispatchEvent(new CustomEvent('taskCreated', { detail: newTask }));
+    } catch (err) {
+      console.error("タスク作成失敗:", err);
+    }
+  };
+
+  const handleCloseAddModal = () => {
+    setShowAddModal(false);
+    setNewTaskTitle("");
+  };
+
   return (
-    <div className="flex-1 flex overflow-hidden">
-      <div className="flex-1 overflow-y-auto px-8 py-6 backdrop-blur-md">
-        {/* Filter/Sort */}
-        <div className="bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] rounded-xl shadow-sm px-6 py-4 mb-6 max-w-8xl mx-auto">
+    <div className="p-8 mx-8 space-y-8">
+      {/* Header with Add Button */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-semibold text-[var(--color-flist-dark)]">Tasks</h1>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--color-flist-accent)] text-white rounded-lg hover:bg-[var(--color-flist-accent-hover)] transition-colors"
+        >
+          <Plus size={16} />
+          New Task
+        </button>
+      </div>
+
+      {/* Filter/Sort */}
+      <div className="bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] rounded-xl shadow-sm px-6 py-4">
           <div className="flex flex-wrap items-center gap-4">
             {/* Filter Button */}
             <div className="relative">
@@ -393,27 +428,84 @@ const TaskListView = ({ onSelectTask, selectedBlockId }) => {
         </div>
 
         {/* Task List */}
-        <div className="max-w-8xl mx-auto space-y-1">
+        <div className="space-y-2">
           {filteredTasks.map((task, index) => (
-            <TaskBlock
-              key={task.id}
-              block={task}
-              onClick={() => onSelectTask(task)}
-              onToggle={handleToggle}
-              onOpenDetail={() => onSelectTask(task)}
-              listName={lists[task.list]?.title}
-              isEditable={editingBlockId === task.id}
-              onBlur={handleBlur}
-              editableRef={(el) => (taskRefs.current[task.id] = el)}
-              onEmptyTaskEnterOrBackspace={() => handleEmptyTaskEnterOrBackspace(task)}
-              isSelected={selectedBlockId === task.id}
-              onDelete={() => handleDelete(task)}
-              editingBlockId={editingBlockId}
-              onKeyDown={(e) => handleKeyDown(e, task, index)}
-            />
+            <div key={task.id} className="bg-white rounded-xl shadow-sm">
+              <TaskBlock
+                block={task}
+                onClick={() => onSelectTask(task)}
+                onToggle={handleToggle}
+                onOpenDetail={() => onSelectTask(task)}
+                listName={lists[task.list]?.title}
+                isEditable={editingBlockId === task.id}
+                onBlur={handleBlur}
+                editableRef={(el) => (taskRefs.current[task.id] = el)}
+                onEmptyTaskEnterOrBackspace={() => handleEmptyTaskEnterOrBackspace(task)}
+                isSelected={selectedBlockId === task.id}
+                onDelete={() => handleDelete(task)}
+                editingBlockId={editingBlockId}
+                onKeyDown={(e) => handleKeyDown(e, task, index)}
+              />
+            </div>
           ))}
         </div>
-      </div>
+
+        {/* Add Task Modal */}
+        {showAddModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+            <div className="bg-white rounded-xl shadow-xl p-6 min-w-[400px] max-w-md w-full">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-[var(--color-flist-dark)]">新しいタスクを作成</h3>
+                <button
+                  onClick={handleCloseAddModal}
+                  className="text-[var(--color-flist-muted)] hover:text-[var(--color-flist-dark)] transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-[var(--color-flist-dark)] mb-2">
+                    タスク名
+                  </label>
+                  <input
+                    type="text"
+                    value={newTaskTitle}
+                    onChange={(e) => setNewTaskTitle(e.target.value)}
+                    placeholder="タスク名を入力..."
+                    className="w-full p-3 border border-[var(--color-flist-border)] rounded-lg focus:outline-none focus:border-[var(--color-flist-accent)] transition-colors"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleCreateTask();
+                      }
+                      if (e.key === "Escape") {
+                        handleCloseAddModal();
+                      }
+                    }}
+                    autoFocus
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={handleCloseAddModal}
+                  className="px-4 py-2 text-[var(--color-flist-dark)] hover:bg-[var(--color-flist-surface-hover)] rounded-lg transition-colors"
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={handleCreateTask}
+                  disabled={!newTaskTitle.trim()}
+                  className="px-4 py-2 bg-[var(--color-flist-accent)] text-white rounded-lg hover:bg-[var(--color-flist-accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  作成
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 };

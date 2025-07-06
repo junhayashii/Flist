@@ -350,7 +350,13 @@ export default function CalendarPage({ onSelectTask, selectedBlockId, refreshKey
 
   return (
     <>
-      <div className="flex gap-6 max-w-screen-2xl mx-auto p-8">
+      <div className="p-8 mx-8 space-y-8">
+        {/* Header with Title */}
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-semibold text-[var(--color-flist-dark)]">Calendar</h1>
+        </div>
+
+        <div className="flex gap-6">
         {/* メインカレンダー */}
         <div className="flex-1 bg-white rounded-xl shadow-lg border border-[var(--color-flist-border)] backdrop-blur-md p-6">
           <div className="flex items-center gap-2 mb-6">
@@ -541,6 +547,7 @@ export default function CalendarPage({ onSelectTask, selectedBlockId, refreshKey
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-flist-accent)]"></div>
             </div>
           )}
+        </div>
         </div>
       </div>
       {renderContextMenu()}

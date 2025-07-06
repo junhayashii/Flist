@@ -64,7 +64,11 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-8 mx-8 space-y-8">
+      {/* Header with Title */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-semibold text-[var(--color-flist-dark)]">Dashboard</h1>
+      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

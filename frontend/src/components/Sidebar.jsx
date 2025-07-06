@@ -13,7 +13,7 @@ import {
   Trash2,
   Edit2,
   Calendar,
-  PanelLeftClose,
+  Sidebar as SidebarIcon,
   Inbox as InboxIcon,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
@@ -383,82 +383,91 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
 
   return (
     <div className={`${sidebarOpen ? "w-64" : "w-0"} transition-all duration-300 bg-[var(--color-flist-surface)] border-r border-[var(--color-flist-border)] flex flex-col overflow-hidden shadow-sm glass`}>
-      <div className="p-4 border-b border-[var(--color-flist-border)] relative">
-        {/* Close button */}
-        {sidebarOpen && setSidebarOpen && (
+      <div className="p-4 border-b border-[var(--color-flist-border)]">
+        {/* Header with close button on the right */}
+        <div className="flex items-center justify-between mb-2">
+          {/* Spacer to push close button to the right */}
+          <div className="flex-1"></div>
+          
+          {/* Close button on the right */}
+          {sidebarOpen && setSidebarOpen && (
+            <button
+              className="p-1.5 rounded-lg hover:bg-[var(--color-flist-surface-hover)] text-[var(--color-flist-text-muted)] hover:text-[var(--color-flist-text-primary)] transition-all duration-200 hover-scale focus-ring"
+              onClick={() => setSidebarOpen(false)}
+              title="Close sidebar"
+            >
+              <SidebarIcon size={16} />
+            </button>
+          )}
+        </div>
+
+        {/* Navigation items in order */}
+        <div className="space-y-1">
+          {/* 1. Inbox */}
           <button
-            className="absolute top-2 right-2 p-1.5 rounded-lg hover:bg-[var(--color-flist-surface-hover)] text-[var(--color-flist-text-muted)] hover:text-[var(--color-flist-text-primary)] transition-all duration-200 hover-scale focus-ring z-10"
-            onClick={() => setSidebarOpen(false)}
-            title="Close sidebar"
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover-lift ${
+              selectedListId === "inbox"
+                ? "bg-[var(--color-flist-primary-light)] text-[var(--color-flist-primary)] shadow-sm"
+                : "text-[var(--color-flist-text-secondary)] hover:bg-[var(--color-flist-surface-hover)] hover:text-[var(--color-flist-text-primary)]"
+            }`}
+            onClick={() => setSelectedListId("inbox")}
           >
-            <PanelLeftClose size={16} />
+            <InboxIcon size={16} />
+            <span>Inbox</span>
           </button>
-        )}
 
-        {/* Inbox */}
-        <button
-          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover-lift mt-2 ${
-            selectedListId === "inbox"
-              ? "bg-[var(--color-flist-primary-light)] text-[var(--color-flist-primary)] shadow-sm"
-              : "text-[var(--color-flist-text-secondary)] hover:bg-[var(--color-flist-surface-hover)] hover:text-[var(--color-flist-text-primary)]"
-          }`}
-          onClick={() => setSelectedListId("inbox")}
-        >
-          <InboxIcon size={16} />
-          <span>Inbox</span>
-        </button>
+          {/* 2. Today */}
+          <button
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover-lift ${
+              selectedListId === "today"
+                ? "bg-[var(--color-flist-primary-light)] text-[var(--color-flist-primary)] shadow-sm"
+                : "text-[var(--color-flist-text-secondary)] hover:bg-[var(--color-flist-surface-hover)] hover:text-[var(--color-flist-text-primary)]"
+            }`}
+            onClick={() => setSelectedListId("today")}
+          >
+            <Calendar size={16} />
+            <span>Today</span>
+          </button>
 
-        {/* Today */}
-        <button
-          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover-lift ${
-            selectedListId === "today"
-              ? "bg-[var(--color-flist-primary-light)] text-[var(--color-flist-primary)] shadow-sm"
-              : "text-[var(--color-flist-text-secondary)] hover:bg-[var(--color-flist-surface-hover)] hover:text-[var(--color-flist-text-primary)]"
-          }`}
-          onClick={() => setSelectedListId("today")}
-        >
-          <Calendar size={16} />
-          <span>Today</span>
-        </button>
+          {/* 3. Dashboard */}
+          <button
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover-lift ${
+              selectedListId === "dashboard" 
+                ? "bg-[var(--color-flist-primary-light)] text-[var(--color-flist-primary)] shadow-sm" 
+                : "text-[var(--color-flist-text-secondary)] hover:bg-[var(--color-flist-surface-hover)] hover:text-[var(--color-flist-text-primary)]"
+            }`}
+            onClick={() => setSelectedListId("dashboard")}
+          >
+            <LayoutDashboard size={16} />
+            <span>Dashboard</span>
+          </button>
 
-        {/* Dashboard */}
-        <button
-          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover-lift ${
-            selectedListId === "dashboard" 
-              ? "bg-[var(--color-flist-primary-light)] text-[var(--color-flist-primary)] shadow-sm" 
-              : "text-[var(--color-flist-text-secondary)] hover:bg-[var(--color-flist-surface-hover)] hover:text-[var(--color-flist-text-primary)]"
-          }`}
-          onClick={() => setSelectedListId("dashboard")}
-        >
-          <LayoutDashboard size={16} />
-          <span>Dashboard</span>
-        </button>
+          {/* 4. Tasks */}
+          <button
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover-lift ${
+              selectedListId === "tasks" 
+                ? "bg-[var(--color-flist-primary-light)] text-[var(--color-flist-primary)] shadow-sm" 
+                : "text-[var(--color-flist-text-secondary)] hover:bg-[var(--color-flist-surface-hover)] hover:text-[var(--color-flist-text-primary)]"
+            }`}
+            onClick={() => setSelectedListId("tasks")}
+          >
+            <CheckSquare size={16} />
+            <span>Tasks</span>
+          </button>
 
-        {/* Tasks */}
-        <button
-          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover-lift ${
-            selectedListId === "tasks" 
-              ? "bg-[var(--color-flist-primary-light)] text-[var(--color-flist-primary)] shadow-sm" 
-              : "text-[var(--color-flist-text-secondary)] hover:bg-[var(--color-flist-surface-hover)] hover:text-[var(--color-flist-text-primary)]"
-          }`}
-          onClick={() => setSelectedListId("tasks")}
-        >
-          <CheckSquare size={16} />
-          <span>Tasks</span>
-        </button>
-
-        {/* Notes */}
-        <button
-          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover-lift ${
-            selectedListId === "notes" 
-              ? "bg-[var(--color-flist-primary-light)] text-[var(--color-flist-primary)] shadow-sm" 
-              : "text-[var(--color-flist-text-secondary)] hover:bg-[var(--color-flist-surface-hover)] hover:text-[var(--color-flist-text-primary)]"
-          }`}
-          onClick={() => setSelectedListId("notes")}
-        >
-          <FileText size={16} />
-          <span>Notes</span>
-        </button>
+          {/* 5. Notes */}
+          <button
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover-lift ${
+              selectedListId === "notes" 
+                ? "bg-[var(--color-flist-primary-light)] text-[var(--color-flist-primary)] shadow-sm" 
+                : "text-[var(--color-flist-text-secondary)] hover:bg-[var(--color-flist-surface-hover)] hover:text-[var(--color-flist-text-primary)]"
+            }`}
+            onClick={() => setSelectedListId("notes")}
+          >
+            <FileText size={16} />
+            <span>Notes</span>
+          </button>
+        </div>
       </div>
 
       {/* Explorer */}

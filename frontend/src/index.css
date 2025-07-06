@@ -521,3 +521,10 @@ body {
     border-radius: 8px;
   }
 }
+
+/* BlockEditor Compact Mode for Details Panel */
+.compact {
+  padding: 1rem !important;
+  margin-left: 1rem !important;
+  margin-right: 1rem !important;
+}

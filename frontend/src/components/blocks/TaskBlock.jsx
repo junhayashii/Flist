@@ -69,30 +69,30 @@ const TaskBlock = forwardRef(({
     <div
       id={`block-${block.id}`}
       ref={ref}
-      className={`p-2 cursor-pointer rounded-lg transition-all duration-200 ${
+      className={`p-3 cursor-pointer rounded-lg transition-all duration-200 ${
         isSelected 
-          ? "bg-[var(--color-flist-blue-light)] border border-[var(--color-flist-accent)]" 
-          : "bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] hover:border-[var(--color-flist-accent)] hover:bg-[var(--color-flist-surface-hover)]"
+          ? "bg-[var(--color-flist-accent)]/10 shadow-sm" 
+          : "hover:bg-[var(--color-flist-surface-hover)]"
       }`}
       onClick={() => onClick?.(block)}
     >
-      <div className="flex items-center space-x-4">
+      <div className="flex items-start space-x-3">
         <div
           onClick={(e) => {
             e.stopPropagation();
             onToggle?.(block);
           }}
-          className="w-6 h-6 cursor-pointer text-[var(--color-flist-accent)] hover:scale-105 transition-transform"
+          className="w-5 h-5 cursor-pointer text-[var(--color-flist-accent)] hover:scale-105 transition-transform mt-0.5 flex-shrink-0"
         >
           {isDone ? (
-            <CheckCircle className="w-6 h-6" strokeWidth={1.5} />
+            <CheckCircle className="w-5 h-5" strokeWidth={1.5} />
           ) : (
-            <Circle className="w-6 h-6" strokeWidth={1.5} />
+            <Circle className="w-5 h-5" strokeWidth={1.5} />
           )}
         </div>
 
         <div className="flex-1 min-w-0">
-          {/* First line: Task name */}
+          {/* Task title - centered with checkbox */}
           {isEditable ? (
             <div
               ref={(el) => {
@@ -101,7 +101,7 @@ const TaskBlock = forwardRef(({
               }}
               contentEditable
               suppressContentEditableWarning
-              className={`outline-none flex-1 text-base font-medium ${
+              className={`outline-none text-base font-medium leading-6 ${
                 isDone ? "line-through text-[var(--color-flist-muted)]" : "text-[var(--color-flist-dark)]"
               }`}
               onBlur={() => onBlur?.(block)}
@@ -112,7 +112,7 @@ const TaskBlock = forwardRef(({
             </div>
           ) : (
             <div
-              className={`text-base font-medium ${
+              className={`text-base font-medium leading-6 ${
                 isDone ? "line-through text-[var(--color-flist-muted)]" : "text-[var(--color-flist-dark)]"
               }`}
             >
@@ -120,40 +120,40 @@ const TaskBlock = forwardRef(({
             </div>
           )}
 
-          {/* Second line: List, Date, Tags */}
-          <div className="flex items-center gap-3 mt-2 text-sm text-[var(--color-flist-muted)]">
-            {listName && (
-              <span className="flex items-center gap-1">
-                <List className="w-3 h-3" />
-                {listName}
-              </span>
-            )}
-            {block.due_date && (
-              <span className="flex items-center gap-1">
-                <CalendarDays className="w-3 h-3" />
-                {formatDateLocal(block.due_date)}
-              </span>
-            )}
-            {block.tags && block.tags.length > 0 && (
-              <div className="flex items-center gap-1">
-                <Tag className="w-3 h-3" />
+          {/* Metadata below title */}
+          {(listName || block.due_date || (block.tags && block.tags.length > 0)) && (
+            <div className="flex items-center gap-3 mt-2 text-sm text-[var(--color-flist-muted)]">
+              {listName && (
+                <span className="flex items-center gap-1">
+                  <List className="w-3 h-3" />
+                  {listName}
+                </span>
+              )}
+              {block.due_date && (
+                <span className="flex items-center gap-1">
+                  <CalendarDays className="w-3 h-3" />
+                  {formatDateLocal(block.due_date)}
+                </span>
+              )}
+              {block.tags && block.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {block.tags.map(tag => (
                     <span
                       key={tag.id}
                       title={tag.name.length > 16 ? tag.name : undefined}
-                      className={`tag ${tagColor}`}
+                      className={`tag ${tagColor} flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] text-xs font-medium`}
                     >
+                      <Tag className="w-3 h-3 text-[var(--color-flist-accent)]" />
                       {tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
                     </span>
                   ))}
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={(e) => {
               e.stopPropagation();

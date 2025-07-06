@@ -18,10 +18,8 @@ export default function AppLauncher({ selectedListId, setSelectedListId }) {
     <div className="flex flex-col justify-between items-center w-14 h-screen bg-[var(--color-flist-surface)] border-r border-[var(--color-flist-border)] py-6 glass">
       <div className="flex flex-col gap-3 items-center">
         {/* App Logo */}
-        <div className="mb-4">
-          <div className="w-8 h-8 bg-[var(--color-flist-primary)] rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">F</span>
-          </div>
+        <div className="mb-2">
+          <img src="/flist-icon.PNG" alt="Flist Logo" className="w-8 h-8 rounded-lg" />
         </div>
         
         {/* List */}

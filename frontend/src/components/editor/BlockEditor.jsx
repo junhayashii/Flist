@@ -10,6 +10,7 @@ import {
 } from "../../utils/blockHandlers";
 import renderBlock from "../blocks/renderBlock";
 import { useClickOutsideBlur } from "../../hooks/useClickOutsideBlur";
+import { fetchLists, updateListTitle } from "../../api/lists";
 
 import {
   DndContext,
@@ -33,6 +34,8 @@ export default function BlockEditor({
   selectedBlockId,
   selectedBlock,
   onBlocksUpdate,
+  hideTitle = false,
+  compact = false,
 }) {
   const { blocks, setBlocks, loadBlocks, saveBlock, updateBlock, deleteBlock } =
     useBlocks(listId, parentBlockId);
@@ -42,6 +45,9 @@ export default function BlockEditor({
   const [activeId, setActiveId] = useState(null);
   const [activeMenuBlockId, setActiveMenuBlockId] = useState(null);
   const [isSlashMenuVisible, setIsSlashMenuVisible] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draftTitle, setDraftTitle] = useState("");
+  const [listTitle, setListTitle] = useState("");
   const blockRefs = useRef({});
   const caretX = useRef(null);
   const caretToStart = useRef(false);
@@ -49,6 +55,38 @@ export default function BlockEditor({
   useEffect(() => {
     loadBlocks();
   }, [listId, parentBlockId]);
+
+  // Load list title
+  useEffect(() => {
+    const loadListTitle = async () => {
+      try {
+        const lists = await fetchLists();
+        const list = lists.find(l => l.id === listId);
+        if (list) {
+          setListTitle(list.title || "Untitled");
+        }
+      } catch (error) {
+        console.error("Failed to load list title:", error);
+      }
+    };
+    loadListTitle();
+  }, [listId]);
+
+  const handleSaveTitle = async () => {
+    const trimmed = draftTitle.trim();
+    if (trimmed && listId) {
+      try {
+        const updated = await updateListTitle(listId, { title: trimmed });
+        setListTitle(updated.title);
+        
+        // Dispatch event for real-time sidebar updates
+        window.dispatchEvent(new CustomEvent('listUpdated', { detail: updated }));
+      } catch (err) {
+        console.error("タイトル更新失敗:", err);
+      }
+    }
+    setEditing(false);
+  };
 
   useEffect(() => {
     if (onBlocksUpdate) {
@@ -250,17 +288,47 @@ export default function BlockEditor({
   const activeBlock = activeId ? blocks.find(block => block.id === activeId) : null;
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext
-        items={blocks.map((b) => b.id)}
-        strategy={verticalListSortingStrategy}
+    <div className={`p-8 mx-8 space-y-8 ${compact ? 'compact' : ''}`}>
+      {/* Header with Title */}
+      {!hideTitle && (
+        <div className="flex justify-between items-center">
+          {editing ? (
+            <input
+              className="text-2xl font-semibold tracking-tight border-b border-[var(--color-flist-border)] focus:outline-none focus:border-[var(--color-flist-primary)] bg-transparent px-1 py-0.5 transition-colors input"
+              value={draftTitle}
+              onChange={(e) => setDraftTitle(e.target.value)}
+              onBlur={handleSaveTitle}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSaveTitle();
+                if (e.key === "Escape") setEditing(false);
+              }}
+              autoFocus
+            />
+          ) : (
+            <h1
+              className="text-2xl font-semibold text-[var(--color-flist-dark)] cursor-text hover:text-[var(--color-flist-accent)] transition-colors"
+              onClick={() => {
+                setDraftTitle(listTitle);
+                setEditing(true);
+              }}
+            >
+              {listTitle}
+            </h1>
+          )}
+        </div>
+      )}
+
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
       >
-        <div className={`space-y-1 p-4 bg-white/70 backdrop-blur rounded-xl ${blocks.length > 0 ? 'shadow-sm' : ''}`}>
+        <SortableContext
+          items={blocks.map((b) => b.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className={`space-y-1 p-4 bg-white rounded-xl ${blocks.length > 0 ? 'shadow-sm' : ''}`}>
           {blocks.length > 0 ? (
             blocks
               .sort((a, b) => a.order - b.order)
@@ -345,5 +413,6 @@ export default function BlockEditor({
         ) : null}
       </DragOverlay>
     </DndContext>
+    </div>
   );
 }
