@@ -19,7 +19,7 @@ export default function AppLauncher({ selectedListId, setSelectedListId }) {
       <div className="flex flex-col gap-3 items-center">
         {/* App Logo */}
         <div className="mb-2">
-          <img src="/flist-icon.PNG" alt="Flist Logo" className="w-8 h-8 rounded-lg" />
+          <img src="/flist-icon.png" alt="Flist Logo" className="w-8 h-8 rounded-lg" />
         </div>
         
         {/* List */}
