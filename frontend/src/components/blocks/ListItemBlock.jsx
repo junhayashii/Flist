@@ -12,8 +12,8 @@ export default function ListItemBlock({
 }) {
   const baseClass = "px-2 py-1 cursor-pointer";
   const classes = {
-    bullet: "list-disc ml-6",
-    numbered: "list-decimal ml-6",
+    bullet: "list-disc ml-3",
+    numbered: "list-decimal ml-3",
   };
 
   const cleanedText =

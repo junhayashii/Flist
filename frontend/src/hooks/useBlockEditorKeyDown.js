@@ -58,10 +58,24 @@ export function useBlockEditorKeyDown({
           ? (currentOrder + nextOrder) / 2
           : currentOrder + 1;
 
+      // Determine the type for the new block based on current block type
+      let newBlockType = "text";
+      let newBlockHtml = "";
+
+      if (block.type === "bullet") {
+        newBlockType = "bullet";
+        newBlockHtml = "- ";
+      } else if (block.type === "numbered") {
+        newBlockType = "numbered";
+        // Find the next number in the sequence
+        const currentNumber = parseInt(block.html.match(/^(\d+)\./)?.[1] || "1");
+        newBlockHtml = `${currentNumber + 1}. `;
+      }
+
       const newBlock = {
         id: `tmp-${Date.now()}`,
-        html: "",
-        type: "text",
+        html: newBlockHtml,
+        type: newBlockType,
         order: newOrder,
         list: block.list,
         parent: block.parent || null,

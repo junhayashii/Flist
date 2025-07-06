@@ -44,19 +44,23 @@ export default function NoteBlock({
     <div
       id={`block-${block.id}`}
       tabIndex={-1}
-      className={`flex items-center justify-between gap-2 px-2 py-1.5 cursor-pointer transition-colors ${
+      className={`p-3 cursor-pointer rounded-lg transition-all duration-200 ${
         isSelected
-          ? "bg-[var(--color-flist-accent)]/10 rounded-lg"
-          : "hover:bg-[var(--color-flist-surface)] rounded-lg"
+          ? "bg-[var(--color-flist-accent)]/10 shadow-sm"
+          : "hover:bg-[var(--color-flist-surface-hover)]"
       }`}
       onClick={() => {
         onClick?.(block.id);
         onOpenDetail?.(block);
       }}
     >
-      <div className="flex-1">
-        <div className="flex items-center gap-2 pt-1 pb-1 font-medium">
-          <StickyNote size={20} strokeWidth={2} className="text-[var(--color-flist-accent)]" />
+      <div className="flex items-start space-x-3">
+        <div className="w-5 h-5 flex-shrink-0 mt-0.5">
+          <StickyNote size={20} strokeWidth={1.5} className="text-[var(--color-flist-accent)]" />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          {/* Note title */}
           {isEditable ? (
             <div
               ref={(el) => {
@@ -65,7 +69,7 @@ export default function NoteBlock({
               }}
               contentEditable
               suppressContentEditableWarning
-              className="outline-none"
+              className="outline-none text-base font-medium leading-6 text-[var(--color-flist-dark)]"
               onBlur={handleBlur}
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => onKeyDown?.(e)}
@@ -73,37 +77,42 @@ export default function NoteBlock({
               {noteTitle}
             </div>
           ) : (
-            <div>{noteTitle}</div>
+            <div className="text-base font-medium leading-6 text-[var(--color-flist-dark)]">
+              {noteTitle}
+            </div>
+          )}
+
+          {/* Tags below title */}
+          {block.tags && block.tags.length > 0 && (
+            <div className="flex items-center gap-3 mt-2 text-sm text-[var(--color-flist-muted)]">
+              <div className="flex flex-wrap gap-1">
+                {block.tags.map(tag => (
+                  <span
+                    key={tag.id}
+                    title={tag.name.length > 16 ? tag.name : undefined}
+                    className="tag tag-primary flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] text-xs font-medium"
+                  >
+                    <Tag className="w-3 h-3 text-[var(--color-flist-accent)]" />
+                    {tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
+                  </span>
+                ))}
+              </div>
+            </div>
           )}
         </div>
-        {/* Tag chips */}
-        {block.tags && block.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-1">
-            {block.tags.map(tag => (
-              <span
-                key={tag.id}
-                title={tag.name.length > 16 ? tag.name : undefined}
-                className={
-                  `tag tag-primary flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] text-xs font-medium`
-                }
-              >
-                <Tag className="w-3 h-3 text-[var(--color-flist-accent)]" />
-                {tag.name.length > 16 ? tag.name.slice(0, 14) + '…' : tag.name}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
 
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onOpenDetail?.(block);
-        }}
-        className="text-[var(--color-flist-muted)] hover:text-[var(--color-flist-accent)] p-1 transition-colors"
-      >
-        <ChevronRight size={14} strokeWidth={3} />
-      </button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenDetail?.(block);
+            }}
+            className="text-[var(--color-flist-muted)] hover:text-[var(--color-flist-accent)] p-1 transition-colors"
+          >
+            <ChevronRight size={14} strokeWidth={2} />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
