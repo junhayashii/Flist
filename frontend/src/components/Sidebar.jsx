@@ -28,37 +28,75 @@ import {
   useDroppable,
 } from "@dnd-kit/core";
 import { moveListToFolder } from "../api/folders";
+import ReactDOM from "react-dom";
 
-const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitle, setDraftTitle, inputRef, onDelete, onRename, taskCount }) => {
+const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitle, setDraftTitle, inputRef, onDelete, onRename, taskCount, openMenuId, setOpenMenuId }) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: list.id,
   });
-  const [showContextMenu, setShowContextMenu] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const contextMenuRef = useRef(null);
 
   const handleContextMenu = (e) => {
     e.preventDefault();
     setContextMenuPosition({ x: e.clientX, y: e.clientY });
-    setShowContextMenu(true);
+    setOpenMenuId(list.id);
   };
 
   const handleClickOutside = (e) => {
     if (contextMenuRef.current && !contextMenuRef.current.contains(e.target)) {
-      setShowContextMenu(false);
+      setOpenMenuId(null);
     }
   };
 
   useEffect(() => {
+    if (openMenuId !== list.id) return;
     document.addEventListener('click', handleClickOutside);
     return () => {
       document.removeEventListener('click', handleClickOutside);
     };
-  }, []);
+  }, [openMenuId, list.id]);
 
   // Determine if this list is unorganized (not in a folder)
   const isUnorganized = !list.folder;
   const inFolder = !!list.folder;
+
+  // Render context menu in a portal above all content
+  const contextMenu = openMenuId === list.id
+    ? ReactDOM.createPortal(
+        <div
+          ref={contextMenuRef}
+          id={`sidebar-list-context-menu-${list.id}`}
+          className="fixed bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] rounded-lg shadow-lg py-1 z-[200] min-w-[160px] glass-strong fade-in"
+          style={{
+            top: contextMenuPosition.y,
+            left: contextMenuPosition.x,
+          }}
+        >
+          <button
+            className="w-full px-4 py-2 text-sm text-left text-[var(--color-flist-text-primary)] hover:bg-[var(--color-flist-surface-hover)] flex items-center space-x-2 transition-colors"
+            onClick={() => {
+              onRename(list.id);
+              setOpenMenuId(null);
+            }}
+          >
+            <Edit2 size={16} />
+            <span>Rename List</span>
+          </button>
+          <button
+            className="w-full px-4 py-2 text-sm text-left text-[var(--color-flist-error)] hover:bg-[var(--color-flist-error-light)] flex items-center space-x-2 transition-colors"
+            onClick={() => {
+              onDelete(list.id);
+              setOpenMenuId(null);
+            }}
+          >
+            <Trash2 size={16} />
+            <span>Delete List</span>
+          </button>
+        </div>,
+        document.body
+      )
+    : null;
 
   return (
     <div
@@ -82,7 +120,7 @@ const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitl
       {editingId === list.id ? (
         <input
           ref={inputRef}
-          className="input w-full text-sm"
+          className="input w-full text-sm mr-6"
           value={draftTitle}
           onChange={(e) => setDraftTitle(e.target.value)}
           onBlur={() => onEdit(list.id)}
@@ -120,37 +158,7 @@ const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitl
         </div>
       )}
 
-      {showContextMenu && (
-        <div
-          ref={contextMenuRef}
-          className="fixed bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] rounded-lg shadow-lg py-1 z-50 min-w-[160px] glass-strong fade-in"
-          style={{
-            top: contextMenuPosition.y,
-            left: contextMenuPosition.x,
-          }}
-        >
-          <button
-            className="w-full px-4 py-2 text-sm text-left text-[var(--color-flist-text-primary)] hover:bg-[var(--color-flist-surface-hover)] flex items-center space-x-2 transition-colors"
-            onClick={() => {
-              onRename(list.id);
-              setShowContextMenu(false);
-            }}
-          >
-            <Edit2 size={16} />
-            <span>Rename List</span>
-          </button>
-          <button
-            className="w-full px-4 py-2 text-sm text-left text-[var(--color-flist-error)] hover:bg-[var(--color-flist-error-light)] flex items-center space-x-2 transition-colors"
-            onClick={() => {
-              onDelete(list.id);
-              setShowContextMenu(false);
-            }}
-          >
-            <Trash2 size={16} />
-            <span>Delete List</span>
-          </button>
-        </div>
-      )}
+      {contextMenu}
     </div>
   );
 };
@@ -289,6 +297,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
   const [expandedFolders, setExpandedFolders] = useState({});
   const [activeId, setActiveId] = useState(null);
   const inputRef = useRef(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -546,6 +555,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
                         setDraftTitle(list.title || "");
                       }}
                       taskCount={getTaskCount(list.id)}
+                      openMenuId={openMenuId}
+                      setOpenMenuId={setOpenMenuId}
                     />
                   ))}
                 </DroppableFolder>
@@ -572,6 +583,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
                           setDraftTitle(list.title || "");
                         }}
                         taskCount={getTaskCount(list.id)}
+                        openMenuId={openMenuId}
+                        setOpenMenuId={setOpenMenuId}
                       />
                     ))}
                   </div>

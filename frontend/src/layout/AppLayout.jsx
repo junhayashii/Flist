@@ -7,6 +7,7 @@ import AppLauncher from "../components/sidebar/AppLauncher";
 import CalendarSidebar from "../components/sidebar/CalendarSidebar";
 import { DndContext, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
 import { updateBlockDueDate } from "../api/blocks";
+import SettingsModal from "../components/SettingsModal";
 
 export default function AppLayout() {
   const [selectedListId, setSelectedListId] = useState(null);
@@ -14,6 +15,7 @@ export default function AppLayout() {
   const [selectedTask, setSelectedTask] = useState(null);
   const { user, loading } = useAuth();
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -43,7 +45,7 @@ export default function AppLayout() {
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <div className="flex h-screen bg-gray-100">
-        <AppLauncher selectedListId={selectedListId} setSelectedListId={setSelectedListId} />
+        <AppLauncher selectedListId={selectedListId} setSelectedListId={setSelectedListId} openSettings={() => setSettingsOpen(true)} />
         {selectedListId === "calendar" ? (
           <CalendarSidebar setSelectedTask={setSelectedTask} refreshKey={sidebarRefreshKey} />
         ) : (
@@ -63,6 +65,7 @@ export default function AppLayout() {
           refreshKey={sidebarRefreshKey}
           setSelectedListId={setSelectedListId}
         />
+        <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       </div>
     </DndContext>
   );
