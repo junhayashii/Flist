@@ -34,7 +34,6 @@ function MiniCalendar({ currentMonth, onDateSelect, selectedDate, tasksByDate })
         <div className="text-xs font-semibold text-[var(--color-flist-dark)]">{format(miniMonth, "yyyy年 M月")}</div>
         <button onClick={() => setMiniMonth(prev => addMonths(prev, 1))} className="p-1 rounded hover:bg-[var(--color-flist-surface-hover)] text-[var(--color-flist-muted)] hover:text-[var(--color-flist-accent)] transition-colors"><ChevronRight size={16} /></button>
       </div>
-      <button onClick={() => { setMiniMonth(today); onDateSelect(today); }} className="w-full mb-2 px-2 py-1 text-xs font-medium text-[var(--color-flist-accent)] bg-transparent rounded hover:bg-[var(--color-flist-surface-hover)] transition-colors">Today</button>
       <div className="grid grid-cols-7 gap-px mb-1">
         {['S','M','T','W','T','F','S'].map((day, i) => (
           <div key={day + '-' + i} className="text-center text-[10px] font-medium text-[var(--color-flist-muted)] py-0.5">{day}</div>
@@ -53,13 +52,16 @@ function MiniCalendar({ currentMonth, onDateSelect, selectedDate, tasksByDate })
               onClick={() => onDateSelect(day)}
               className={`relative w-7 h-7 text-xs rounded-md flex items-center justify-center transition-all duration-150
                 ${isCurrentMonth ? "text-[var(--color-flist-dark)] hover:bg-[var(--color-flist-blue-light)]/20" : "text-[var(--color-flist-muted)]/50"}
-                ${isToday ? "bg-[var(--color-flist-accent)] text-white font-bold" : ""}
-                ${isSelected && !isToday ? "bg-[var(--color-flist-accent)]/20 text-[var(--color-flist-accent)] font-medium ring-2 ring-[var(--color-flist-accent)]" : ""}
+                ${isSelected && !isToday ? "text-[var(--color-flist-accent)] font-medium" : ""}
               `}
               style={{margin: 0, padding: 0}}
             >
-              {format(day, "d")}
-              {hasTasks && !isToday && (
+              {isToday ? (
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white font-bold">{format(day, "d")}</span>
+              ) : (
+                format(day, "d")
+              )}
+              {hasTasks && (
                 <div className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-[var(--color-flist-accent)] rounded-full"></div>
               )}
             </button>

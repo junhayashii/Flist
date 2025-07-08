@@ -169,12 +169,11 @@ export default function CalendarPage({ onSelectTask, selectedBlockId, refreshKey
     load();
   }, [localRefreshKey]);
 
-  // 日付ごとにタスクをグループ化（UTC日付で）
+  // 日付ごとにタスクをグループ化（ローカル日付で）
   const tasksByDate = {};
   tasks.forEach(task => {
     if (!task.due_date) return;
-    const utcDate = new Date(task.due_date);
-    const dateKey = `${utcDate.getUTCFullYear()}-${String(utcDate.getUTCMonth()+1).padStart(2,'0')}-${String(utcDate.getUTCDate()).padStart(2,'0')}`;
+    const dateKey = format(parseISO(task.due_date), "yyyy-MM-dd");
     if (!tasksByDate[dateKey]) tasksByDate[dateKey] = [];
     tasksByDate[dateKey].push(task);
   });
@@ -260,8 +259,7 @@ export default function CalendarPage({ onSelectTask, selectedBlockId, refreshKey
       <div
         ref={setNodeRef}
         className={`rounded-xl p-2 min-h-[80px] border text-left flex flex-col gap-1 transition-all duration-200 bg-white relative
-          ${isToday ? "border-2 border-[var(--color-flist-accent)] bg-[var(--color-flist-blue-light)]/10" : "border border-[var(--color-flist-border)]"}
-          ${isSelected ? "ring-2 ring-[var(--color-flist-accent)]" : ""}
+          border border-[var(--color-flist-border)]
           ${(isOver || isDropping) ? "ring-2 ring-[var(--color-flist-accent)] bg-[var(--color-flist-accent)]/10" : ""}
           hover:bg-[var(--color-flist-blue-light)]/5`}
         style={{ position: "relative" }}
@@ -435,8 +433,11 @@ export default function CalendarPage({ onSelectTask, selectedBlockId, refreshKey
                       onClick={() => handleDateSelect(day)}
                     >
                       <div className={`flex items-center justify-between mb-1`}>
-                        <span className={`text-xs font-bold ${isToday ? "text-[var(--color-flist-accent)]" : isSelected ? "text-[var(--color-flist-accent)]" : "text-[var(--color-flist-dark)]"}`}>{format(day, "d")}</span>
-                        {isToday && <span className="ml-1 px-2 py-0.5 rounded-full bg-[var(--color-flist-accent)]/20 text-[var(--color-flist-accent)] text-[10px]">Today</span>}
+                        {isToday ? (
+                          <span className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-500 text-white font-bold">{format(day, "d")}</span>
+                        ) : (
+                          <span className={`text-xs font-bold ${isSelected ? "text-[var(--color-flist-accent)]" : "text-[var(--color-flist-dark)]"}`}>{format(day, "d")}</span>
+                        )}
                       </div>
                       <div className="flex flex-col gap-1 h-20 overflow-hidden">
                         {showTasks.map(task => (
