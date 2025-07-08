@@ -8,10 +8,10 @@ function getMonthMatrix(currentMonth) {
   const startMonth = startOfMonth(currentMonth);
   const endMonth = endOfMonth(currentMonth);
   const startDate = startOfWeek(startMonth, { weekStartsOn: 0 });
-  const endDate = endOfWeek(endMonth, { weekStartsOn: 0 });
+  // Always show 6 weeks (6*7=42 days)
   const weeks = [];
   let day = startDate;
-  while (day <= endDate) {
+  for (let w = 0; w < 6; w++) {
     const week = [];
     for (let i = 0; i < 7; i++) {
       week.push(day);
@@ -57,12 +57,12 @@ function MiniCalendar({ currentMonth, onDateSelect, selectedDate, tasksByDate })
               style={{margin: 0, padding: 0}}
             >
               {isToday ? (
-                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white font-bold">{format(day, "d")}</span>
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-500/70 shadow-sm text-white font-bold" style={{ zIndex: 1 }}>{format(day, "d")}</span>
               ) : (
                 format(day, "d")
               )}
               {hasTasks && (
-                <div className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-[var(--color-flist-accent)] rounded-full"></div>
+                <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-1 bg-[var(--color-flist-accent)] rounded-full" style={{ bottom: '0.5px', zIndex: 0 }}></div>
               )}
             </button>
           );

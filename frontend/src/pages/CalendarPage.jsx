@@ -145,6 +145,8 @@ export default function CalendarPage({ onSelectTask, selectedBlockId, refreshKey
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, task: null });
   const [localRefreshKey, setLocalRefreshKey] = useState(0);
+  // Add state for modal position:
+  const [modalPosition, setModalPosition] = useState({ top: null, left: null });
 
   // 親からのrefreshKeyまたはwindowイベントでリフレッシュ
   useEffect(() => {
@@ -203,6 +205,8 @@ export default function CalendarPage({ onSelectTask, selectedBlockId, refreshKey
   };
 
   const weeks = getMonthMatrix(currentMonth);
+  const totalCalendarHeight = 740; // px, increased for more height
+  const cellHeight = totalCalendarHeight / weeks.length;
 
   // ドラッグ用ラッパー
   function DraggableTask({ task, children }) {
@@ -250,7 +254,7 @@ export default function CalendarPage({ onSelectTask, selectedBlockId, refreshKey
   }
 
   // ドロップ用ラッパー
-  function DroppableDateCell({ date, isOver, isToday, isSelected, children, onClick }) {
+  function DroppableDateCell({ date, isOver, isToday, isSelected, children, onClick, cellHeight }) {
     const { setNodeRef, isOver: isDropping } = useDroppable({
       id: `date-${format(date, "yyyy-MM-dd")}`,
       data: { date: format(date, "yyyy-MM-dd") },
@@ -258,17 +262,15 @@ export default function CalendarPage({ onSelectTask, selectedBlockId, refreshKey
     return (
       <div
         ref={setNodeRef}
-        className={`rounded-xl p-2 min-h-[80px] border text-left flex flex-col gap-1 transition-all duration-200 bg-white relative
-          border border-[var(--color-flist-border)]
+        className={`calendar-square-cell border border-[var(--color-flist-border)] bg-white flex flex-col transition-all duration-200 relative
           ${(isOver || isDropping) ? "ring-2 ring-[var(--color-flist-accent)] bg-[var(--color-flist-accent)]/10" : ""}
           hover:bg-[var(--color-flist-blue-light)]/5`}
-        style={{ position: "relative" }}
+        style={{ position: "relative", width: '100%', height: cellHeight ? `${cellHeight}px` : undefined, minHeight: 0, maxHeight: 'none', padding: 0 }}
         onClick={onClick}
       >
         {(isOver || isDropping) && (
-          <div className="absolute inset-0 bg-[var(--color-flist-accent)]/5 border-2 border-dashed border-[var(--color-flist-accent)] rounded-xl animate-pulse" />
+          <div className="absolute inset-0 bg-[var(--color-flist-accent)]/5 border-2 border-dashed border-[var(--color-flist-accent)] animate-pulse" style={{ borderRadius: 0 }} />
         )}
-        
         {(isOver || isDropping) && (
           <div className="absolute inset-0 flex items-center justify-center z-10">
             <div className="bg-[var(--color-flist-accent)] text-white px-3 py-1 rounded-full text-xs font-medium shadow-lg">
@@ -276,8 +278,7 @@ export default function CalendarPage({ onSelectTask, selectedBlockId, refreshKey
             </div>
           </div>
         )}
-        
-        <div className={`relative z-10 ${(isOver || isDropping) ? "opacity-50" : ""}`}>
+        <div className={`relative z-10 ${(isOver || isDropping) ? "opacity-50" : ""}`} style={{ padding: 4 }}>
           {children}
         </div>
       </div>
@@ -350,205 +351,232 @@ export default function CalendarPage({ onSelectTask, selectedBlockId, refreshKey
     <>
       <div className="p-8 mx-8 space-y-8">
         {/* Header with Title */}
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-semibold text-[var(--color-flist-dark)]">Calendar</h1>
+          <div className="flex gap-2 items-center">
+            <button
+              className="px-3 py-1 rounded bg-[var(--color-flist-accent)] text-white font-medium hover:bg-[var(--color-flist-accent-hover)] transition-colors"
+              onClick={() => {
+                const today = new Date();
+                setSelectedDate(today);
+                if (view === "month") {
+                  setCurrentMonth(today);
+                } else {
+                  setCurrentWeek(startOfWeek(today, { weekStartsOn: 0 }));
+                }
+              }}
+            >
+              Today
+            </button>
+            <select
+              className="px-2 py-1 rounded border border-[var(--color-flist-border)] bg-white text-[var(--color-flist-dark)] text-sm"
+              value={view}
+              onChange={e => setView(e.target.value)}
+            >
+              <option value="month">Month</option>
+              <option value="week">Week</option>
+            </select>
+            {view === "month" ? (
+              <>
+                <button
+                  className="px-2 py-1 rounded bg-[var(--color-flist-surface)] hover:bg-[var(--color-flist-surface-hover)] border border-[var(--color-flist-border)] text-[var(--color-flist-dark)]"
+                  onClick={() => setCurrentMonth(prev => addDays(startOfMonth(prev), -1))}
+                >
+                  &lt;
+                </button>
+                <span className="font-medium text-lg text-[var(--color-flist-dark)]">{format(currentMonth, "yyyy年 M月")}</span>
+                <button
+                  className="px-2 py-1 rounded bg-[var(--color-flist-surface)] hover:bg-[var(--color-flist-surface-hover)] border border-[var(--color-flist-border)] text-[var(--color-flist-dark)]"
+                  onClick={() => setCurrentMonth(prev => addDays(endOfMonth(prev), 1))}
+                >
+                  &gt;
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  className="px-2 py-1 rounded bg-[var(--color-flist-surface)] hover:bg-[var(--color-flist-surface-hover)] border border-[var(--color-flist-border)] text-[var(--color-flist-dark)]"
+                  onClick={() => setCurrentWeek(prev => subWeeks(prev, 1))}
+                >
+                  &lt;
+                </button>
+                <span className="font-medium text-lg text-[var(--color-flist-dark)]">{format(currentWeek, "yyyy年 M月 d日")} - {format(addDays(currentWeek, 6), "M月 d日")}</span>
+                <button
+                  className="px-2 py-1 rounded bg-[var(--color-flist-surface)] hover:bg-[var(--color-flist-surface-hover)] border border-[var(--color-flist-border)] text-[var(--color-flist-dark)]"
+                  onClick={() => setCurrentWeek(prev => addWeeks(prev, 1))}
+                >
+                  &gt;
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
-        <div className="flex gap-6">
-        {/* メインカレンダー */}
-        <div className="flex-1 bg-white rounded-xl shadow-lg border border-[var(--color-flist-border)] backdrop-blur-md p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="ml-4 flex gap-2">
-              <button
-                className={`px-3 py-1 rounded-t-lg border-b-2 ${view === "month" ? "border-[var(--color-flist-accent)] text-[var(--color-flist-accent)] bg-white" : "border-transparent text-[var(--color-flist-muted)] bg-[var(--color-flist-surface)]"}`}
-                onClick={() => setView("month")}
-              >
-                Month
-              </button>
-              <button
-                className={`px-3 py-1 rounded-t-lg border-b-2 ${view === "week" ? "border-[var(--color-flist-accent)] text-[var(--color-flist-accent)] bg-white" : "border-transparent text-[var(--color-flist-muted)] bg-[var(--color-flist-surface)]"}`}
-                onClick={() => setView("week")}
-              >
-                Week
-              </button>
-            </div>
-            <div className="ml-auto flex gap-2">
+        <div className="flex flex-col w-full">
+          {/* Controls above the card, no extra gap */}
+          <div className="w-full flex items-center justify-between">
+            {/* Main calendar card, remove p-6 padding */}
+            <div className="flex-1 bg-white rounded-xl shadow-lg backdrop-blur-md mt-6">
               {view === "month" ? (
                 <>
-                  <button
-                    className="px-2 py-1 rounded bg-[var(--color-flist-surface)] hover:bg-[var(--color-flist-surface-hover)] border border-[var(--color-flist-border)] text-[var(--color-flist-dark)]"
-                    onClick={() => setCurrentMonth(prev => addDays(startOfMonth(prev), -1))}
-                  >
-                    &lt;
-                  </button>
-                  <span className="font-medium text-lg text-[var(--color-flist-dark)]">{format(currentMonth, "yyyy年 M月")}</span>
-                  <button
-                    className="px-2 py-1 rounded bg-[var(--color-flist-surface)] hover:bg-[var(--color-flist-surface-hover)] border border-[var(--color-flist-border)] text-[var(--color-flist-dark)]"
-                    onClick={() => setCurrentMonth(prev => addDays(endOfMonth(prev), 1))}
-                  >
-                    &gt;
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    className="px-2 py-1 rounded bg-[var(--color-flist-surface)] hover:bg-[var(--color-flist-surface-hover)] border border-[var(--color-flist-border)] text-[var(--color-flist-dark)]"
-                    onClick={() => setCurrentWeek(prev => subWeeks(prev, 1))}
-                  >
-                    &lt;
-                  </button>
-                  <span className="font-medium text-lg text-[var(--color-flist-dark)]">{format(currentWeek, "yyyy年 M月 d日")} - {format(addDays(currentWeek, 6), "M月 d日")}</span>
-                  <button
-                    className="px-2 py-1 rounded bg-[var(--color-flist-surface)] hover:bg-[var(--color-flist-surface-hover)] border border-[var(--color-flist-border)] text-[var(--color-flist-dark)]"
-                    onClick={() => setCurrentWeek(prev => addWeeks(prev, 1))}
-                  >
-                    &gt;
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-          {view === "month" ? (
-            <>
-              <div className="grid grid-cols-7 gap-px bg-[var(--color-flist-border)] rounded-xl overflow-hidden text-center text-xs font-semibold text-[var(--color-flist-accent)] mb-2">
-                {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => <div key={d} className="py-2 bg-white">{d}</div>)}
-              </div>
-              <div className="grid grid-cols-7 gap-px bg-[var(--color-flist-border)] rounded-xl overflow-hidden">
-                {weeks.flat().map((day) => {
-                  const dateKey = format(day, "yyyy-MM-dd");
-                  const isToday = isSameDay(day, new Date());
-                  const isSelected = selectedDate && isSameDay(day, selectedDate);
-                  const tasksForDay = tasksByDate[dateKey] || [];
-                  const maxShow = 2;
-                  const showTasks = tasksForDay.slice(0, maxShow);
-                  const moreCount = tasksForDay.length - maxShow;
-                  const isOver = false;
-                  return (
-                    <DroppableDateCell
-                      key={dateKey}
-                      date={day}
-                      isOver={isOver}
-                      isToday={isToday}
-                      isSelected={isSelected}
-                      onClick={() => handleDateSelect(day)}
-                    >
-                      <div className={`flex items-center justify-between mb-1`}>
-                        {isToday ? (
-                          <span className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-500 text-white font-bold">{format(day, "d")}</span>
-                        ) : (
-                          <span className={`text-xs font-bold ${isSelected ? "text-[var(--color-flist-accent)]" : "text-[var(--color-flist-dark)]"}`}>{format(day, "d")}</span>
-                        )}
-                      </div>
-                      <div className="flex flex-col gap-1 h-20 overflow-hidden">
-                        {showTasks.map(task => (
-                          <DraggableTask key={task.id} task={task}>
-                            <div
-                              className={`truncate text-xs px-2 py-1 rounded-lg border cursor-pointer transition-all duration-150 shadow-sm bg-white hover:bg-[var(--color-flist-blue-light)]/20 border-[var(--color-flist-border)] text-[var(--color-flist-dark)] ${selectedBlockId === task.id ? "bg-gradient-to-r from-[var(--color-flist-accent)]/90 to-blue-400/80 text-white border-[var(--color-flist-accent)] shadow-lg" : ""}`}
-                            >
-                              {(task.html || "").replace(/^- \[[ xX]\] /, "")}
-                            </div>
-                          </DraggableTask>
-                        ))}
-                        {moreCount > 0 && (
-                          <button
-                            className="text-xs text-[var(--color-flist-accent)] hover:underline mt-1 px-2 py-0.5 rounded bg-[var(--color-flist-accent)]/10 hover:bg-[var(--color-flist-accent)]/30 transition-colors"
-                            onClick={() => {
-                              setModalTasks(tasksForDay);
-                              setModalDate(dateKey);
-                              setShowMoreModal(true);
-                            }}
-                          >
-                            +{moreCount}件
-                          </button>
-                        )}
-                        {/* 空の部分をクリックして新規追加 */}
-                        <div 
-                          className="flex-1 min-h-[20px] cursor-pointer hover:bg-[var(--color-flist-accent)]/5 rounded transition-colors"
-                          onClick={() => {
+                  <div className="grid grid-cols-7 gap-px bg-[var(--color-flist-border)] rounded-t-xl" style={{ borderTopLeftRadius: 12, borderTopRightRadius: 12, overflow: 'hidden' }}>
+                    {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => <div key={d} className="py-2 bg-white text-center flex items-center justify-center border border-[var(--color-flist-border)]" style={{ borderRadius: 0 }}>{d}</div>)}
+                  </div>
+                  <div className="grid grid-cols-7 gap-px bg-[var(--color-flist-border)] rounded-b-xl" style={{ borderBottomLeftRadius: 12, borderBottomRightRadius: 12, overflow: 'hidden' }}>
+                    {weeks.flat().map((day) => {
+                      const dateKey = format(day, "yyyy-MM-dd");
+                      const isToday = isSameDay(day, new Date());
+                      const isSelected = selectedDate && isSameDay(day, selectedDate);
+                      const tasksForDay = tasksByDate[dateKey] || [];
+                      const maxShow = 3;
+                      const showTasks = tasksForDay.slice(0, maxShow);
+                      const moreCount = tasksForDay.length - maxShow;
+                      const isOver = false;
+                      return (
+                        <DroppableDateCell
+                          key={dateKey}
+                          date={day}
+                          isOver={isOver}
+                          isToday={isToday}
+                          isSelected={isSelected}
+                          onClick={e => {
+                            // Prevent adding a task if clicking on a task or the more button
+                            if (
+                              e.target.closest('.calendar-task') ||
+                              e.target.closest('.calendar-more-btn')
+                            ) return;
                             handleCreateNewTask(dateKey);
                           }}
-                        />
-                      </div>
-                    </DroppableDateCell>
-                  );
-                })}
-              </div>
-              {/* モーダル */}
-              {showMoreModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-                  <div className="bg-white rounded-xl shadow-xl p-6 min-w-[280px] max-w-xs w-full border border-[var(--color-flist-border)]">
-                    <div className="flex justify-between items-center mb-4">
-                      <div className="font-bold text-[var(--color-flist-accent)]">{modalDate}</div>
-                      <button className="text-gray-400 hover:text-[var(--color-flist-accent)]" onClick={() => setShowMoreModal(false)}>&times;</button>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      {modalTasks.map(task => (
-                        <DraggableTask key={task.id} task={task}>
-                          <div
-                            className={`truncate text-xs px-2 py-1 rounded-lg border cursor-pointer transition-colors shadow-sm bg-white hover:bg-[var(--color-flist-blue-light)]/20 border-[var(--color-flist-border)] text-[var(--color-flist-dark)] ${selectedBlockId === task.id ? "bg-[var(--color-flist-accent)] text-white border-[var(--color-flist-accent)]" : ""}`}
-                            onClick={() => {
-                              if (onSelectTask) onSelectTask(task);
-                            }}
-                          >
-                            {(task.html || "").replace(/^- \[[ xX]\] /, "")}
+                          cellHeight={cellHeight}
+                        >
+                          <div className="flex flex-col items-center mb-1 gap-1">
+                            {isToday ? (
+                              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white font-bold">{format(day, "d")}</span>
+                            ) : (
+                              <span className={`flex items-center justify-center w-5 h-5 text-xs font-bold ${isSelected ? "text-[var(--color-flist-accent)]" : "text-[var(--color-flist-dark)]"}`}>{format(day, "d")}</span>
+                            )}
                           </div>
-                        </DraggableTask>
-                      ))}
-                    </div>
+                          <div className="flex flex-col gap-1 w-full overflow-hidden">
+                            {showTasks.map(task => (
+                              <DraggableTask key={task.id} task={task}>
+                                <div
+                                  className={`truncate text-xs px-2 py-1 rounded-lg border cursor-pointer transition-all duration-150 shadow-sm bg-white hover:bg-[var(--color-flist-blue-light)]/20 border-[var(--color-flist-border)] text-[var(--color-flist-dark)] ${selectedBlockId === task.id ? "bg-gradient-to-r from-[var(--color-flist-accent)]/90 to-blue-400/80 text-white border-[var(--color-flist-accent)] shadow-lg" : ""} calendar-task`}
+                                >
+                                  {(task.html || "").replace(/^- \[[ xX]\] /, "")}
+                                </div>
+                              </DraggableTask>
+                            ))}
+                            {moreCount > 0 && (
+                              <button
+                                className="text-xs text-[var(--color-flist-accent)] hover:underline mt-1 px-2 py-0.5 rounded bg-[var(--color-flist-accent)]/10 hover:bg-[var(--color-flist-accent)]/30 transition-colors calendar-more-btn"
+                                onClick={e => {
+                                  const rect = e.target.getBoundingClientRect();
+                                  setModalTasks(tasksForDay);
+                                  setModalDate(dateKey);
+                                  setShowMoreModal(true);
+                                  setModalPosition({
+                                    top: rect.bottom + window.scrollY + 8, // 8px below the button
+                                    left: rect.left + window.scrollX - 20 // shift left for better alignment
+                                  });
+                                }}
+                              >
+                                +{moreCount}件
+                              </button>
+                            )}
+                          </div>
+                        </DroppableDateCell>
+                      );
+                    })}
                   </div>
-                </div>
-              )}
-            </>
-          ) : (
-            // 週表示（タイムブロッキング）
-            <div className="overflow-x-auto">
-              <table className="min-w-[900px] w-full border-collapse bg-white rounded-xl shadow border border-[var(--color-flist-border)]">
-                <thead>
-                  <tr>
-                    <th className="w-20 bg-[var(--color-flist-surface)]"></th>
-                    {weekDays.map(day => (
-                      <th key={format(day, "yyyy-MM-dd")}
-                          className="text-center text-xs font-semibold py-2 bg-[var(--color-flist-surface)] border-b border-[var(--color-flist-border)] text-[var(--color-flist-accent)]">
-                        {format(day, "EEE d")}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {hours.map((hour, i) => (
-                    <tr key={hour}>
-                      <td className={`text-xs text-right pr-2 py-1 align-top bg-[var(--color-flist-surface)] border-b border-[var(--color-flist-border)] ${i === 0 ? "font-bold" : ""}`}>{hour === "All Day" ? "All Day" : `${hour}:00`}</td>
-                      {weekDays.map(day => (
-                        <td key={format(day, "yyyy-MM-dd") + hour}
-                            className={`align-top border-b border-[var(--color-flist-border)] px-1 py-0.5 min-h-[32px] ${i === 0 ? "bg-[var(--color-flist-surface)]" : ""}`}>
-                          <div className="flex flex-col gap-0.5">
-                            {getTasksForCell(day, hour).map(task => (
+                  {/* モーダル */}
+                  {showMoreModal && (
+                    <div
+                      className="z-50"
+                      style={{
+                        position: 'absolute',
+                        top: modalPosition.top,
+                        left: modalPosition.left,
+                        minWidth: 280,
+                        maxWidth: 320,
+                        width: '100%',
+                        pointerEvents: 'auto',
+                      }}
+                    >
+                      <div className="bg-white rounded-2xl shadow-xl p-6 border border-[var(--color-flist-border)] flex flex-col items-center relative">
+                        <button className="absolute top-3 right-3 text-gray-400 hover:text-[var(--color-flist-accent)] text-xl" onClick={() => setShowMoreModal(false)}>&times;</button>
+                        <div className="text-center w-full mb-2">
+                          <div className="text-[var(--color-flist-muted)] text-sm font-medium mb-1">{format(parseISO(modalDate), 'E', { locale: undefined })}</div>
+                          <div className="text-3xl font-bold text-[var(--color-flist-dark)]">{format(parseISO(modalDate), 'd')}</div>
+                        </div>
+                        <div className="flex flex-col gap-2 w-full mt-2">
+                          {modalTasks.map(task => (
+                            <DraggableTask key={task.id} task={task}>
                               <div
-                                key={task.id}
-                                className={`truncate text-xs px-1 py-0.5 rounded border cursor-pointer transition-colors bg-white hover:bg-[var(--color-flist-blue-light)]/20 border-[var(--color-flist-border)] text-[var(--color-flist-dark)] ${selectedBlockId === task.id ? "bg-[var(--color-flist-accent)] text-white border-[var(--color-flist-accent)]" : ""}`}
+                                className="w-full px-4 py-2 rounded-xl bg-[#b7a6e7] text-white text-sm font-medium text-left truncate shadow-sm"
                                 onClick={() => {
                                   if (onSelectTask) onSelectTask(task);
                                 }}
                               >
-                                {(task.html || "").replace(/^- \[[ xX]\] /, "")}<br/>
-                                <span className="text-[10px] text-[var(--color-flist-muted)]">{hour === "All Day" ? format(parseISO(task.due_date), "yyyy-MM-dd") : format(parseISO(task.due_date), "HH:mm")}</span>
+                                {(task.html || '').replace(/^- \[[ xX]\] /, '') || '(タイトルなし)'}
                               </div>
-                            ))}
-                          </div>
-                        </td>
+                            </DraggableTask>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                // 週表示（タイムブロッキング）
+                <div className="overflow-x-auto">
+                  <table className="min-w-[900px] w-full border-collapse bg-white rounded-xl shadow border border-[var(--color-flist-border)]">
+                    <thead>
+                      <tr>
+                        <th className="w-20 bg-[var(--color-flist-surface)]"></th>
+                        {weekDays.map(day => (
+                          <th key={format(day, "yyyy-MM-dd")}
+                              className="text-center text-xs font-semibold py-2 bg-[var(--color-flist-surface)] border-b border-[var(--color-flist-border)] text-[var(--color-flist-accent)]">
+                            {format(day, "EEE d")}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {hours.map((hour, i) => (
+                        <tr key={hour}>
+                          <td className={`text-xs text-right pr-2 py-1 align-top bg-[var(--color-flist-surface)] border-b border-[var(--color-flist-border)] ${i === 0 ? "font-bold" : ""}`}>{hour === "All Day" ? "All Day" : `${hour}:00`}</td>
+                          {weekDays.map(day => (
+                            <td key={format(day, "yyyy-MM-dd") + hour}
+                                className={`align-top border-b border-[var(--color-flist-border)] px-1 py-0.5 min-h-[32px] ${i === 0 ? "bg-[var(--color-flist-surface)]" : ""}`}>
+                              <div className="flex flex-col gap-0.5">
+                                {getTasksForCell(day, hour).map(task => (
+                                  <div
+                                    key={task.id}
+                                    className={`truncate text-xs px-1 py-0.5 rounded border cursor-pointer transition-colors bg-white hover:bg-[var(--color-flist-blue-light)]/20 border-[var(--color-flist-border)] text-[var(--color-flist-dark)] ${selectedBlockId === task.id ? "bg-[var(--color-flist-accent)] text-white border-[var(--color-flist-accent)]" : ""}`}
+                                    onClick={() => {
+                                      if (onSelectTask) onSelectTask(task);
+                                    }}
+                                  >
+                                    {(task.html || "").replace(/^- \[[ xX]\] /, "")}<br/>
+                                    <span className="text-[10px] text-[var(--color-flist-muted)]">{hour === "All Day" ? format(parseISO(task.due_date), "yyyy-MM-dd") : format(parseISO(task.due_date), "HH:mm")}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                          ))}
+                        </tr>
                       ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {loading && (
+                <div className="flex items-center justify-center mt-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-flist-accent)]"></div>
+                </div>
+              )}
             </div>
-          )}
-          {loading && (
-            <div className="flex items-center justify-center mt-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-flist-accent)]"></div>
-            </div>
-          )}
-        </div>
+          </div>
         </div>
       </div>
       {renderContextMenu()}
