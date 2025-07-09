@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { fetchAllBlocks } from "../api/blocks";
+import { fetchListMap } from "../api/lists";
 import { format, isFuture, parseISO, isToday, isTomorrow, isThisWeek } from "date-fns";
 import {
   Calendar,
@@ -11,22 +12,28 @@ import {
   List,
   Folder,
   AlertCircle,
+  Tag,
 } from "lucide-react";
 
-export default function Dashboard() {
+export default function Dashboard({ setSelectedTask, setSelectedListId }) {
   const [notes, setNotes] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [pinnedItems, setPinnedItems] = useState([]);
+  const [lists, setLists] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
-        const all = await fetchAllBlocks();
+        const [all, listMap] = await Promise.all([
+          fetchAllBlocks(),
+          fetchListMap(),
+        ]);
         setNotes(all.filter((b) => b.type === "note"));
         setTasks(all.filter((b) => b.type === "task" || b.type === "task-done"));
         setPinnedItems(all.filter((b) => b.is_pinned));
+        setLists(listMap);
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
       } finally {
@@ -39,8 +46,9 @@ export default function Dashboard() {
   const completedTasks = tasks.filter((t) => t.type === "task-done");
   const pendingTasks = tasks.filter((t) => t.type === "task");
   const upcomingTasks = tasks.filter(
-    (t) => t.due_date && isFuture(parseISO(t.due_date))
-  );
+    (t) => t.due_date && isFuture(parseISO(t.due_date)) && t.type === "task"
+  ).sort((a, b) => parseISO(a.due_date) - parseISO(b.due_date));
+
   const todayTasks = tasks.filter(
     (t) => t.due_date && isToday(parseISO(t.due_date))
   );
@@ -55,6 +63,34 @@ export default function Dashboard() {
     .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
     .slice(0, 5);
 
+  // Get recent notes (sorted by updated_at)
+  const recentNotes = notes
+    .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
+    .slice(0, 3);
+
+  // Helper function to format due date
+  const formatDueDate = (dueDate) => {
+    const date = parseISO(dueDate);
+    if (isToday(date)) return "Today";
+    if (isTomorrow(date)) return "Tomorrow";
+    return format(date, "MMM dd");
+  };
+
+  // Handle item click
+  const handleItemClick = (item) => {
+    if (setSelectedTask && setSelectedListId) {
+      setSelectedTask(item);
+      // Add a small delay to ensure the task is set before navigation
+      setTimeout(() => {
+        if (item.type === "note") {
+          setSelectedListId("notes");
+        } else {
+          setSelectedListId("tasks");
+        }
+      }, 10);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -64,7 +100,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-8 mx-8 space-y-8">
+    <div className="p-6 mx-6 space-y-6">
       {/* Header with Title */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold text-[var(--color-flist-dark)]">Dashboard</h1>
@@ -143,18 +179,138 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Activity */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-xl p-6 shadow-sm">
+        {/* Left Column: Upcoming Tasks & Recent Notes */}
+        <div className="space-y-6 lg:col-span-2 flex flex-col">
+          {/* Upcoming Tasks */}
+          <div className="bg-white rounded-xl p-6 shadow-sm flex-1 flex flex-col">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <List className="w-5 h-5 text-gray-500" />
+              Upcoming Tasks
+            </h2>
+            <ul className="divide-y divide-gray-200 flex-1">
+              {upcomingTasks.slice(0, 8).map((task) => (
+                <li key={task.id} className="py-3 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => handleItemClick(task)}>
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-2 flex-1 min-w-0">
+                      <span>
+                        <CheckSquare className="w-4 h-4 text-green-500" />
+                      </span>
+                      <span className="font-medium truncate">
+                        {task.html.replace(/^- \[[ xX]\] /, "")}
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-2 ml-2">
+                      {/* List name */}
+                      {task.list && lists[task.list] && (
+                        <span className="flex items-center gap-1 px-2 py-0.5 text-gray-600 text-xs font-medium whitespace-nowrap">
+                          <List className="w-3 h-3" />
+                          {lists[task.list]}
+                        </span>
+                      )}
+                      {/* Tags */}
+                      {task.tags && task.tags.length > 0 && (
+                        <span className="flex gap-1">
+                          {task.tags.map(tag => (
+                            <span
+                              key={tag.id}
+                              title={tag.name.length > 16 ? tag.name : undefined}
+                              className="flex items-center gap-1 px-2 py-0.5 text-gray-600 text-xs font-medium whitespace-nowrap"
+                            >
+                              <Tag className="w-3 h-3" />
+                              {tag.name.length > 8 ? tag.name.slice(0, 6) + '…' : tag.name}
+                            </span>
+                          ))}
+                        </span>
+                      )}
+                      <span className="text-xs text-gray-400 flex items-center gap-1 whitespace-nowrap">
+                        {task.due_date && (
+                          <>
+                            <Calendar className="w-3 h-3" />
+                            {formatDueDate(task.due_date)}
+                          </>
+                        )}
+                      </span>
+                    </span>
+                  </div>
+                </li>
+              ))}
+              {upcomingTasks.length === 0 && (
+                <li className="py-3 text-sm text-gray-500">No upcoming tasks</li>
+              )}
+            </ul>
+          </div>
+
+          {/* Recent Notes */}
+          <div className="bg-white rounded-xl p-4 shadow-sm flex-1 flex flex-col">
+            <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
+              <FileText className="w-4 h-4 text-gray-500" />
+              Recent Notes
+            </h2>
+            <ul className="divide-y divide-gray-200 flex-1">
+              {recentNotes.length > 0 ? (
+                recentNotes.map((note) => (
+                  <li key={note.id} className="py-2 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => handleItemClick(note)}>
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-2 flex-1 min-w-0">
+                        <span>
+                          <FileText className="w-4 h-4 text-blue-500" />
+                        </span>
+                        <span className="font-medium truncate">
+                          {note.html?.match(/\[\[(.+?)\]\]/)?.[1] ||
+                            note.html.replace(/^- \[[ xX]\] /, "").slice(0, 40)}
+                        </span>
+                      </span>
+                      <span className="flex items-center gap-2 ml-2">
+                        {/* List name */}
+                        {note.list && lists[note.list] && (
+                          <span className="flex items-center gap-1 px-2 py-0.5 text-gray-600 text-xs font-medium whitespace-nowrap">
+                            <List className="w-3 h-3" />
+                            {lists[note.list]}
+                          </span>
+                        )}
+                        {/* Tags */}
+                        {note.tags && note.tags.length > 0 && (
+                          <span className="flex gap-1">
+                            {note.tags.map(tag => (
+                              <span
+                                key={tag.id}
+                                title={tag.name.length > 16 ? tag.name : undefined}
+                                className="flex items-center gap-1 px-2 py-0.5 text-gray-600 text-xs font-medium whitespace-nowrap"
+                              >
+                                <Tag className="w-3 h-3" />
+                                {tag.name.length > 8 ? tag.name.slice(0, 6) + '…' : tag.name}
+                              </span>
+                            ))}
+                          </span>
+                        )}
+                        <span className="text-xs text-gray-400 flex items-center gap-1 whitespace-nowrap">
+                          <Clock className="w-3 h-3" />
+                          {format(new Date(note.updated_at), "MMM dd")}
+                        </span>
+                      </span>
+                    </div>
+                  </li>
+                ))
+              ) : (
+                <li className="py-2 text-sm text-gray-500">No recent notes</li>
+              )}
+            </ul>
+          </div>
+        </div>
+
+        {/* Right Column: Recent Activity, Pinned Items, Quick Stats */}
+        <div className="space-y-6 flex flex-col">
+          {/* Recent Activity */}
+          <div className="bg-white rounded-xl p-6 shadow-sm flex-1 flex flex-col">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Clock className="w-5 h-5 text-gray-500" />
               Recent Activity
             </h2>
-            <ul className="divide-y divide-gray-200">
-              {recentActivity.map((item) => (
-                <li key={item.id} className="py-3">
+            <ul className="divide-y divide-gray-200 flex-1">
+              {recentActivity.slice(0, 4).map((item) => (
+                <li key={item.id} className="py-3 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => handleItemClick(item)}>
                   <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-2">
+                    <span className="flex items-center gap-2 flex-1 min-w-0">
                       <span>
                         {item.type === "note" ? (
                           <FileText className="w-4 h-4 text-blue-500" />
@@ -162,126 +318,61 @@ export default function Dashboard() {
                           <CheckSquare className="w-4 h-4 text-green-500" />
                         )}
                       </span>
-                      <span className="font-medium">
+                      <span className="font-medium truncate">
                         {item.html?.match(/\[\[(.+?)\]\]/)?.[1] ||
                           item.html.replace(/^- \[[ xX]\] /, "").slice(0, 50)}
                       </span>
                     </span>
-                    <span className="text-xs text-gray-400">
-                      {format(new Date(item.updated_at), "PPP")}
+                    <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">
+                      <Clock className="w-3 h-3 inline mr-1" />
+                      {format(new Date(item.updated_at), "MMM dd")}
                     </span>
                   </div>
                 </li>
               ))}
-            </ul>
-          </div>
-
-          {/* Task Overview */}
-          <div className="bg-white rounded-xl p-6 shadow-sm">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <List className="w-5 h-5 text-gray-500" />
-              Task Overview
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Today</h3>
-                <ul className="space-y-2">
-                  {todayTasks.map((task) => (
-                    <li key={task.id} className="flex items-center gap-2 text-sm">
-                      <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
-                      <span>{task.html.replace(/^- \[[ xX]\] /, "")}</span>
-                    </li>
-                  ))}
-                  {todayTasks.length === 0 && (
-                    <li className="text-sm text-gray-500">No tasks due today</li>
-                  )}
-                </ul>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Tomorrow</h3>
-                <ul className="space-y-2">
-                  {tomorrowTasks.map((task) => (
-                    <li key={task.id} className="flex items-center gap-2 text-sm">
-                      <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                      <span>{task.html.replace(/^- \[[ xX]\] /, "")}</span>
-                    </li>
-                  ))}
-                  {tomorrowTasks.length === 0 && (
-                    <li className="text-sm text-gray-500">No tasks due tomorrow</li>
-                  )}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Side Panels */}
-        <div className="space-y-6">
-          {/* Upcoming Tasks */}
-          <div className="bg-white rounded-xl p-6 shadow-sm">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-gray-500" />
-              Upcoming Tasks
-            </h2>
-            <ul className="space-y-3">
-              {upcomingTasks.slice(0, 5).map((task) => (
-                <li
-                  key={task.id}
-                  className="text-sm text-gray-700 flex gap-2 items-start"
-                >
-                  <span className="mt-1">🟢</span>
-                  <div>
-                    <p>{task.html.replace(/^- \[[ xX]\] /, "")}</p>
-                    <p className="text-xs text-gray-500">
-                      {format(parseISO(task.due_date), "PPpp")}
-                    </p>
-                  </div>
-                </li>
-              ))}
-              {upcomingTasks.length === 0 && (
-                <li className="text-sm text-gray-500">No upcoming tasks</li>
-              )}
             </ul>
           </div>
 
           {/* Pinned Items */}
-          <div className="bg-white rounded-xl p-6 shadow-sm">
+          <div className="bg-white rounded-xl p-6 shadow-sm flex-1 flex flex-col">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Star className="w-5 h-5 text-gray-500" />
               Pinned Items
             </h2>
-            <ul className="space-y-3">
+            <ul className="divide-y divide-gray-200 flex-1">
               {pinnedItems.map((item) => (
-                <li key={item.id} className="text-sm">
-                  <div className="flex items-center gap-2">
-                    {item.type === "note" ? (
-                      <FileText className="w-4 h-4 text-blue-500" />
-                    ) : (
-                      <CheckSquare className="w-4 h-4 text-green-500" />
-                    )}
-                    <span className="font-medium">
-                      {item.html?.match(/\[\[(.+?)\]\]/)?.[1] ||
-                        item.html.replace(/^- \[[ xX]\] /, "").slice(0, 50)}
+                <li key={item.id} className="py-3 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => handleItemClick(item)}>
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-2 flex-1 min-w-0">
+                      {item.type === "note" ? (
+                        <FileText className="w-4 h-4 text-blue-500" />
+                      ) : (
+                        <CheckSquare className="w-4 h-4 text-green-500" />
+                      )}
+                      <span className="font-medium truncate">
+                        {item.html?.match(/\[\[(.+?)\]\]/)?.[1] ||
+                          item.html.replace(/^- \[[ xX]\] /, "").slice(0, 50)}
+                      </span>
+                    </span>
+                    <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">
+                      {format(new Date(item.updated_at), "MMM dd")}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Updated: {format(new Date(item.updated_at), "PPP")}
-                  </p>
                 </li>
               ))}
               {pinnedItems.length === 0 && (
-                <li className="text-sm text-gray-500">No pinned items</li>
+                <li className="py-3 text-sm text-gray-500">No pinned items</li>
               )}
             </ul>
           </div>
 
           {/* Quick Stats */}
-          <div className="bg-white rounded-xl p-6 shadow-sm">
+          <div className="bg-white rounded-xl p-6 shadow-sm flex-1 flex flex-col">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-gray-500" />
               Quick Stats
             </h2>
-            <div className="space-y-3">
+            <div className="space-y-3 flex-1">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">This Week's Tasks</span>
                 <span className="text-sm font-medium">{thisWeekTasks.length}</span>

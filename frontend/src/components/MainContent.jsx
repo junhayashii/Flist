@@ -27,7 +27,7 @@ export default function MainContent({
 
   useEffect(() => {
     // Only clear selectedTask when navigating to special pages, not when navigating to a regular list
-    const specialPages = ["dashboard", "inbox", "today", "tasks", "notes", "calendar"];
+    const specialPages = ["dashboard", "inbox", "today", "calendar"];
     if (specialPages.includes(selectedListId)) {
       setSelectedTask(null);
     }
@@ -85,7 +85,7 @@ export default function MainContent({
           {/* メイン表示（ブロック or タスク） */}
           <div className="mt-2">
             {selectedListId === "dashboard" ? (
-              <Dashboard />
+              <Dashboard setSelectedTask={setSelectedTask} setSelectedListId={setSelectedListId} />
             ) : selectedListId === "inbox" ? (
               <Inbox />
             ) : selectedListId === "today" ? (
@@ -183,7 +183,7 @@ export default function MainContent({
           
           {/* タスク、ノート、カレンダーページでは従来通り */}
           {["tasks", "notes", "calendar"].includes(selectedListId) && selectedTask && (
-            <div className="w-[32rem] shrink-0 overflow-y-auto border-l border-[var(--color-flist-border)] bg-[var(--color-flist-surface)] backdrop-blur-md">
+            <div className="w-[32rem] shrink-0 overflow-0 border-l border-[var(--color-flist-border)] bg-[var(--color-flist-surface)] backdrop-blur-md">
               <BlockDetails
                 block={selectedTask}
                 onClose={() => setSelectedTask(null)}
