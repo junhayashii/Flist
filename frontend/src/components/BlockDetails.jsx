@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import BlockEditor from "./editor/BlockEditor";
 import { updateBlockDueDate, updateBlock, fetchBlock, fetchTags, createTag, deleteBlock } from "../api/blocks";
-import { CheckCircle, Circle, Tag, X, CalendarDays, MoreVertical, List as ListIcon } from "lucide-react";
+import { CheckCircle, Circle, Tag, X, CalendarDays, MoreVertical, List as ListIcon, Star } from "lucide-react";
 import CustomDatePicker from "./CustomDatePicker";
 import CustomTagPicker from "./CustomTagPicker";
 import { fetchListMap } from "../api/lists";
@@ -197,16 +197,34 @@ export default function BlockDetails({ block, onClose, onUpdate, onDelete, setSe
     window.dispatchEvent(new CustomEvent('taskUpdated', { detail: updatedBlock }));
   };
 
+  const handlePinToggle = async () => {
+    const updatedBlock = { ...localBlock, is_pinned: !localBlock.is_pinned };
+    setLocalBlock(updatedBlock);
+    try {
+      await updateBlock(updatedBlock);
+      onUpdate?.(updatedBlock);
+      window.dispatchEvent(new CustomEvent('taskUpdated', { detail: updatedBlock }));
+    } catch (err) {
+      console.error("ピン留め更新失敗:", err);
+    }
+  };
+
   return (
     <div className="w-[32rem] border-l border-[var(--color-flist-border)] bg-[var(--color-flist-bg)] h-screen flex flex-col">
       <div className="flex-none p-8 pt-10 relative">
         {/* Close button and context menu - top right */}
         <div className="absolute top-4 right-4 flex items-center gap-2">
+          {/* Pin button */}
           <button
-            onClick={onClose}
-            className="p-2 rounded-lg text-[var(--color-flist-text-muted)] hover:text-[var(--color-flist-text-primary)] hover:bg-[var(--color-flist-surface-hover)] transition-all duration-200 hover-scale focus-ring"
+            onClick={handlePinToggle}
+            className={`p-2 rounded-lg transition-all duration-200 hover-scale focus-ring ${
+              localBlock.is_pinned 
+                ? "text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50" 
+                : "text-[var(--color-flist-text-muted)] hover:text-[var(--color-flist-text-primary)] hover:bg-[var(--color-flist-surface-hover)]"
+            }`}
+            title={localBlock.is_pinned ? "Unpin" : "Pin"}
           >
-            <X size={18} />
+            <Star size={18} fill={localBlock.is_pinned ? "currentColor" : "none"} />
           </button>
 
           {/* Context menu button */}
@@ -233,6 +251,13 @@ export default function BlockDetails({ block, onClose, onUpdate, onDelete, setSe
               </div>
             )}
           </div>
+
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-[var(--color-flist-text-muted)] hover:text-[var(--color-flist-text-primary)] hover:bg-[var(--color-flist-surface-hover)] transition-all duration-200 hover-scale focus-ring"
+          >
+            <X size={18} />
+          </button>
         </div>
 
         {/* Title */}

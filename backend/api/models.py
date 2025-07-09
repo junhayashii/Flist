@@ -43,6 +43,7 @@ class Block(models.Model):
     order = models.FloatField(default=0.0)
     due_date = models.DateTimeField(null=True, blank=True)
     is_done = models.BooleanField(default=False)
+    is_pinned = models.BooleanField(default=False)
     tags = models.ManyToManyField(Tag, related_name="blocks", blank=True)
     
     created_at = models.DateTimeField(auto_now_add=True)

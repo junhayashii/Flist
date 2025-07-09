@@ -40,7 +40,7 @@ class BlockSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Block
-        fields = ['id', 'list', 'parent_block', 'html', 'type', 'order', 'child_blocks', 'due_date', 'is_done', 'tags', 'tag_ids', 'created_at', 'updated_at']
+        fields = ['id', 'list', 'parent_block', 'html', 'type', 'order', 'child_blocks', 'due_date', 'is_done', 'is_pinned', 'tags', 'tag_ids', 'created_at', 'updated_at']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def get_child_blocks(self, obj):

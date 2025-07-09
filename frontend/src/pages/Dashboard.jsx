@@ -60,13 +60,13 @@ export default function Dashboard({ setSelectedTask, setSelectedListId }) {
   );
 
   const recentActivity = [...notes, ...tasks]
-    .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
-    .slice(0, 5);
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 3);
 
   // Get recent notes (sorted by updated_at)
   const recentNotes = notes
     .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
-    .slice(0, 3);
+    .slice(0, 4);
 
   // Helper function to format due date
   const formatDueDate = (dueDate) => {
@@ -188,7 +188,7 @@ export default function Dashboard({ setSelectedTask, setSelectedListId }) {
               Upcoming Tasks
             </h2>
             <ul className="divide-y divide-gray-200 flex-1">
-              {upcomingTasks.slice(0, 8).map((task) => (
+              {upcomingTasks.slice(0, 7).map((task) => (
                 <li key={task.id} className="py-3 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => handleItemClick(task)}>
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2 flex-1 min-w-0">
@@ -307,7 +307,7 @@ export default function Dashboard({ setSelectedTask, setSelectedListId }) {
               Recent Activity
             </h2>
             <ul className="divide-y divide-gray-200 flex-1">
-              {recentActivity.slice(0, 4).map((item) => (
+              {recentActivity.slice(0, 3).map((item) => (
                 <li key={item.id} className="py-3 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => handleItemClick(item)}>
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2 flex-1 min-w-0">
@@ -340,7 +340,7 @@ export default function Dashboard({ setSelectedTask, setSelectedListId }) {
               Pinned Items
             </h2>
             <ul className="divide-y divide-gray-200 flex-1">
-              {pinnedItems.map((item) => (
+              {pinnedItems.slice(0, 3).map((item) => (
                 <li key={item.id} className="py-3 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => handleItemClick(item)}>
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2 flex-1 min-w-0">
