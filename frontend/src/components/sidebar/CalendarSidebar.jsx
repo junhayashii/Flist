@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { fetchTasks } from "../../api/blocks";
+import { fetchListMap } from "../../api/lists";
 import { format, isSameDay, isSameMonth, parseISO, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DndContext, useDraggable } from "@dnd-kit/core";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 
 function getMonthMatrix(currentMonth) {
   const startMonth = startOfMonth(currentMonth);
@@ -45,7 +46,8 @@ function MiniCalendar({ currentMonth, onDateSelect, selectedDate, tasksByDate })
           const isToday = isSameDay(day, today);
           const isCurrentMonth = isSameMonth(day, miniMonth);
           const isSelected = selectedDate && isSameDay(day, selectedDate);
-          const hasTasks = tasksByDate[dateKey] && tasksByDate[dateKey].length > 0;
+          // Show dot only if there are incomplete tasks (type === 'task')
+          const hasIncompleteTasks = tasksByDate[dateKey] && tasksByDate[dateKey].some(task => task.type === 'task');
           return (
             <button
               key={dateKey}
@@ -61,7 +63,7 @@ function MiniCalendar({ currentMonth, onDateSelect, selectedDate, tasksByDate })
               ) : (
                 format(day, "d")
               )}
-              {hasTasks && (
+              {hasIncompleteTasks && (
                 <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-1 bg-[var(--color-flist-accent)] rounded-full" style={{ bottom: '0.5px', zIndex: 0 }}></div>
               )}
             </button>
@@ -98,15 +100,20 @@ function DraggableTask({ task, children }) {
   );
 }
 
-export default function CalendarSidebar({ setSelectedTask, refreshKey }) {
+export default function CalendarSidebar({ setSelectedTask, refreshKey, onDragEnd }) {
   const [tasks, setTasks] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [lists, setLists] = useState({});
   useEffect(() => {
     fetchTasks().then(setTasks);
+    fetchListMap().then(setLists);
   }, [refreshKey]);
   useEffect(() => {
-    const handler = () => fetchTasks().then(setTasks);
+    const handler = () => {
+      fetchTasks().then(setTasks);
+      fetchListMap().then(setLists);
+    };
     window.addEventListener('taskUpdated', handler);
     return () => window.removeEventListener('taskUpdated', handler);
   }, []);
@@ -118,26 +125,58 @@ export default function CalendarSidebar({ setSelectedTask, refreshKey }) {
     if (!tasksByDate[dateKey]) tasksByDate[dateKey] = [];
     tasksByDate[dateKey].push(task);
   });
+  // Handler for checkbox toggle
+  const handleTaskCheckbox = async (task) => {
+    const newType = task.type === "task-done" ? "task" : "task-done";
+    const newHtml = (newType === "task-done" ? "- [x] " : "- [ ] ") + (task.html || "").replace(/^- \[[ xX]\] /, "");
+    const updatedTask = { ...task, type: newType, html: newHtml };
+    // Optimistically update UI
+    setTasks(prev => prev.map(t => t.id === task.id ? updatedTask : t));
+    // Update backend
+    await import("../../api/blocks").then(mod => mod.updateBlock(updatedTask));
+    // Dispatch event for real-time updates
+    window.dispatchEvent(new CustomEvent('taskUpdated', { detail: updatedTask }));
+  };
+  // Droppable for no-date tasks
+  const { setNodeRef: setNoDateDropRef, isOver: isNoDateDropping } = useDroppable({ id: 'no-date-tasks' });
+
   return (
     <div className="w-64 h-full bg-[var(--color-flist-surface)] border-r border-[var(--color-flist-border)] p-4 space-y-4 overflow-y-auto">
       <MiniCalendar currentMonth={currentMonth} onDateSelect={date => { setSelectedDate(date); setCurrentMonth(date); }} selectedDate={selectedDate} tasksByDate={tasksByDate} />
       <div className="mt-6">
         <h3 className="text-xs font-semibold text-[var(--color-flist-muted)] mb-2 pl-1">日付なしタスク</h3>
-        <div className="space-y-1">
-          {tasks.filter(task => !task.due_date).length > 0 ? (
-            tasks.filter(task => !task.due_date).map(task => (
+        <div
+          ref={setNoDateDropRef}
+          className={`space-y-1 transition-all duration-200 ${isNoDateDropping ? 'bg-[var(--color-flist-accent)]/10 border-2 border-[var(--color-flist-accent)] rounded-lg p-2' : ''}`}
+          style={{ minHeight: 40 }}
+        >
+          {tasks.filter(task => !task.due_date && task.type === 'task').length > 0 ? (
+            tasks.filter(task => !task.due_date && task.type === 'task').map(task => (
               <DraggableTask key={task.id} task={task}>
                 <div
-                  className="px-3 py-2 rounded-lg text-sm text-[var(--color-flist-dark)] hover:bg-[var(--color-flist-surface-hover)] cursor-pointer transition-colors truncate"
+                  className="px-3 py-2 rounded-lg text-sm text-[var(--color-flist-dark)] hover:bg-[var(--color-flist-surface-hover)] cursor-pointer transition-colors truncate flex items-center gap-2"
                   title={(task.html || "").replace(/^- \[[ xX]\] /, "")}
                   onClick={() => setSelectedTask && setSelectedTask(task)}
                 >
-                  {(task.html || "").replace(/^- \[[ xX]\] /, "")}
+                  <input
+                    type="checkbox"
+                    checked={task.type === "task-done"}
+                    onChange={e => { e.stopPropagation(); handleTaskCheckbox(task); }}
+                    className="accent-[var(--color-flist-accent)] mr-1"
+                  />
+                  <span className={task.type === "task-done" ? "line-through text-gray-400" : ""}>
+                    {(task.html || "").replace(/^- \[[ xX]\] /, "")}
+                  </span>
+                  {task.list && lists[task.list] && (
+                    <span className="ml-2 px-2 py-0.5 rounded-full bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] text-[var(--color-flist-accent)] text-xs font-medium">
+                      {lists[task.list]}
+                    </span>
+                  )}
                 </div>
               </DraggableTask>
             ))
           ) : (
-            <div className="text-xs text-[var(--color-flist-muted)] text-center py-4">日付なしタスクはありません</div>
+            <div className="text-xs text-[var(--color-flist-muted)] text-center py-4">未完了の日付なしタスクはありません</div>
           )}
         </div>
       </div>

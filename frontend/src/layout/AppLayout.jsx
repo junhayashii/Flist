@@ -32,10 +32,16 @@ export default function AppLayout() {
     if (!active || !over) return;
     const taskId = active.data?.current?.taskId;
     const overId = over.id;
-    if (taskId && overId && overId.startsWith('date-')) {
-      const toDate = overId.replace('date-', '');
-      await updateBlockDueDate(taskId, toDate);
-      handleTaskDueDateChange();
+    if (taskId && overId) {
+      if (overId.startsWith('date-')) {
+        const toDate = overId.replace('date-', '');
+        await updateBlockDueDate(taskId, toDate);
+        handleTaskDueDateChange();
+      } else if (overId === 'no-date-tasks') {
+        // Remove due date
+        await updateBlockDueDate(taskId, null);
+        handleTaskDueDateChange();
+      }
     }
   };
 
@@ -47,7 +53,7 @@ export default function AppLayout() {
       <div className="flex h-screen bg-gray-100">
         <AppLauncher selectedListId={selectedListId} setSelectedListId={setSelectedListId} openSettings={() => setSettingsOpen(true)} />
         {selectedListId === "calendar" ? (
-          <CalendarSidebar setSelectedTask={setSelectedTask} refreshKey={sidebarRefreshKey} />
+          <CalendarSidebar setSelectedTask={setSelectedTask} refreshKey={sidebarRefreshKey} onDragEnd={handleDragEnd} />
         ) : (
           <Sidebar
             sidebarOpen={sidebarOpen}

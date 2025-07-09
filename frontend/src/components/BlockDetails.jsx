@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import BlockEditor from "./editor/BlockEditor";
 import { updateBlockDueDate, updateBlock, fetchBlock, fetchTags, createTag, deleteBlock } from "../api/blocks";
-import { Tag, X, CalendarDays, MoreVertical, List as ListIcon } from "lucide-react";
+import { CheckCircle, Circle, Tag, X, CalendarDays, MoreVertical, List as ListIcon } from "lucide-react";
 import CustomDatePicker from "./CustomDatePicker";
 import CustomTagPicker from "./CustomTagPicker";
 import { fetchListMap } from "../api/lists";
@@ -185,6 +185,18 @@ export default function BlockDetails({ block, onClose, onUpdate, onDelete, setSe
     return localBlock.html?.replace(/^- \[[ xX]?\] /, "") || "(無題タスク)";
   };
 
+  // Add handler for checkbox toggle
+  const handleCheckboxToggle = async () => {
+    if (localBlock.type !== "task" && localBlock.type !== "task-done") return;
+    const newType = localBlock.type === "task-done" ? "task" : "task-done";
+    const newHtml = (newType === "task-done" ? "- [x] " : "- [ ] ") + getTitleText();
+    const updatedBlock = { ...localBlock, type: newType, html: newHtml };
+    setLocalBlock(updatedBlock);
+    await updateBlock(updatedBlock);
+    onUpdate?.(updatedBlock);
+    window.dispatchEvent(new CustomEvent('taskUpdated', { detail: updatedBlock }));
+  };
+
   return (
     <div className="w-[32rem] border-l border-[var(--color-flist-border)] bg-[var(--color-flist-bg)] h-screen flex flex-col">
       <div className="flex-none p-8 pt-10 relative">
@@ -224,31 +236,47 @@ export default function BlockDetails({ block, onClose, onUpdate, onDelete, setSe
         </div>
 
         {/* Title */}
-        <h2
-          ref={titleRef}
-          contentEditable
-          suppressContentEditableWarning
-          onBlur={handleTitleBlur}
-          className="text-xl font-semibold mb-2 outline-none border-b border-transparent focus:border-[var(--color-flist-primary)] transition-colors text-[var(--color-flist-text-primary)]"
-        >
-          {getTitleText()}
-        </h2>
-
-        {/* List name pill for tasks and notes */}
-        {((localBlock.type === "task" || localBlock.type === "task-done" || localBlock.type === "note") && localBlock.list && lists[localBlock.list]) && (
-          <div className="mb-4">
+        <div className="flex items-center gap-2 mb-6">
+          {(localBlock.type === "task" || localBlock.type === "task-done") && (
             <button
-              onClick={() => setSelectedListId?.(localBlock.list)}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] text-xs font-medium hover:bg-[var(--color-flist-surface-hover)] hover:border-[var(--color-flist-accent)] transition-all duration-200 cursor-pointer"
+              onClick={handleCheckboxToggle}
+              className="w-6 h-6 flex items-center justify-center text-[var(--color-flist-accent)] hover:scale-105 transition-transform focus:outline-none"
+              style={{ marginRight: 4 }}
+              tabIndex={0}
+              aria-label={localBlock.type === "task-done" ? "Mark as incomplete" : "Mark as complete"}
             >
-              <ListIcon className="w-3 h-3 text-[var(--color-flist-accent)]" />
-              {lists[localBlock.list]}
+              {localBlock.type === "task-done" ? (
+                <CheckCircle className="w-6 h-6" strokeWidth={1.5} />
+              ) : (
+                <Circle className="w-6 h-6" strokeWidth={1.5} />
+              )}
             </button>
-          </div>
-        )}
+          )}
+          <h2
+            ref={titleRef}
+            contentEditable
+            suppressContentEditableWarning
+            onBlur={handleTitleBlur}
+            className="text-xl font-semibold outline-none border-b border-transparent focus:border-[var(--color-flist-primary)] transition-colors text-[var(--color-flist-text-primary)]"
+            style={{ textDecoration: localBlock.type === "task-done" ? "line-through" : "none", color: localBlock.type === "task-done" ? "#aaa" : undefined }}
+          >
+            {getTitleText()}
+          </h2>
+        </div>
 
         {/* Due Date and Tags - Side by Side */}
         <div className="mb-0 flex flex-wrap gap-2 items-center">
+          {/* List name pill (as pill, same row as due date/tags) */}
+          {((localBlock.type === "task" || localBlock.type === "task-done" || localBlock.type === "note") && localBlock.list && lists[localBlock.list]) && (
+            <button
+              onClick={() => setSelectedListId?.(localBlock.list)}
+              className="flex items-center gap-2 bg-[var(--color-flist-surface)] border border-[var(--color-flist-border)] rounded-full px-4 py-1 text-[var(--color-flist-dark)] text-sm font-medium shadow-sm hover:border-[var(--color-flist-accent)] transition-colors"
+              type="button"
+            >
+              <ListIcon className="w-4 h-4 text-[var(--color-flist-accent)]" />
+              {lists[localBlock.list]}
+            </button>
+          )}
           {/* Due Date (as pill) */}
           {localBlock.type !== "note" && (
             <CustomDatePicker
