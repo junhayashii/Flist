@@ -26,3 +26,7 @@ urlpatterns = [
     path('api/accounts/', include('accounts.urls')),
     re_path(r'^.*$', serve, kwargs={'path': 'index.html', 'document_root': settings.BASE_DIR / 'dist'}),
 ]
+
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
