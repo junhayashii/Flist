@@ -67,7 +67,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = ["jazzy-treacle-7ef68a.netlify.app"]
+CORS_ALLOW_ALL_ORIGINS = ["https://flist-frontend.onrender.com"]
 
 ROOT_URLCONF = 'config.urls'
 
