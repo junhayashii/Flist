@@ -23,7 +23,7 @@ DATABASES = {
 }
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "dist", "static"),
+    os.path.join(BASE_DIR, "dist", "assets"),
 ]
 
 # Quick-start development settings - unsuitable for production
