@@ -1,7 +1,6 @@
 {
     "routes": [
-      { "handle": "filesystem" },
-      { "handle": "rewrite", "src": ".*", "dest": "/index.html" }
+        { "handle": "filesystem" },
+        { "handle": "rewrite", "src": ".*", "dest": "/index.html" }
     ]
-  }
-  
+}
