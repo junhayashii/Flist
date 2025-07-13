@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
-import { X, Sliders, Bell, Link2, Settings as Cog, Star } from "lucide-react";
+import { useAuth } from "../hooks/useAuth";
+import { X, Sliders, Bell, Link2, Settings as Cog, Star, User } from "lucide-react";
 
 // Settings sections with icons (General first)
 const SECTIONS = [
   { key: "general", label: "General", icon: <Cog className="w-4 h-4 mr-2" /> },
+  { key: "accounts", label: "Accounts", icon: <User className="w-4 h-4 mr-2" /> },
   { key: "preferences", label: "Preferences", icon: <Sliders className="w-4 h-4 mr-2" /> },
   { key: "notifications", label: "Notifications", icon: <Bell className="w-4 h-4 mr-2" /> },
   { key: "connections", label: "Connections", icon: <Link2 className="w-4 h-4 mr-2" /> },
@@ -18,6 +20,7 @@ const SECTIONS = [
 export default function SettingsModal({ open, onClose }) {
   const [activeSection, setActiveSection] = useState(SECTIONS[0].key);
   const modalRef = useRef(null);
+  const { user } = useAuth();
 
   // Close on ESC key
   useEffect(() => {
@@ -87,6 +90,20 @@ export default function SettingsModal({ open, onClose }) {
 
           {/* All sections: show 'Upcoming...' message with icon */}
           <div className="flex flex-col items-center justify-center w-full">
+            {activeSection === "accounts" && (
+              <>
+                <User className="w-12 h-12 mb-4 text-[var(--color-flist-primary)] opacity-80" />
+                <h2 className="text-2xl font-bold mb-2">Accounts</h2>
+                <div className="w-full max-w-md mx-auto bg-white rounded-xl shadow p-6 border border-gray-100 flex flex-col items-center">
+                  <div className="w-full mb-4">
+                    <label className="text-xs font-semibold text-gray-500 ml-1 mb-1">Email</label>
+                    <div className="w-full px-4 py-2 bg-gray-100 rounded-lg text-gray-700 font-medium text-base border border-gray-200">
+                      {user?.email || <span className="text-gray-400">(not available)</span>}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
             {activeSection === "preferences" && (
               <>
                 <Sliders className="w-12 h-12 mb-4 text-[var(--color-flist-primary)] opacity-80" />

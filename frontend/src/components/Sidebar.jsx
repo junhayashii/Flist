@@ -163,7 +163,7 @@ const DraggableList = ({ list, isSelected, onClick, onEdit, editingId, draftTitl
   );
 };
 
-const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, children, onAddList }) => {
+const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, children, onAddList, editingId, draftTitle, setDraftTitle, inputRef, onEdit }) => {
   const { setNodeRef, isOver } = useDroppable({
     id: `folder-${folder.id}`,
   });
@@ -211,9 +211,25 @@ const DroppableFolder = ({ folder, isExpanded, onToggle, onDelete, onRename, chi
             <ChevronRight size={16} className={`mr-0.5 ${isOver ? "text-[var(--color-flist-primary)]" : "text-[var(--color-flist-text-muted)]"}`} />
           )}
           <Folder size={16} className={`${isOver ? "text-[var(--color-flist-primary)]" : "text-[var(--color-flist-text-muted)]"}`} style={{ verticalAlign: 'middle' }} />
-          <span className={`text-sm font-medium ml-1 truncate ${isOver ? "text-[var(--color-flist-primary)]" : "text-[var(--color-flist-text-primary)]"}`} style={{ verticalAlign: 'middle' }}>
-            {folder.title}
-          </span>
+          {editingId === `folder-${folder.id}` ? (
+            <input
+              ref={inputRef}
+              className="input w-full text-sm ml-1"
+              value={draftTitle}
+              autoFocus
+              onChange={(e) => setDraftTitle(e.target.value)}
+              onBlur={() => onEdit(folder.id, true)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") onEdit(folder.id, true);
+                if (e.key === "Escape") onRename(null);
+              }}
+              style={{ maxWidth: 120 }}
+            />
+          ) : (
+            <span className={`text-sm font-medium ml-1 truncate ${isOver ? "text-[var(--color-flist-primary)]" : "text-[var(--color-flist-text-primary)]"}`} style={{ verticalAlign: 'middle' }}>
+              {folder.title}
+            </span>
+          )}
         </div>
         {isHovered && (
           <button
@@ -329,7 +345,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
     if (draftTitle.trim() === "") return;
     try {
       if (isFolder) {
-        await editFolder(id, draftTitle);
+        await editFolder(id, { title: draftTitle });
       } else {
         await updateList(id, { title: draftTitle });
       }
@@ -537,6 +553,11 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, selectedListId, setSelectedListI
                   onDelete={handleDeleteFolder}
                   onRename={handleRenameFolder}
                   onAddList={handleAddList}
+                  editingId={editingId}
+                  draftTitle={draftTitle}
+                  setDraftTitle={setDraftTitle}
+                  inputRef={inputRef}
+                  onEdit={handleSaveTitle}
                 >
                   {listsByFolder[folder.id]?.map((list) => (
                     <DraggableList

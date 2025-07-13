@@ -261,7 +261,7 @@ export default function BlockDetails({ block, onClose, onUpdate, onDelete, setSe
         </div>
 
         {/* Title */}
-        <div className="flex items-center gap-2 mb-6">
+        <div className="flex items-center gap-2 mt-4 mb-4">
           {(localBlock.type === "task" || localBlock.type === "task-done") && (
             <button
               onClick={handleCheckboxToggle}

@@ -32,7 +32,7 @@ function MiniCalendar({ currentMonth, onDateSelect, selectedDate, tasksByDate })
     <div className="rounded-lg px-2 pt-2 pb-3 mb-2">
       <div className="flex items-center justify-between mb-2">
         <button onClick={() => setMiniMonth(prev => subMonths(prev, 1))} className="p-1 rounded hover:bg-[var(--color-flist-surface-hover)] text-[var(--color-flist-muted)] hover:text-[var(--color-flist-accent)] transition-colors"><ChevronLeft size={16} /></button>
-        <div className="text-xs font-semibold text-[var(--color-flist-dark)]">{format(miniMonth, "yyyy年 M月")}</div>
+        <div className="text-xs font-semibold text-[var(--color-flist-dark)]">{format(miniMonth, "MMMM yyyy")}</div>
         <button onClick={() => setMiniMonth(prev => addMonths(prev, 1))} className="p-1 rounded hover:bg-[var(--color-flist-surface-hover)] text-[var(--color-flist-muted)] hover:text-[var(--color-flist-accent)] transition-colors"><ChevronRight size={16} /></button>
       </div>
       <div className="grid grid-cols-7 gap-px mb-1">
@@ -74,13 +74,13 @@ function MiniCalendar({ currentMonth, onDateSelect, selectedDate, tasksByDate })
   );
 }
 
-// DraggableTask: 日付なしタスク用
+// DraggableTask: For tasks without a date
 function DraggableTask({ task, children }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `task-${task.id}`,
     data: {
       taskId: task.id,
-      fromDate: null, // 日付なし
+      fromDate: null, // No date
     },
   });
   return (
@@ -117,7 +117,7 @@ export default function CalendarSidebar({ setSelectedTask, refreshKey, onDragEnd
     window.addEventListener('taskUpdated', handler);
     return () => window.removeEventListener('taskUpdated', handler);
   }, []);
-  // 日付ごとにタスクをグループ化
+  // Group tasks by date
   const tasksByDate = {};
   tasks.forEach(task => {
     if (!task.due_date) return;
@@ -144,7 +144,7 @@ export default function CalendarSidebar({ setSelectedTask, refreshKey, onDragEnd
     <div className="w-64 h-full bg-[var(--color-flist-surface)] border-r border-[var(--color-flist-border)] p-4 space-y-4 overflow-y-auto">
       <MiniCalendar currentMonth={currentMonth} onDateSelect={date => { setSelectedDate(date); setCurrentMonth(date); }} selectedDate={selectedDate} tasksByDate={tasksByDate} />
       <div className="mt-6">
-        <h3 className="text-xs font-semibold text-[var(--color-flist-muted)] mb-2 pl-1">日付なしタスク</h3>
+        <h3 className="text-xs font-semibold text-[var(--color-flist-muted)] mb-2 pl-1">Tasks without a date</h3>
         <div
           ref={setNoDateDropRef}
           className={`space-y-1 transition-all duration-200 ${isNoDateDropping ? 'bg-[var(--color-flist-accent)]/10 border-2 border-[var(--color-flist-accent)] rounded-lg p-2' : ''}`}
@@ -176,7 +176,7 @@ export default function CalendarSidebar({ setSelectedTask, refreshKey, onDragEnd
               </DraggableTask>
             ))
           ) : (
-            <div className="text-xs text-[var(--color-flist-muted)] text-center py-4">未完了の日付なしタスクはありません</div>
+            <div className="text-xs text-[var(--color-flist-muted)] text-center py-4">No incomplete tasks without a date</div>
           )}
         </div>
       </div>
