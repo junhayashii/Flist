@@ -52,7 +52,7 @@ export default function Login() {
           </div>
           {/* Google Sign In */}
           <button type="button" className="w-full flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 font-semibold py-2.5 rounded-lg shadow-sm hover:bg-blue-50 transition mb-6">
-            <span className="inline-block w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center">G</span>
+            <span className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center">G</span>
             Sign in with Google
           </button>
           <form onSubmit={handleSubmit} className="space-y-6">

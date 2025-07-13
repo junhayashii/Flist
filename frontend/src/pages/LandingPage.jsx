@@ -3,12 +3,15 @@ import { Check, CheckSquare, Calendar, FileText, Target, Users, Star, ArrowRight
 import { useNavigate } from 'react-router-dom';
 import flistIcon from '../assets/flist-icon.png';
 import { Twitter, Facebook, Github, Instagram } from 'lucide-react';
+import { useAuth } from "../hooks/useAuth";
 
 const LandingPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const navigate = useNavigate();
   const [billing, setBilling] = useState('monthly');
+  const { login } = useAuth();
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -214,11 +217,24 @@ const testimonials = [
                 <ArrowRight className="inline-block w-5 h-5 ml-2" />
               </button>
               <button className="border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-full font-semibold text-lg bg-white hover:bg-blue-50 hover:text-blue-700 transition-all duration-300"
-                onClick={() => navigate('/app')}
+                onClick={async () => {
+                  setError("");
+                  try {
+                    await login('guest@email.com', 'guest123');
+                    navigate('/app');
+                  } catch (err) {
+                    setError('Guest login failed.');
+                  }
+                }}
               >
                 Try as Guest
               </button>
             </div>
+            {error && (
+              <div className="p-4 rounded-lg bg-red-50 border border-red-300 text-red-700 text-sm mb-2 max-w-md mx-auto">
+                {error}
+              </div>
+            )}
           </div>
           
           {/* Hero Cover Screenshot Card */}
