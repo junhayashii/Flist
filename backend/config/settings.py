@@ -58,7 +58,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = ["jazzy-treacle-7ef68a.netlify.app"]
 
 ROOT_URLCONF = 'config.urls'
 
